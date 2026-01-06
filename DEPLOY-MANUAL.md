@@ -41,7 +41,7 @@ Entornos: Production, Preview, Development (marcar todos)
 
 ```
 DATABASE_URL
-Valor: mysql://u670007821_odontologo:%2F%7Eg5%244t%40L@srv650.hstgr.io:3306/u670007821_clinica_odonto
+Valor: mysql://USUARIO:CONTRASENA_URL_ENCODED@HOST:3306/NOMBRE_BD
 Entornos: Production, Preview, Development (marcar todos)
 ```
 

@@ -31,13 +31,13 @@ Error: P1010: User was denied access on the database `clinica_odontologica`
 
 ### Paso 2: Otorgar Permisos al Usuario
 
-**IMPORTANTE:** En Hostinger, el usuario `u670007821_odontologo` puede que ya exista pero no tenga permisos en la nueva base de datos.
+**IMPORTANTE:** En Hostinger, tu usuario MySQL puede que ya exista pero no tenga permisos en la nueva base de datos.
 
 Ejecuta este SQL en phpMyAdmin:
 
 ```sql
 -- Otorgar TODOS los privilegios
-GRANT ALL PRIVILEGES ON clinica_odontologica.* TO 'u670007821_odontologo'@'%';
+GRANT ALL PRIVILEGES ON TU_BD.* TO 'TU_USUARIO'@'%';
 
 -- Aplicar los cambios
 FLUSH PRIVILEGES;
@@ -48,12 +48,12 @@ FLUSH PRIVILEGES;
 Ejecuta este SQL para verificar:
 
 ```sql
-SHOW GRANTS FOR 'u670007821_odontologo'@'%';
+SHOW GRANTS FOR 'TU_USUARIO'@'%';
 ```
 
 Deberías ver algo como:
 ```
-GRANT ALL PRIVILEGES ON `clinica_odontologica`.* TO `u670007821_odontologo`@`%`
+GRANT ALL PRIVILEGES ON `TU_BD`.* TO `TU_USUARIO`@`%`
 ```
 
 ### Paso 4: Verificar la Conexión
@@ -73,7 +73,7 @@ npx prisma db push
 
 ## 🔐 Alternativa: Usar el Usuario Principal
 
-Si el usuario `u670007821_odontologo` no puede tener permisos, puedes:
+Si tu usuario MySQL no puede tener permisos, puedes:
 
 1. **Usar el usuario principal de Hostinger** (si tienes acceso)
 2. **Crear un nuevo usuario específico** para esta base de datos
@@ -93,7 +93,7 @@ FLUSH PRIVILEGES;
 
 Luego actualiza tu DATABASE_URL:
 ```
-mysql://clinica_user:tu_contraseña@srv650.hstgr.io:3306/clinica_odontologica
+mysql://clinica_user:tu_contraseña@HOST:3306/TU_BD
 ```
 
 ## 🌐 Problema: Conexiones Externas en Hostinger
@@ -115,13 +115,13 @@ Hostinger puede restringir conexiones externas. Verifica:
 Asegúrate de que tu `.env` tenga exactamente:
 
 ```env
-DATABASE_URL="mysql://u670007821_odontologo:%2F%7Eg5%244t%40L@srv650.hstgr.io:3306/clinica_odontologica"
+DATABASE_URL="mysql://USUARIO:CONTRASENA_URL_ENCODED@HOST:3306/TU_BD"
 ```
 
 **Verifica:**
-- ✅ El usuario es correcto: `u670007821_odontologo`
-- ✅ La contraseña está codificada: `%2F%7Eg5%244t%40L`
-- ✅ El servidor es correcto: `srv650.hstgr.io`
+- ✅ El usuario es correcto: `TU_USUARIO`
+- ✅ La contraseña está codificada (URL encoded)
+- ✅ El servidor es correcto: `HOST`
 - ✅ El puerto es: `3306`
 - ✅ El nombre de la BD es: `clinica_odontologica`
 
@@ -130,7 +130,7 @@ DATABASE_URL="mysql://u670007821_odontologo:%2F%7Eg5%244t%40L@srv650.hstgr.io:33
 Puedes probar la conexión con este comando (si tienes MySQL client):
 
 ```bash
-mysql -h srv650.hstgr.io -u u670007821_odontologo -p clinica_odontologica
+mysql -h HOST -u TU_USUARIO -p TU_BD
 ```
 
 O usa una herramienta como MySQL Workbench o DBeaver para probar la conexión.
@@ -138,7 +138,7 @@ O usa una herramienta como MySQL Workbench o DBeaver para probar la conexión.
 ## 📞 Si Nada Funciona
 
 1. **Contacta el soporte de Hostinger:**
-   - Pregunta si el usuario `u670007821_odontologo` puede tener permisos en nuevas bases de datos
+   - Pregunta si tu usuario puede tener permisos en nuevas bases de datos
    - Pregunta sobre restricciones de conexiones remotas
    - Pregunta si necesitas un plan específico para conexiones externas
 
@@ -162,7 +162,7 @@ O usa una herramienta como MySQL Workbench o DBeaver para probar la conexión.
 ## 🎯 Solución Rápida (Resumen)
 
 1. Crea la BD en phpMyAdmin
-2. Ejecuta: `GRANT ALL PRIVILEGES ON clinica_odontologica.* TO 'u670007821_odontologo'@'%';`
+2. Ejecuta: `GRANT ALL PRIVILEGES ON TU_BD.* TO 'TU_USUARIO'@'%';`
 3. Ejecuta: `FLUSH PRIVILEGES;`
 4. Reintenta: `npx prisma db push`
 

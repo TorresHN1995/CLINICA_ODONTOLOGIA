@@ -2,10 +2,10 @@
 
 ## ✅ Credenciales Configuradas
 
-- **Usuario:** u670007821_odontologo
-- **Servidor:** srv650.hstgr.io
+- **Usuario:** (tu_usuario_mysql)
+- **Servidor:** (tu_host_mysql)
 - **Puerto:** 3306 (puerto estándar MySQL)
-- **Base de datos:** clinica_odontologica (debes crearla primero)
+- **Base de datos:** (tu_base_de_datos) (debes crearla primero)
 
 ## 📝 Paso 1: Crear la Base de Datos en Hostinger
 
@@ -33,7 +33,7 @@ Crea o edita el archivo `.env` en la raíz de tu proyecto con estos valores:
 
 ```env
 # Base de datos MySQL en Hostinger
-DATABASE_URL="mysql://u670007821_odontologo:%2F%7Eg5%244t%40L@srv650.hstgr.io:3306/clinica_odontologica"
+DATABASE_URL="mysql://USUARIO:CONTRASENA_URL_ENCODED@HOST:3306/NOMBRE_BD"
 
 # NextAuth - Genera un secret seguro
 NEXTAUTH_SECRET="tu-secret-generado-aqui"
@@ -97,19 +97,13 @@ Cuando despliegues en Vercel, agrega estas variables de entorno:
 1. Ve a tu proyecto en Vercel
 2. Settings → Environment Variables
 3. Agrega:
-   - `DATABASE_URL` = `mysql://u670007821_odontologo:%2F%7Eg5%244t%40L@srv650.hstgr.io:3306/clinica_odontologica`
+   - `DATABASE_URL` = `mysql://USUARIO:CONTRASENA_URL_ENCODED@HOST:3306/NOMBRE_BD`
    - `NEXTAUTH_SECRET` = (el mismo que generaste)
    - `NEXTAUTH_URL` = `https://tu-proyecto.vercel.app`
 
 ## ⚠️ Nota sobre la Contraseña
 
-La contraseña `/~g5$4t@L` tiene caracteres especiales que fueron codificados en la URL:
-- `/` → `%2F`
-- `~` → `%7E`
-- `$` → `%24`
-- `@` → `%40`
-
-Por eso la URL usa: `%2F%7Eg5%244t%40L`
+Si tu contraseña tiene caracteres especiales, debes codificarla en URL (por ejemplo `@` → `%40`, `$` → `%24`, etc.).
 
 ## 🐛 Solución de Problemas
 
@@ -118,7 +112,7 @@ Por eso la URL usa: `%2F%7Eg5%244t%40L`
 - Asegúrate de que la base de datos `clinica_odontologica` exista
 
 ### Error: "Can't connect to MySQL server"
-- Verifica que el servidor `srv650.hstgr.io` sea correcto
+- Verifica que el servidor (`HOST`) sea correcto
 - Verifica que el puerto sea `3306`
 - Algunos planes de Hostinger requieren conexiones desde IPs específicas
 
