@@ -54,18 +54,55 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password, nombre, apellido, telefono, rol } = body
+    const { email, password, nombre, apellido, telefono, rol, username } = body
 
     // Verificar si el email ya existe
-    const existente = await prisma.usuario.findUnique({
+    const existenteEmail = await prisma.usuario.findUnique({
       where: { email },
     })
 
-    if (existente) {
+    if (existenteEmail) {
       return NextResponse.json(
         { error: 'El email ya está registrado' },
         { status: 400 }
       )
+    }
+
+    // Generar username si no se proporciona (desde email o nombre)
+    let finalUsername = username
+    if (!finalUsername) {
+      // Intentar usar la parte antes del @ del email
+      finalUsername = email.split('@')[0].toLowerCase()
+      
+      // Verificar que el username sea único, si no, agregar un número
+      let usernameExists = true
+      let counter = 1
+      let testUsername = finalUsername
+      
+      while (usernameExists) {
+        const existente = await prisma.usuario.findUnique({
+          where: { username: testUsername },
+        })
+        if (!existente) {
+          usernameExists = false
+          finalUsername = testUsername
+        } else {
+          testUsername = `${finalUsername}${counter}`
+          counter++
+        }
+      }
+    } else {
+      // Verificar que el username proporcionado sea único
+      const existenteUsername = await prisma.usuario.findUnique({
+        where: { username: finalUsername },
+      })
+      
+      if (existenteUsername) {
+        return NextResponse.json(
+          { error: 'El nombre de usuario ya está en uso' },
+          { status: 400 }
+        )
+      }
     }
 
     // Hash de la contraseña
@@ -74,6 +111,7 @@ export async function POST(request: NextRequest) {
     const usuario = await prisma.usuario.create({
       data: {
         email,
+        username: finalUsername,
         password: hashedPassword,
         nombre,
         apellido,
