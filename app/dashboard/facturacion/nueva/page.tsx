@@ -28,6 +28,7 @@ interface Item {
 interface Correlativo {
   id: string
   tipo: string
+  cai?: string | null
   sucursal: string
   puntoEmision: string
   tipoDoc: string
