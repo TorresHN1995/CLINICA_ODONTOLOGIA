@@ -1,14 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import { User, Lock, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     username: '',
@@ -20,7 +17,13 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const callbackUrl = decodeURIComponent(searchParams.get('callbackUrl') || '/dashboard')
+      // En build/prerender de Next.js no podemos depender de useSearchParams en la Page.
+      // Leemos el callbackUrl directamente del query string en tiempo de ejecución (cliente).
+      const rawCallback =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('callbackUrl')
+          : null
+      const callbackUrl = rawCallback ? decodeURIComponent(rawCallback) : '/dashboard'
       
       // Intentar login con redirect automático
       const result = await signIn('credentials', {
