@@ -29,8 +29,10 @@ export default function LoginPage() {
         toast.error('Credenciales inválidas')
       } else {
         toast.success('¡Bienvenido!')
-        router.push('/dashboard')
-        router.refresh()
+        // Esperar un momento para que la sesión se establezca
+        await new Promise(resolve => setTimeout(resolve, 100))
+        // Usar window.location para forzar recarga completa
+        window.location.href = '/dashboard'
       }
     } catch (error) {
       toast.error('Error al iniciar sesión')
