@@ -1,0 +1,117 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
+import { addMinutes, format } from 'date-fns'
+
+const gestionSchema = z.object({
+    accion: z.enum(['CANCELAR', 'REPROGRAMAR']),
+    citaId: z.string(),
+    identificacion: z.string(),
+    // Cancelar
+    motivo: z.string().optional(),
+    // Reprogramar
+    nuevaFecha: z.string().optional(),
+    nuevaHora: z.string().optional(),
+})
+
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json()
+        const data = gestionSchema.parse(body)
+
+        // 1. Verificar propiedad de la cita (Seguridad)
+        // El usuario provee Identidad + CitaID, verificamos que matchen en BD
+        const cita = await prisma.cita.findUnique({
+            where: { id: data.citaId },
+            include: { paciente: true }
+        })
+
+        if (!cita) {
+            return NextResponse.json({ error: 'Cita no encontrada' }, { status: 404 })
+        }
+
+        if (cita.paciente.identificacion !== data.identificacion) {
+            return NextResponse.json({ error: 'No autorizado para gestionar esta cita' }, { status: 403 })
+        }
+
+        if (data.accion === 'CANCELAR') {
+            if (!data.motivo) return NextResponse.json({ error: 'Motivo requerido' }, { status: 400 })
+
+            await prisma.cita.update({
+                where: { id: data.citaId },
+                data: {
+                    estado: 'CANCELADA',
+                    observaciones: (cita.observaciones || '') + `\n[Cancelada por Paciente]: ${data.motivo}`
+                }
+            })
+
+            return NextResponse.json({ success: true, message: 'Cita cancelada correctamente' })
+        }
+
+        if (data.accion === 'REPROGRAMAR') {
+            if (!data.nuevaFecha || !data.nuevaHora) {
+                return NextResponse.json({ error: 'Fecha y hora requeridas' }, { status: 400 })
+            }
+
+            const fechaDate = new Date(`${data.nuevaFecha}T${data.nuevaHora}`)
+            const duracion = cita.duracion
+            const horaFin = format(addMinutes(fechaDate, duracion), 'HH:mm')
+
+            // 2. Validar Disponibilidad (Igual que al crear)
+            // Odontólogo
+            const colisionOdontologo = await prisma.cita.findFirst({
+                where: {
+                    id: { not: cita.id }, // Excluir misma cita
+                    fecha: {
+                        gte: new Date(data.nuevaFecha),
+                        lt: addMinutes(new Date(data.nuevaFecha), 24 * 60)
+                    },
+                    horaInicio: data.nuevaHora,
+                    estado: { not: 'CANCELADA' },
+                    odontologoId: cita.odontologoId
+                }
+            })
+
+            if (colisionOdontologo) {
+                return NextResponse.json({ error: 'El horario seleccionado no está disponible.' }, { status: 409 })
+            }
+
+            // Paciente
+            const colisionPaciente = await prisma.cita.findFirst({
+                where: {
+                    id: { not: cita.id }, // Excluir misma cita
+                    pacienteId: cita.pacienteId,
+                    fecha: new Date(data.nuevaFecha),
+                    estado: { not: 'CANCELADA' },
+                    horaInicio: data.nuevaHora
+                }
+            })
+
+            if (colisionPaciente) {
+                return NextResponse.json({ error: 'Ya tienes otra cita en ese horario.' }, { status: 409 })
+            }
+
+            await prisma.cita.update({
+                where: { id: data.citaId },
+                data: {
+                    fecha: new Date(data.nuevaFecha),
+                    horaInicio: data.nuevaHora,
+                    horaFin: horaFin,
+                    estado: 'PROGRAMADA', // Reset estado si estaba NO_ASISTIO etc
+                    observaciones: (cita.observaciones || '') + `\n[Reprogramada por Paciente]`
+                }
+            })
+
+            return NextResponse.json({ success: true, message: 'Cita reprogramada correctamente' })
+        }
+
+        return NextResponse.json({ error: 'Acción inválida' }, { status: 400 })
+
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json({ error: 'Datos inválidos', details: error.errors }, { status: 400 })
+        }
+        console.error('Error gestión citas:', error)
+        return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+    }
+}

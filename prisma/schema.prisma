@@ -1,0 +1,593 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Usuarios y Roles
+model Usuario {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  nombre    String
+  apellido  String
+  telefono  String?
+  rol       Rol      @default(RECEPCION)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  citas           Cita[]
+  facturas        Factura[]
+  procedimientos  Procedimiento[]
+  estadisticas    EstadisticaOdontologo[]
+  egresos         Egreso[]
+
+  @@map("usuarios")
+}
+
+enum Rol {
+  ADMINISTRADOR
+  ODONTOLOGO
+  ASISTENTE
+  RECEPCION
+}
+
+// Modelo de Pacientes
+model Paciente {
+  id                String   @id @default(uuid())
+  identificacion    String   @unique
+  nombre            String
+  apellido          String
+  fechaNacimiento   DateTime
+  email             String?
+  telefono          String
+  celular           String?
+  direccion         String?
+  ciudad            String?
+  ocupacion         String?
+  contactoEmergencia String?
+  telefonoEmergencia String?
+  
+  // Historia médica
+  alergias          String?  @db.Text
+  medicamentos      String?  @db.Text
+  enfermedades      String?  @db.Text
+  observaciones     String?  @db.Text
+  
+  // Control
+  consentimiento    Boolean  @default(false)
+  activo            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relaciones
+  citas             Cita[]
+  expedientes       Expediente[]
+  tratamientos      Tratamiento[]
+  facturas          Factura[]
+  documentos        Documento[]
+
+  @@map("pacientes")
+}
+
+// Modelo de Citas
+model Cita {
+  id            String      @id @default(uuid())
+  pacienteId    String
+  odontologoId  String
+  fecha         DateTime
+  horaInicio    String
+  horaFin       String
+  duracion      Int         // en minutos
+  tipoCita      TipoCita
+  estado        EstadoCita  @default(PROGRAMADA)
+  motivo        String?     @db.Text
+  observaciones String?     @db.Text
+  recordatorio  Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relaciones
+  paciente      Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  odontologo    Usuario     @relation(fields: [odontologoId], references: [id])
+
+  @@index([pacienteId])
+  @@index([odontologoId])
+  @@index([fecha])
+  @@map("citas")
+}
+
+enum TipoCita {
+  CONSULTA
+  LIMPIEZA
+  EXTRACCION
+  ENDODONCIA
+  ORTODONCIA
+  PROTESIS
+  CIRUGIA
+  CONTROL
+  EMERGENCIA
+  OTRO
+}
+
+enum EstadoCita {
+  PROGRAMADA
+  CONFIRMADA
+  EN_CURSO
+  COMPLETADA
+  CANCELADA
+  NO_ASISTIO
+}
+
+// Modelo de Expediente Clínico
+model Expediente {
+  id            String   @id @default(uuid())
+  pacienteId    String
+  fecha         DateTime @default(now())
+  diagnostico   String   @db.Text
+  tratamiento   String   @db.Text
+  evolucion     String?  @db.Text
+  proximaCita   DateTime?
+  odontograma   String?  @db.LongText // JSON del odontograma
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  paciente      Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  procedimientos Procedimiento[]
+  imagenes      ImagenClinica[]
+
+  @@index([pacienteId])
+  @@map("expedientes")
+}
+
+// Modelo de Procedimientos
+model Procedimiento {
+  id            String   @id @default(uuid())
+  expedienteId  String
+  odontologoId  String
+  fecha         DateTime @default(now())
+  nombre        String
+  descripcion   String   @db.Text
+  diente        String?  // Número del diente
+  precio        Decimal  @db.Decimal(10, 2)
+  duracion      Int?     // en minutos
+  materiales    String?  @db.Text // JSON de materiales usados
+  observaciones String?  @db.Text
+  createdAt     DateTime @default(now())
+
+  // Relaciones
+  expediente    Expediente @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  odontologo    Usuario    @relation(fields: [odontologoId], references: [id])
+
+  @@index([expedienteId])
+  @@index([odontologoId])
+  @@map("procedimientos")
+}
+
+// Modelo de Tratamientos
+model Tratamiento {
+  id            String           @id @default(uuid())
+  pacienteId    String
+  nombre        String
+  descripcion   String           @db.Text
+  estado        EstadoTratamiento @default(PLANIFICADO)
+  fechaInicio   DateTime?
+  fechaFin      DateTime?
+  costoTotal    Decimal          @db.Decimal(10, 2)
+  observaciones String?          @db.Text
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // Relaciones
+  paciente      Paciente         @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  etapas        EtapaTratamiento[]
+
+  @@index([pacienteId])
+  @@map("tratamientos")
+}
+
+enum EstadoTratamiento {
+  PLANIFICADO
+  EN_PROGRESO
+  PAUSADO
+  COMPLETADO
+  CANCELADO
+}
+
+// Modelo de Etapas de Tratamiento
+model EtapaTratamiento {
+  id            String   @id @default(uuid())
+  tratamientoId String
+  orden         Int
+  nombre        String
+  descripcion   String?  @db.Text
+  costo         Decimal  @db.Decimal(10, 2)
+  completada    Boolean  @default(false)
+  fechaCompletada DateTime?
+  observaciones String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  tratamiento   Tratamiento @relation(fields: [tratamientoId], references: [id], onDelete: Cascade)
+
+  @@index([tratamientoId])
+  @@map("etapas_tratamiento")
+}
+
+// Modelo de Facturas
+model Factura {
+  id            String        @id @default(uuid())
+  numero        String        @unique
+  pacienteId    String
+  emitenteId    String        // Usuario que emitió la factura
+  fecha         DateTime      @default(now())
+  subtotal      Decimal       @db.Decimal(10, 2)
+  descuento     Decimal       @default(0) @db.Decimal(10, 2)
+  impuesto      Decimal       @default(0) @db.Decimal(10, 2)
+  total         Decimal       @db.Decimal(10, 2)
+  estado        EstadoFactura @default(PENDIENTE)
+  metodoPago    MetodoPago?
+  observaciones String?       @db.Text
+  enviada       Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relaciones
+  paciente      Paciente      @relation(fields: [pacienteId], references: [id])
+  emitente      Usuario       @relation(fields: [emitenteId], references: [id])
+  items         ItemFactura[]
+  pagos         Pago[]
+  ingreso       Ingreso?
+  
+  // Datos SAR
+  cai           String?       // Clave de Autorización de Impresión
+  tipoDocumento TipoDocumentoFacturacion @default(FACTURA)
+  correlativoId String?
+  correlativo   Correlativo?  @relation(fields: [correlativoId], references: [id])
+
+  @@index([pacienteId])
+  @@index([numero])
+  @@index([correlativoId])
+  @@map("facturas")
+}
+
+enum TipoDocumentoFacturacion {
+  FACTURA
+  ORDEN_PEDIDO
+}
+
+// Modelo de Correlativos SAR
+model Correlativo {
+  id            String    @id @default(uuid())
+  tipo          TipoDocumentoFacturacion
+  cai           String?   // Opcional para Orden de Pedido
+  sucursal      String    // e.g. 000
+  puntoEmision  String    // e.g. 001
+  tipoDoc       String    // e.g. 01 (Factura)
+  rangoInicial  Int
+  rangoFinal    Int
+  siguiente     Int       // Último número utilizado + 1
+  fechaLimite   DateTime
+  activo        Boolean   @default(true)
+  facturas      Factura[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("correlativos")
+}
+
+enum EstadoFactura {
+  PENDIENTE
+  PAGADA_PARCIAL
+  PAGADA
+  ANULADA
+}
+
+enum MetodoPago {
+  EFECTIVO
+  TARJETA_CREDITO
+  TARJETA_DEBITO
+  TRANSFERENCIA
+  CHEQUE
+  OTRO
+}
+
+// Modelo de Items de Factura
+model ItemFactura {
+  id            String   @id @default(uuid())
+  facturaId     String
+  descripcion   String
+  cantidad      Int      @default(1)
+  precioUnitario Decimal @db.Decimal(10, 2)
+  subtotal      Decimal  @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+
+  // Relaciones
+  factura       Factura  @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+
+  @@index([facturaId])
+  @@map("items_factura")
+}
+
+// Modelo de Pagos
+model Pago {
+  id            String     @id @default(uuid())
+  facturaId     String
+  monto         Decimal    @db.Decimal(10, 2)
+  metodoPago    MetodoPago
+  fecha         DateTime   @default(now())
+  referencia    String?
+  observaciones String?    @db.Text
+  createdAt     DateTime   @default(now())
+
+  // Relaciones
+  factura       Factura    @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+
+  @@index([facturaId])
+  @@map("pagos")
+}
+
+// Modelo de Inventario
+model Inventario {
+  id            String   @id @default(uuid())
+  codigo        String   @unique
+  nombre        String
+  descripcion   String?  @db.Text
+  categoria     CategoriaInventario
+  unidadMedida  String
+  stock         Int      @default(0)
+  stockMinimo   Int      @default(10)
+  precioCompra  Decimal  @db.Decimal(10, 2)
+  precioVenta   Decimal? @db.Decimal(10, 2)
+  proveedor     String?
+  activo        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  movimientos   MovimientoInventario[]
+
+  @@map("inventario")
+}
+
+enum CategoriaInventario {
+  MATERIAL_DENTAL
+  INSTRUMENTAL
+  MEDICAMENTO
+  CONSUMIBLE
+  EQUIPAMIENTO
+  OTRO
+}
+
+// Modelo de Movimientos de Inventario
+model MovimientoInventario {
+  id            String            @id @default(uuid())
+  inventarioId  String
+  tipo          TipoMovimiento
+  cantidad      Int
+  motivo        String?
+  responsable   String?
+  fecha         DateTime          @default(now())
+  createdAt     DateTime          @default(now())
+
+  // Relaciones
+  inventario    Inventario        @relation(fields: [inventarioId], references: [id], onDelete: Cascade)
+
+  @@index([inventarioId])
+  @@map("movimientos_inventario")
+}
+
+enum TipoMovimiento {
+  ENTRADA
+  SALIDA
+  AJUSTE
+  DEVOLUCION
+}
+
+// Modelo de Documentos
+model Documento {
+  id            String   @id @default(uuid())
+  pacienteId    String
+  nombre        String
+  tipo          TipoDocumento
+  url           String
+  tamanio       Int      // en bytes
+  createdAt     DateTime @default(now())
+
+  // Relaciones
+  paciente      Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+
+  @@index([pacienteId])
+  @@map("documentos")
+}
+
+enum TipoDocumento {
+  RADIOGRAFIA
+  FOTOGRAFIA
+  CONSENTIMIENTO
+  RECETA
+  ORDEN_LABORATORIO
+  OTRO
+}
+
+// Modelo de Imágenes Clínicas
+model ImagenClinica {
+  id            String     @id @default(uuid())
+  expedienteId  String
+  nombre        String
+  descripcion   String?
+  url           String
+  tipo          String     // MIME type
+  tamanio       Int        // en bytes
+  createdAt     DateTime   @default(now())
+
+  // Relaciones
+  expediente    Expediente @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+
+  @@index([expedienteId])
+  @@map("imagenes_clinicas")
+}
+
+// Modelo de Estadísticas por Odontólogo
+model EstadisticaOdontologo {
+  id            String   @id @default(uuid())
+  odontologoId  String
+  mes           Int
+  anio          Int
+  pacientesAtendidos Int @default(0)
+  citasCompletadas   Int @default(0)
+  citasCanceladas    Int @default(0)
+  ingresos      Decimal  @db.Decimal(10, 2) @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  odontologo    Usuario  @relation(fields: [odontologoId], references: [id], onDelete: Cascade)
+
+  @@unique([odontologoId, mes, anio])
+  @@index([odontologoId])
+  @@map("estadisticas_odontologo")
+}
+
+// Modelo de Ingresos (Automático desde facturas)
+model Ingreso {
+  id            String        @id @default(uuid())
+  facturaId     String        @unique
+  concepto      String        // Descripción del ingreso
+  categoria     CategoriaIngreso
+  monto         Decimal       @db.Decimal(10, 2)
+  fecha         DateTime      @default(now())
+  metodoPago    MetodoPago
+  estado        EstadoIngreso @default(REGISTRADO)
+  observaciones String?       @db.Text
+  createdAt     DateTime      @default(now())
+
+  // Relaciones
+  factura       Factura       @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+
+  @@index([fecha])
+  @@index([categoria])
+  @@map("ingresos")
+}
+
+enum CategoriaIngreso {
+  CONSULTA
+  LIMPIEZA
+  EXTRACCION
+  ENDODONCIA
+  ORTODONCIA
+  PROTESIS
+  CIRUGIA
+  CONTROL
+  EMERGENCIA
+  MATERIALES
+  OTROS_SERVICIOS
+}
+
+enum EstadoIngreso {
+  REGISTRADO
+  CONFIRMADO
+  CONTABILIZADO
+}
+
+// Modelo de Egresos (Gastos)
+model Egreso {
+  id            String        @id @default(uuid())
+  concepto      String        // Descripción del gasto
+  categoria     CategoriaEgreso
+  monto         Decimal       @db.Decimal(10, 2)
+  fecha         DateTime      @default(now())
+  metodoPago    MetodoPago
+  proveedor     String?       // Nombre del proveedor
+  numeroFactura String?       // Número de factura del proveedor
+  estado        EstadoEgreso  @default(PENDIENTE)
+  observaciones String?       @db.Text
+  registradoPor String        // ID del usuario que registró el gasto
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relaciones
+  registrador   Usuario       @relation(fields: [registradoPor], references: [id])
+
+  @@index([fecha])
+  @@index([categoria])
+  @@index([registradoPor])
+  @@map("egresos")
+}
+
+enum CategoriaEgreso {
+  MATERIALES_DENTALES
+  INSTRUMENTAL
+  MEDICAMENTOS
+  EQUIPAMIENTO
+  SERVICIOS_PUBLICOS
+  ALQUILER
+  SALARIOS
+  SEGUROS
+  MANTENIMIENTO
+  MARKETING
+  CAPACITACION
+  OTROS_GASTOS
+}
+
+enum EstadoEgreso {
+  PENDIENTE
+  APROBADO
+  PAGADO
+  RECHAZADO
+}
+
+// Modelo de Flujo de Caja
+model FlujoCaja {
+  id            String   @id @default(uuid())
+  fecha         DateTime @default(now())
+  tipo          TipoFlujo
+  concepto      String
+  monto         Decimal  @db.Decimal(10, 2)
+  saldoAnterior Decimal  @db.Decimal(10, 2)
+  saldoActual   Decimal  @db.Decimal(10, 2)
+  referencia    String?  // ID de factura, egreso, etc.
+  createdAt     DateTime @default(now())
+
+  @@index([fecha])
+  @@index([tipo])
+  @@map("flujo_caja")
+}
+
+enum TipoFlujo {
+  INGRESO
+  EGRESO
+  AJUSTE
+}
+
+model ConfiguracionEmpresa {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique
+  rtn         String?  @unique
+  telefono    String?
+  email       String?
+  direccion   String?
+  ciudad      String?
+  pais        String   @default("Honduras")
+  moneda      String   @default("HNL")
+  simboloMoneda String @default("L.")
+  formatoFecha String  @default("DD/MM/YYYY")
+  logo        String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("configuracion_empresa")
+}
+
