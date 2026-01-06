@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import { User, Lock, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     username: '',
@@ -19,6 +20,9 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
+      const callbackUrl = decodeURIComponent(searchParams.get('callbackUrl') || '/dashboard')
+      
+      // Intentar login con redirect automático
       const result = await signIn('credentials', {
         username: formData.username,
         password: formData.password,
@@ -27,16 +31,31 @@ export default function LoginPage() {
 
       if (result?.error) {
         toast.error('Credenciales inválidas')
-      } else {
+        setLoading(false)
+      } else if (result?.ok) {
         toast.success('¡Bienvenido!')
-        // Esperar un momento para que la sesión se establezca
-        await new Promise(resolve => setTimeout(resolve, 100))
-        // Usar window.location para forzar recarga completa
-        window.location.href = '/dashboard'
+        
+        // Esperar un momento para que la cookie se establezca
+        await new Promise(resolve => setTimeout(resolve, 300))
+        
+        // Redirigir usando el callbackUrl completo o solo la ruta
+        let redirectUrl = callbackUrl
+        if (callbackUrl.startsWith('http')) {
+          // Si es una URL completa, extraer solo la ruta
+          try {
+            const url = new URL(callbackUrl)
+            redirectUrl = url.pathname + url.search
+          } catch {
+            redirectUrl = '/dashboard'
+          }
+        }
+        
+        // Forzar recarga completa con la URL correcta
+        window.location.href = redirectUrl
       }
     } catch (error) {
+      console.error('Error en login:', error)
       toast.error('Error al iniciar sesión')
-    } finally {
       setLoading(false)
     }
   }

@@ -64,6 +64,14 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string
       }
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      // Si hay una URL de callback, úsala
+      if (url.startsWith('/')) return `${baseUrl}${url}`
+      // Si la URL es del mismo dominio, permite la redirección
+      if (new URL(url).origin === baseUrl) return url
+      // Por defecto, redirigir al dashboard
+      return `${baseUrl}/dashboard`
     }
   },
   pages: {
