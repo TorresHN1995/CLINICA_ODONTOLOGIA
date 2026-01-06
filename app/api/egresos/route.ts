@@ -174,4 +174,3 @@ async function registrarFlujoCaja(
   }
 }
 
-export { registrarFlujoCaja }
