@@ -139,10 +139,10 @@ export default function FacturaDetallePage({ params }: Params) {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <Link href="/dashboard/facturacion" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <Link href="/dashboard/facturacion" className="p-2 hover:bg-muted rounded-lg transition-colors">
             <ArrowLeft className="w-6 h-6" />
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Factura no encontrada</h1>
+          <h1 className="text-2xl font-bold text-foreground">Factura no encontrada</h1>
         </div>
       </div>
     )
@@ -153,12 +153,12 @@ export default function FacturaDetallePage({ params }: Params) {
       {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link href="/dashboard/facturacion" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <Link href="/dashboard/facturacion" className="p-2 hover:bg-muted rounded-lg transition-colors">
             <ArrowLeft className="w-6 h-6" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Factura {factura.numero}</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-3xl font-bold text-foreground">Factura {factura.numero}</h1>
+            <p className="text-muted-foreground mt-1">
               {format(new Date(factura.fecha), "dd/MM/yyyy", { locale: es })}
             </p>
           </div>
@@ -175,23 +175,23 @@ export default function FacturaDetallePage({ params }: Params) {
       {/* Resumen */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card">
-          <p className="text-sm text-gray-600">Paciente</p>
-          <p className="text-lg font-semibold text-gray-900">
+          <p className="text-sm text-muted-foreground">Paciente</p>
+          <p className="text-lg font-semibold text-foreground">
             {factura.paciente.nombre} {factura.paciente.apellido}
           </p>
-          <p className="text-sm text-gray-600">{factura.paciente.identificacion}</p>
+          <p className="text-sm text-muted-foreground">{factura.paciente.identificacion}</p>
         </div>
         <div className="card">
-          <p className="text-sm text-gray-600">Total</p>
-          <p className="text-2xl font-bold text-gray-900">{formatearMoneda(factura.total)}</p>
-          <p className="text-sm text-gray-600">Subtotal {formatearMoneda(factura.subtotal)}</p>
+          <p className="text-sm text-muted-foreground">Total</p>
+          <p className="text-2xl font-bold text-foreground">{formatearMoneda(factura.total)}</p>
+          <p className="text-sm text-muted-foreground">Subtotal {formatearMoneda(factura.subtotal)}</p>
         </div>
         <div className="card">
-          <p className="text-sm text-gray-600">Saldo</p>
+          <p className="text-sm text-muted-foreground">Saldo</p>
           <p className={`text-2xl font-bold ${saldo > 0 ? 'text-red-600' : 'text-green-600'}`}>
             {formatearMoneda(saldo)}
           </p>
-          <p className="text-sm text-gray-600">Pagado {formatearMoneda(totalPagado)}</p>
+          <p className="text-sm text-muted-foreground">Pagado {formatearMoneda(totalPagado)}</p>
         </div>
       </div>
 
@@ -199,17 +199,17 @@ export default function FacturaDetallePage({ params }: Params) {
       <div className="card overflow-hidden p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unit.</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Descripción</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Cantidad</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Precio Unit.</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Subtotal</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-card divide-y divide-border">
               {factura.items.map(item => (
-                <tr key={item.id} className="hover:bg-gray-50">
+                <tr key={item.id} className="hover:bg-muted">
                   <td className="px-6 py-4">{item.descripcion}</td>
                   <td className="px-6 py-4">{item.cantidad}</td>
                   <td className="px-6 py-4">{formatearMoneda(item.precioUnitario)}</td>
@@ -219,10 +219,10 @@ export default function FacturaDetallePage({ params }: Params) {
             </tbody>
           </table>
         </div>
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end space-x-6">
-          <div className="text-sm text-gray-700">Descuento: {formatearMoneda(factura.descuento)}</div>
-          <div className="text-sm text-gray-700">Impuesto: {formatearMoneda(factura.impuesto)}</div>
-          <div className="text-lg font-bold text-gray-900">Total: {formatearMoneda(factura.total)}</div>
+        <div className="px-6 py-4 bg-muted border-t border-border flex items-center justify-end space-x-6">
+          <div className="text-sm text-muted-foreground">Descuento: {formatearMoneda(factura.descuento)}</div>
+          <div className="text-sm text-muted-foreground">Impuesto: {formatearMoneda(factura.impuesto)}</div>
+          <div className="text-lg font-bold text-foreground">Total: {formatearMoneda(factura.total)}</div>
         </div>
       </div>
 
@@ -230,32 +230,32 @@ export default function FacturaDetallePage({ params }: Params) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900">Pagos</h2>
+            <h2 className="text-lg font-bold text-foreground">Pagos</h2>
             <DollarSign className="w-6 h-6 text-green-600" />
           </div>
 
           {factura.pagos.length === 0 ? (
-            <p className="text-gray-600">No hay pagos registrados.</p>
+            <p className="text-muted-foreground">No hay pagos registrados.</p>
           ) : (
             <div className="overflow-x-auto -mx-4 sm:-mx-6 md:mx-0">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Método</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Referencia</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Fecha</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Monto</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Método</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Referencia</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card divide-y divide-border">
                   {factura.pagos.map((pago) => (
-                    <tr key={pago.id} className="hover:bg-gray-50">
-                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700">
+                    <tr key={pago.id} className="hover:bg-muted">
+                      <td className="px-4 sm:px-6 py-3 text-sm text-muted-foreground">
                         {format(new Date(pago.fecha), 'dd/MM/yyyy HH:mm', { locale: es })}
                       </td>
-                      <td className="px-4 sm:px-6 py-3 text-sm font-semibold text-gray-900">{formatearMoneda(pago.monto)}</td>
-                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700">{pago.metodoPago.replace('_', ' ')}</td>
-                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700">{pago.referencia || '-'}</td>
+                      <td className="px-4 sm:px-6 py-3 text-sm font-semibold text-foreground">{formatearMoneda(pago.monto)}</td>
+                      <td className="px-4 sm:px-6 py-3 text-sm text-muted-foreground">{pago.metodoPago.replace('_', ' ')}</td>
+                      <td className="px-4 sm:px-6 py-3 text-sm text-muted-foreground">{pago.referencia || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -265,7 +265,7 @@ export default function FacturaDetallePage({ params }: Params) {
         </div>
 
         <div className="card">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Registrar Pago</h2>
+          <h2 className="text-lg font-bold text-foreground mb-4">Registrar Pago</h2>
           <form onSubmit={registrarPago} className="space-y-4">
             <div>
               <label className="label">Monto</label>

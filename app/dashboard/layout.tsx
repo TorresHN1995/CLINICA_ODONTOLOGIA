@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
 import { ConfiguracionProvider } from '@/components/providers/ConfiguracionProvider'
+import { CustomizationPanel } from '@/components/ui/CustomizationPanel'
 
 export default async function DashboardLayout({
   children,
@@ -18,7 +19,7 @@ export default async function DashboardLayout({
 
   return (
     <ConfiguracionProvider>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Sidebar userRole={session.user.role} />
         <Header />
         <main className="ml-64 pt-16">
@@ -26,6 +27,7 @@ export default async function DashboardLayout({
             {children}
           </div>
         </main>
+        <CustomizationPanel />
       </div>
     </ConfiguracionProvider>
   )

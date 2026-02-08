@@ -47,7 +47,7 @@ export default function FacturacionPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setFacturas(data)
+        setFacturas(data.facturas || data)
       } else {
         toast.error('Error al cargar facturas')
       }
@@ -81,8 +81,8 @@ export default function FacturacionPage() {
       {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Facturación y Pagos</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-foreground">Facturación y Pagos</h1>
+          <p className="text-muted-foreground mt-1">
             Gestiona las facturas y pagos de la clínica
           </p>
         </div>
@@ -163,67 +163,67 @@ export default function FacturacionPage() {
           </div>
         ) : facturas.length === 0 ? (
           <div className="text-center py-12">
-            <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">No se encontraron facturas</p>
+            <DollarSign className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No se encontraron facturas</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Número
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Paciente
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Fecha
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Total
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Pagado
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Saldo
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Estado
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Acciones
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-card divide-y divide-border">
                 {facturas.map((factura) => {
                   const totalPagado = calcularTotalPagado(factura.pagos)
                   const saldoPendiente = calcularSaldoPendiente(factura)
 
                   return (
-                    <tr key={factura.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={factura.id} className="hover:bg-muted transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-mono font-semibold text-gray-900">
+                        <span className="font-mono font-semibold text-foreground">
                           {factura.numero}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-foreground">
                             {factura.paciente.nombre} {factura.paciente.apellido}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-muted-foreground">
                             {factura.paciente.identificacion}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {format(new Date(factura.fecha), "dd/MM/yyyy", { locale: es })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-bold text-gray-900">
+                        <span className="text-sm font-bold text-foreground">
                           {moneda}{Number(factura.total).toLocaleString()}
                         </span>
                       </td>
@@ -233,7 +233,7 @@ export default function FacturacionPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`text-sm font-medium ${saldoPendiente > 0 ? 'text-red-600' : 'text-gray-400'
+                        <span className={`text-sm font-medium ${saldoPendiente > 0 ? 'text-red-600' : 'text-muted-foreground'
                           }`}>
                           {moneda}{saldoPendiente.toLocaleString()}
                         </span>

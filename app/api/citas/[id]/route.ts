@@ -4,6 +4,20 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
+const citaUpdateSchema = z.object({
+  fecha: z.string().optional(),
+  hora: z.string().optional(),
+  motivo: z.string().optional(),
+  notas: z.string().optional(),
+  estado: z.enum([
+    'PROGRAMADA', 'CONFIRMADA', 'EN_CURSO',
+    'COMPLETADA', 'CANCELADA', 'NO_ASISTIO'
+  ]).optional(),
+  odontologoId: z.string().optional(),
+  pacienteId: z.string().optional(),
+  duracion: z.number().positive().optional(),
+}).strict()
+
 // PUT - Actualizar cita
 export async function PUT(
   request: NextRequest,
@@ -16,26 +30,13 @@ export async function PUT(
     }
 
     const body = await request.json()
+    const validatedData = citaUpdateSchema.parse(body)
 
-    // Si se está actualizando el estado
-    if (body.estado) {
-      const cita = await prisma.cita.update({
-        where: { id: params.id },
-        data: { estado: body.estado },
-        include: {
-          paciente: true,
-          odontologo: true,
-        },
-      })
-      return NextResponse.json(cita)
-    }
-
-    // Actualización completa
     const cita = await prisma.cita.update({
       where: { id: params.id },
       data: {
-        ...body,
-        fecha: body.fecha ? new Date(body.fecha) : undefined,
+        ...validatedData,
+        fecha: validatedData.fecha ? new Date(validatedData.fecha) : undefined,
       },
       include: {
         paciente: true,
@@ -45,6 +46,12 @@ export async function PUT(
 
     return NextResponse.json(cita)
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Datos inválidos', details: error.errors },
+        { status: 400 }
+      )
+    }
     console.error('Error al actualizar cita:', error)
     return NextResponse.json(
       { error: 'Error al actualizar cita' },

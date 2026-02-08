@@ -138,20 +138,20 @@ export default function NuevaCitaPage() {
       <div className="flex items-center space-x-4">
         <Link
           href="/dashboard/citas"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-muted rounded-lg transition-colors"
         >
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nueva Cita</h1>
-          <p className="text-gray-600 mt-1">Programa una nueva cita</p>
+          <h1 className="text-3xl font-bold text-foreground">Nueva Cita</h1>
+          <p className="text-muted-foreground mt-1">Programa una nueva cita</p>
         </div>
       </div>
 
       {/* Formulario */}
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Información de la Cita</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Información de la Cita</h2>
 
           <div className="space-y-6">
             <div>

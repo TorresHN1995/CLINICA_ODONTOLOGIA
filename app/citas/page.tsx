@@ -213,31 +213,31 @@ export default function BookingPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="min-h-screen bg-muted flex flex-col items-center justify-center p-4">
             <Toaster position="top-center" />
 
             {/* Header Simple */}
             <div className="w-full max-w-lg mb-8 text-center">
-                <Link href="/" className="inline-flex items-center text-gray-500 hover:text-primary-600 mb-4 transition-colors">
+                <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-primary-600 mb-4 transition-colors">
                     <ArrowLeft className="w-4 h-4 mr-1" /> Volver al Inicio
                 </Link>
-                <h1 className="text-3xl font-bold text-gray-900">Agenda y Gestión</h1>
-                <p className="text-gray-500 mt-2">Clínica Odontológica Profesional</p>
+                <h1 className="text-3xl font-bold text-foreground">Agenda y Gestión</h1>
+                <p className="text-muted-foreground mt-2">Clínica Odontológica Profesional</p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden transition-all">
+            <div className="bg-card rounded-2xl shadow-xl w-full max-w-lg overflow-hidden transition-all">
 
                 {/* Tabs */}
                 <div className="flex border-b">
                     <button
                         onClick={() => setView('BOOKING')}
-                        className={`flex-1 py-4 text-sm font-medium transition-colors ${view === 'BOOKING' ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 py-4 text-sm font-medium transition-colors ${view === 'BOOKING' ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50' : 'text-muted-foreground hover:text-muted-foreground'}`}
                     >
                         Reservar Cita
                     </button>
                     <button
                         onClick={() => setView('MANAGE')}
-                        className={`flex-1 py-4 text-sm font-medium transition-colors ${view === 'MANAGE' ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 py-4 text-sm font-medium transition-colors ${view === 'MANAGE' ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50' : 'text-muted-foreground hover:text-muted-foreground'}`}
                     >
                         Mis Citas
                     </button>
@@ -246,10 +246,10 @@ export default function BookingPage() {
                 {view === 'BOOKING' && (
                     <>
                         {/* Progress Bar */}
-                        <div className="bg-gray-100 h-2 w-full">
+                        <div className="bg-muted h-2 w-full">
                             <div
-                                className="h-full bg-primary-600 transition-all duration-500 ease-in-out"
-                                style={{ width: `${(step / 5) * 100}%` }}
+                                className="h-full transition-all duration-500 ease-in-out"
+                                style={{ width: `${(step / 5) * 100}%`, backgroundColor: 'rgb(var(--accent))' }}
                             ></div>
                         </div>
 
@@ -272,8 +272,8 @@ export default function BookingPage() {
                                                 onClick={() => { setMotivo(servicio); setStep(2); }}
                                                 className="w-full p-4 text-left border rounded-xl hover:border-primary-500 hover:bg-primary-50 transition-all flex items-center justify-between group"
                                             >
-                                                <span className="font-medium text-gray-700 group-hover:text-primary-800">{servicio}</span>
-                                                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-primary-500" />
+                                                <span className="font-medium text-muted-foreground group-hover:text-primary-800">{servicio}</span>
+                                                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary-500" />
                                             </button>
                                         ))}
                                     </div>
@@ -284,14 +284,14 @@ export default function BookingPage() {
                             {step === 2 && (
                                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                                     <div className="flex items-center mb-6">
-                                        <button onClick={() => setStep(1)} className="p-1 -ml-2 mr-2 hover:bg-gray-100 rounded-full">
-                                            <ChevronLeft className="w-6 h-6 text-gray-500" />
+                                        <button onClick={() => setStep(1)} className="p-1 -ml-2 mr-2 hover:bg-muted rounded-full">
+                                            <ChevronLeft className="w-6 h-6 text-muted-foreground" />
                                         </button>
                                         <h2 className="text-xl font-bold text-gray-800">Selecciona Fecha y Hora</h2>
                                     </div>
 
                                     <div className="mb-6">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                                        <label className="block text-sm font-medium text-muted-foreground mb-2">Fecha</label>
                                         <input
                                             type="date"
                                             min={format(new Date(), 'yyyy-MM-dd')}
@@ -302,7 +302,7 @@ export default function BookingPage() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Horarios Disponibles</label>
+                                        <label className="block text-sm font-medium text-muted-foreground mb-2">Horarios Disponibles</label>
                                         {loading ? (
                                             <div className="flex justify-center py-8">
                                                 <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
@@ -313,14 +313,14 @@ export default function BookingPage() {
                                                     <button
                                                         key={slot.hora}
                                                         onClick={() => { setHora(slot.hora); setStep(3); }}
-                                                        className="py-2 px-3 text-sm font-medium text-center border rounded-lg hover:border-primary-500 hover:bg-primary-50 text-gray-700"
+                                                        className="py-2 px-3 text-sm font-medium text-center border rounded-lg hover:border-primary-500 hover:bg-primary-50 text-muted-foreground"
                                                     >
                                                         {format(new Date(`2000-01-01T${slot.hora}`), 'h:mm a')}
                                                     </button>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
+                                            <div className="text-center py-8 text-muted-foreground bg-muted rounded-xl">
                                                 No hay horarios disponibles para esta fecha.
                                             </div>
                                         )}
@@ -332,19 +332,19 @@ export default function BookingPage() {
                             {step === 3 && (
                                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                                     <div className="flex items-center mb-6">
-                                        <button onClick={() => setStep(2)} className="p-1 -ml-2 mr-2 hover:bg-gray-100 rounded-full">
-                                            <ChevronLeft className="w-6 h-6 text-gray-500" />
+                                        <button onClick={() => setStep(2)} className="p-1 -ml-2 mr-2 hover:bg-muted rounded-full">
+                                            <ChevronLeft className="w-6 h-6 text-muted-foreground" />
                                         </button>
                                         <h2 className="text-xl font-bold text-gray-800">Tu Identifiación</h2>
                                     </div>
 
-                                    <p className="text-gray-600 mb-4 text-sm">
+                                    <p className="text-muted-foreground mb-4 text-sm">
                                         Ingresa tu número de identidad (sin guiones) para verificar si ya eres paciente.
                                     </p>
 
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="text-sm font-medium text-gray-700">Cédula / Identidad *</label>
+                                            <label className="text-sm font-medium text-muted-foreground">Cédula / Identidad *</label>
                                             <input
                                                 type="text"
                                                 placeholder="Ej: 0801199912345"
@@ -373,8 +373,8 @@ export default function BookingPage() {
                             {step === 4 && (
                                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                                     <div className="flex items-center mb-6">
-                                        <button onClick={() => setStep(3)} className="p-1 -ml-2 mr-2 hover:bg-gray-100 rounded-full">
-                                            <ChevronLeft className="w-6 h-6 text-gray-500" />
+                                        <button onClick={() => setStep(3)} className="p-1 -ml-2 mr-2 hover:bg-muted rounded-full">
+                                            <ChevronLeft className="w-6 h-6 text-muted-foreground" />
                                         </button>
                                         <h2 className="text-xl font-bold text-gray-800">Tus Datos</h2>
                                     </div>
@@ -382,7 +382,7 @@ export default function BookingPage() {
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="text-sm font-medium text-gray-700">Nombre *</label>
+                                                <label className="text-sm font-medium text-muted-foreground">Nombre *</label>
                                                 <input
                                                     type="text"
                                                     required
@@ -392,7 +392,7 @@ export default function BookingPage() {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-sm font-medium text-gray-700">Apellido *</label>
+                                                <label className="text-sm font-medium text-muted-foreground">Apellido *</label>
                                                 <input
                                                     type="text"
                                                     required
@@ -404,7 +404,7 @@ export default function BookingPage() {
                                         </div>
 
                                         <div>
-                                            <label className="text-sm font-medium text-gray-700">Teléfono / Celular *</label>
+                                            <label className="text-sm font-medium text-muted-foreground">Teléfono / Celular *</label>
                                             <input
                                                 type="tel"
                                                 required
@@ -415,7 +415,7 @@ export default function BookingPage() {
                                         </div>
 
                                         <div>
-                                            <label className="text-sm font-medium text-gray-700">Fecha de Nacimiento *</label>
+                                            <label className="text-sm font-medium text-muted-foreground">Fecha de Nacimiento *</label>
                                             <input
                                                 type="date"
                                                 required
@@ -426,7 +426,7 @@ export default function BookingPage() {
                                         </div>
 
                                         <div>
-                                            <label className="text-sm font-medium text-gray-700">Email (Opcional)</label>
+                                            <label className="text-sm font-medium text-muted-foreground">Email (Opcional)</label>
                                             <input
                                                 type="email"
                                                 className="w-full mt-1 p-2 border rounded-lg"
@@ -461,8 +461,8 @@ export default function BookingPage() {
                                     <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                                         <CheckCircle2 className="w-10 h-10" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Cita Confirmada!</h2>
-                                    <p className="text-gray-500 mb-8">
+                                    <h2 className="text-2xl font-bold text-foreground mb-2">¡Cita Confirmada!</h2>
+                                    <p className="text-muted-foreground mb-8">
                                         Hemos registrado tu cita correctamente. Te esperamos el día <strong>{format(new Date(fecha), 'dd/MM/yyyy')}</strong> a las <strong>{format(new Date(`2000-01-01T${hora}`), 'h:mm a')}</strong>.
                                     </p>
                                     <button
@@ -472,7 +472,7 @@ export default function BookingPage() {
                                         Reservar otra cita
                                     </button>
                                     <div className="mt-4">
-                                        <Link href="/" className="text-sm text-gray-400 hover:text-gray-600">
+                                        <Link href="/" className="text-sm text-muted-foreground hover:text-muted-foreground">
                                             Volver al inicio
                                         </Link>
                                     </div>
@@ -510,15 +510,15 @@ export default function BookingPage() {
 
                                 <div className="space-y-3">
                                     {misCitas.map(cita => (
-                                        <div key={cita.id} className="p-4 border rounded-xl hover:border-primary-300 transition-all bg-gray-50">
+                                        <div key={cita.id} className="p-4 border rounded-xl hover:border-primary-300 transition-all bg-muted">
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
-                                                    <p className="font-bold text-gray-900">{format(new Date(cita.fecha), 'PPP', { locale: es })}</p>
-                                                    <p className="text-gray-600 text-sm">{cita.horaInicio} - {cita.tipoCita}</p>
+                                                    <p className="font-bold text-foreground">{format(new Date(cita.fecha), 'PPP', { locale: es })}</p>
+                                                    <p className="text-muted-foreground text-sm">{cita.horaInicio} - {cita.tipoCita}</p>
                                                     <p className="text-xs text-blue-600 font-medium">Dr. {cita.odontologo.nombre} {cita.odontologo.apellido}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200">
+                                            <div className="flex gap-2 mt-4 pt-4 border-t border-border">
                                                 <button
                                                     onClick={() => { setManagingCita(cita); setGestionAction('RESCHEDULE'); }}
                                                     className="flex-1 text-xs py-2 bg-blue-50 text-blue-700 rounded font-medium hover:bg-blue-100"
@@ -542,12 +542,12 @@ export default function BookingPage() {
                         {managingCita && gestionAction === 'CANCEL' && (
                             <div>
                                 <div className="flex items-center mb-6">
-                                    <button onClick={() => { setManagingCita(null); setGestionAction(null); }} className="p-1 -ml-2 mr-2 hover:bg-gray-100 rounded-full">
-                                        <ChevronLeft className="w-6 h-6 text-gray-500" />
+                                    <button onClick={() => { setManagingCita(null); setGestionAction(null); }} className="p-1 -ml-2 mr-2 hover:bg-muted rounded-full">
+                                        <ChevronLeft className="w-6 h-6 text-muted-foreground" />
                                     </button>
                                     <h2 className="text-xl font-bold text-red-600">Cancelar Cita</h2>
                                 </div>
-                                <p className="text-sm text-gray-600 mb-4">
+                                <p className="text-sm text-muted-foreground mb-4">
                                     Estás cancelando tu cita del <strong>{format(new Date(managingCita.fecha), 'PPP', { locale: es })}</strong>.
                                     Por favor indícanos el motivo:
                                 </p>
@@ -572,13 +572,13 @@ export default function BookingPage() {
                         {managingCita && gestionAction === 'RESCHEDULE' && (
                             <div>
                                 <div className="flex items-center mb-6">
-                                    <button onClick={() => { setManagingCita(null); setGestionAction(null); }} className="p-1 -ml-2 mr-2 hover:bg-gray-100 rounded-full">
-                                        <ChevronLeft className="w-6 h-6 text-gray-500" />
+                                    <button onClick={() => { setManagingCita(null); setGestionAction(null); }} className="p-1 -ml-2 mr-2 hover:bg-muted rounded-full">
+                                        <ChevronLeft className="w-6 h-6 text-muted-foreground" />
                                     </button>
                                     <h2 className="text-xl font-bold text-blue-600">Reprogramar Cita</h2>
                                 </div>
                                 <div className="mb-6">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Nueva Fecha</label>
+                                    <label className="block text-sm font-medium text-muted-foreground mb-2">Nueva Fecha</label>
                                     <input
                                         type="date"
                                         min={format(new Date(), 'yyyy-MM-dd')}
@@ -589,7 +589,7 @@ export default function BookingPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Nuevos Horarios</label>
+                                    <label className="block text-sm font-medium text-muted-foreground mb-2">Nuevos Horarios</label>
                                     {loading ? (
                                         <div className="flex justify-center py-8">
                                             <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
@@ -601,14 +601,14 @@ export default function BookingPage() {
                                                     key={slot.hora}
                                                     onClick={() => { setHora(slot.hora); handleReprogramar(); /* Direct logic or confirm step */ }}
                                                     onMouseEnter={() => setHora(slot.hora)} // Preview?
-                                                    className={`py-2 px-3 text-sm font-medium text-center border rounded-lg hover:border-primary-500 hover:bg-primary-50 text-gray-700 ${hora === slot.hora ? 'border-primary-500 bg-primary-50' : ''}`}
+                                                    className={`py-2 px-3 text-sm font-medium text-center border rounded-lg hover:border-primary-500 hover:bg-primary-50 text-muted-foreground ${hora === slot.hora ? 'border-primary-500 bg-primary-50' : ''}`}
                                                 >
                                                     {format(new Date(`2000-01-01T${slot.hora}`), 'h:mm a')}
                                                 </button>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
+                                        <div className="text-center py-8 text-muted-foreground bg-muted rounded-xl">
                                             No hay horarios disponibles.
                                         </div>
                                     )}
@@ -630,7 +630,7 @@ export default function BookingPage() {
 
             </div>
 
-            <div className="mt-8 text-sm text-gray-400">
+            <div className="mt-8 text-sm text-muted-foreground">
                 &copy; {new Date().getFullYear()} Clínica Odontológica
             </div>
         </div>

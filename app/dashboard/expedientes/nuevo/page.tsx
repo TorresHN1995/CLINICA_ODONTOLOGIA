@@ -77,20 +77,20 @@ export default function NuevoExpedientePage() {
       <div className="flex items-center space-x-4">
         <Link
           href="/dashboard/expedientes"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-muted rounded-lg transition-colors"
         >
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nuevo Expediente Clínico</h1>
-          <p className="text-gray-600 mt-1">Registra un nuevo expediente odontológico</p>
+          <h1 className="text-3xl font-bold text-foreground">Nuevo Expediente Clínico</h1>
+          <p className="text-muted-foreground mt-1">Registra un nuevo expediente odontológico</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Selección de Paciente */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Seleccionar Paciente</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Seleccionar Paciente</h2>
           <div>
             <label className="label">Paciente *</label>
             <select
@@ -111,7 +111,7 @@ export default function NuevoExpedientePage() {
 
         {/* Odontograma */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Odontograma</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Odontograma</h2>
           <Odontograma
             data={odontogramaData}
             editable={true}
@@ -121,7 +121,7 @@ export default function NuevoExpedientePage() {
 
         {/* Diagnóstico y Tratamiento */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Diagnóstico y Tratamiento</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Diagnóstico y Tratamiento</h2>
           <div className="space-y-6">
             <div>
               <label className="label">Diagnóstico *</label>

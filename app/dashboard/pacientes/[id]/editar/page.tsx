@@ -112,12 +112,12 @@ export default function EditarPacientePage({ params }: Params) {
       {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link href={`/dashboard/pacientes/${params.id}`} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <Link href={`/dashboard/pacientes/${params.id}`} className="p-2 hover:bg-muted rounded-lg transition-colors">
             <ArrowLeft className="w-6 h-6" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Editar Paciente</h1>
-            <p className="text-gray-600 mt-1">Actualiza la información del paciente</p>
+            <h1 className="text-3xl font-bold text-foreground">Editar Paciente</h1>
+            <p className="text-muted-foreground mt-1">Actualiza la información del paciente</p>
           </div>
         </div>
       </div>
@@ -125,7 +125,7 @@ export default function EditarPacientePage({ params }: Params) {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Información Personal */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Información Personal</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Información Personal</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="label">Identificación *</label>
@@ -152,7 +152,7 @@ export default function EditarPacientePage({ params }: Params) {
 
         {/* Información de Contacto */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Información de Contacto</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Información de Contacto</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="label">Teléfono *</label>
@@ -179,7 +179,7 @@ export default function EditarPacientePage({ params }: Params) {
 
         {/* Contacto de Emergencia */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Contacto de Emergencia</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Contacto de Emergencia</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="label">Nombre del Contacto</label>
@@ -194,7 +194,7 @@ export default function EditarPacientePage({ params }: Params) {
 
         {/* Historia Médica */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Historia Médica</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Historia Médica</h2>
           <div className="space-y-6">
             <div>
               <label className="label">Alergias</label>

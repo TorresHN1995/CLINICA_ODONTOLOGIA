@@ -67,8 +67,8 @@ export default function TratamientosPage() {
       {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Tratamientos</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Tratamientos</h1>
+          <p className="text-muted-foreground mt-1">
             Administra los planes de tratamiento de los pacientes
           </p>
         </div>
@@ -109,7 +109,7 @@ export default function TratamientosPage() {
         ) : tratamientos.length === 0 ? (
           <div className="col-span-2 card text-center py-12">
             <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">No se encontraron tratamientos</p>
+            <p className="text-muted-foreground">No se encontraron tratamientos</p>
           </div>
         ) : (
           tratamientos.map((tratamiento) => {
@@ -123,10 +123,10 @@ export default function TratamientosPage() {
                       <Heart className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">
+                      <h3 className="text-lg font-bold text-foreground">
                         {tratamiento.nombre}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {tratamiento.paciente.nombre} {tratamiento.paciente.apellido}
                       </p>
                     </div>
@@ -141,29 +141,29 @@ export default function TratamientosPage() {
                   </span>
                 </div>
 
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   {tratamiento.descripcion}
                 </p>
 
                 {/* Barra de progreso */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Progreso</span>
+                    <span className="text-sm font-medium text-muted-foreground">Progreso</span>
                     <span className="text-sm font-bold text-primary-600">{progreso}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-muted rounded-full h-2">
                     <div
-                      className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${progreso}%` }}
+                      className="h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${progreso}%`, backgroundColor: 'rgb(var(--accent))' }}
                     ></div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <Calendar className="w-4 h-4" />
                     <div>
-                      <p className="text-xs text-gray-500">Inicio</p>
+                      <p className="text-xs text-muted-foreground">Inicio</p>
                       <p className="font-medium">
                         {tratamiento.fechaInicio
                           ? format(new Date(tratamiento.fechaInicio), "dd/MM/yyyy", { locale: es })
@@ -171,10 +171,10 @@ export default function TratamientosPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <DollarSign className="w-4 h-4" />
                     <div>
-                      <p className="text-xs text-gray-500">Costo Total</p>
+                      <p className="text-xs text-muted-foreground">Costo Total</p>
                       <p className="font-medium">
                         {formatearMoneda(tratamiento.costoTotal)}
                       </p>
@@ -182,8 +182,8 @@ export default function TratamientosPage() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-600 mb-2">
+                <div className="pt-4 border-t border-border">
+                  <p className="text-sm text-muted-foreground mb-2">
                     <span className="font-medium">Etapas:</span> {tratamiento.etapas.length} total,{' '}
                     {tratamiento.etapas.filter(e => e.completada).length} completadas
                   </p>

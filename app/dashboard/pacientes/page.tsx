@@ -88,8 +88,8 @@ export default function PacientesPage() {
       {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Pacientes</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Pacientes</h1>
+          <p className="text-muted-foreground mt-1">
             Administra la información de tus pacientes
           </p>
         </div>
@@ -105,7 +105,7 @@ export default function PacientesPage() {
       {/* Barra de búsqueda */}
       <div className="card">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
           <input
             type="text"
             placeholder="Buscar por nombre, identificación, email o teléfono..."
@@ -127,50 +127,50 @@ export default function PacientesPage() {
           </div>
         ) : pacientes.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-600">No se encontraron pacientes</p>
+            <p className="text-muted-foreground">No se encontraron pacientes</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Paciente
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Identificación
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Edad
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Contacto
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Registro
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card divide-y divide-border">
                   {pacientes.map((paciente) => (
-                    <tr key={paciente.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={paciente.id} className="hover:bg-muted transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-primary-600 rounded-full flex items-center justify-center">
+                          <div className="flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--accent))' }}>
                             <span className="text-white font-semibold">
                               {paciente.nombre[0]}{paciente.apellido[0]}
                             </span>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-foreground">
                               {paciente.nombre} {paciente.apellido}
                             </div>
                             {paciente.ciudad && (
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm text-muted-foreground">
                                 {paciente.ciudad}
                               </div>
                             )}
@@ -178,29 +178,29 @@ export default function PacientesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{paciente.identificacion}</div>
+                        <div className="text-sm text-foreground">{paciente.identificacion}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-foreground">
                           {calcularEdad(paciente.fechaNacimiento)} años
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 space-y-1">
+                        <div className="text-sm text-foreground space-y-1">
                           <div className="flex items-center space-x-2">
-                            <Phone className="w-4 h-4 text-gray-400" />
+                            <Phone className="w-4 h-4 text-muted-foreground" />
                             <span>{paciente.telefono}</span>
                           </div>
                           {paciente.email && (
                             <div className="flex items-center space-x-2">
-                              <Mail className="w-4 h-4 text-gray-400" />
+                              <Mail className="w-4 h-4 text-muted-foreground" />
                               <span>{paciente.email}</span>
                             </div>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                           <Calendar className="w-4 h-4" />
                           <span>
                             {format(new Date(paciente.createdAt), "dd/MM/yyyy", { locale: es })}
@@ -211,21 +211,21 @@ export default function PacientesPage() {
                         <div className="flex items-center justify-end space-x-2">
                           <Link
                             href={`/dashboard/pacientes/${paciente.id}`}
-                            className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-500/10 rounded-lg transition-colors"
                             title="Ver detalles"
                           >
                             <Eye className="w-5 h-5" />
                           </Link>
                           <Link
                             href={`/dashboard/pacientes/${paciente.id}/editar`}
-                            className="text-green-600 hover:text-green-900 p-2 hover:bg-green-50 rounded-lg transition-colors"
+                            className="text-green-600 hover:text-green-900 p-2 hover:bg-green-500/10 rounded-lg transition-colors"
                             title="Editar"
                           >
                             <Edit className="w-5 h-5" />
                           </Link>
                           <button
                             onClick={() => handleDelete(paciente.id)}
-                            className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                            className="text-red-600 hover:text-red-900 p-2 hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Eliminar"
                           >
                             <Trash2 className="w-5 h-5" />
@@ -240,22 +240,22 @@ export default function PacientesPage() {
 
             {/* Paginación */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-                <div className="text-sm text-gray-700">
+              <div className="px-6 py-4 bg-muted border-t border-border flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
                   Página {page} de {totalPages}
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setPage(page - 1)}
                     disabled={page === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-muted-foreground bg-card hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Anterior
                   </button>
                   <button
                     onClick={() => setPage(page + 1)}
                     disabled={page === totalPages}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-muted-foreground bg-card hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Siguiente
                   </button>

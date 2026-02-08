@@ -97,7 +97,7 @@ export default function ConfiguracionPage() {
   const cargarConfiguracion = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/configuracion-empresa');
+      const response = await fetch('/api/configuracion/empresa');
 
       if (response.ok) {
         const data = await response.json();
@@ -127,10 +127,8 @@ export default function ConfiguracionPage() {
     try {
       setSaving(true);
 
-      const method = configuracion.id ? 'PUT' : 'POST';
-      const url = configuracion.id
-        ? `/api/configuracion-empresa/${configuracion.id}`
-        : '/api/configuracion-empresa';
+      const method = 'PUT';
+      const url = '/api/configuracion/empresa';
 
       const response = await fetch(url, {
         method,
@@ -177,89 +175,89 @@ export default function ConfiguracionPage() {
       <div className="flex items-center space-x-3">
         <Building2 className="h-8 w-8 text-blue-600" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Configuración de Empresa</h1>
-          <p className="text-gray-600">Gestiona la información de tu clínica odontológica</p>
+          <h1 className="text-2xl font-bold text-foreground">Configuración de Empresa</h1>
+          <p className="text-muted-foreground">Gestiona la información de tu clínica odontológica</p>
         </div>
       </div>
 
       {/* Formulario */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-card rounded-lg shadow-sm border border-border">
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Información Básica */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <h3 className="text-lg font-semibold text-foreground flex items-center">
                 <Building2 className="h-5 w-5 mr-2 text-blue-600" />
                 Información Básica
               </h3>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Nombre de la Empresa *
                 </label>
                 <input
                   type="text"
                   value={configuracion.nombre}
                   onChange={(e) => handleInputChange('nombre', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Clínica Odontológica..."
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   RTN
                 </label>
                 <input
                   type="text"
                   value={configuracion.rtn || ''}
                   onChange={(e) => handleInputChange('rtn', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="12345678901234"
                 />
               </div>
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <h3 className="text-lg font-semibold text-foreground flex items-center">
                 <Globe className="h-5 w-5 mr-2 text-green-600" />
                 Ubicación
               </h3>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   País
                 </label>
                 <input
                   type="text"
                   value={configuracion.pais}
                   onChange={(e) => handleInputChange('pais', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Ciudad
                 </label>
                 <input
                   type="text"
                   value={configuracion.ciudad || ''}
                   onChange={(e) => handleInputChange('ciudad', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Tegucigalpa"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Dirección
                 </label>
                 <textarea
                   value={configuracion.direccion || ''}
                   onChange={(e) => handleInputChange('direccion', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3}
                   placeholder="Col. Centro, Ave. República de Chile..."
                 />
@@ -269,34 +267,34 @@ export default function ConfiguracionPage() {
 
           {/* Contacto */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+            <h3 className="text-lg font-semibold text-foreground flex items-center">
               <Phone className="h-5 w-5 mr-2 text-purple-600" />
               Información de Contacto
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Teléfono
                 </label>
                 <input
                   type="tel"
                   value={configuracion.telefono || ''}
                   onChange={(e) => handleInputChange('telefono', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="+504 2234-5678"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Email
                 </label>
                 <input
                   type="email"
                   value={configuracion.email || ''}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="info@clinica.com"
                 />
               </div>
@@ -305,20 +303,20 @@ export default function ConfiguracionPage() {
 
           {/* Configuración Regional */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+            <h3 className="text-lg font-semibold text-foreground flex items-center">
               <DollarSign className="h-5 w-5 mr-2 text-yellow-600" />
               Configuración Regional
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Moneda
                 </label>
                 <select
                   value={configuracion.moneda}
                   onChange={(e) => handleInputChange('moneda', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="HNL">Lempira (HNL)</option>
                   <option value="USD">Dólar (USD)</option>
@@ -327,26 +325,26 @@ export default function ConfiguracionPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Símbolo de Moneda
                 </label>
                 <input
                   type="text"
                   value={configuracion.simboloMoneda}
                   onChange={(e) => handleInputChange('simboloMoneda', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="L."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Formato de Fecha
                 </label>
                 <select
                   value={configuracion.formatoFecha}
                   onChange={(e) => handleInputChange('formatoFecha', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                   <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -358,22 +356,22 @@ export default function ConfiguracionPage() {
 
           {/* Logo */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+            <h3 className="text-lg font-semibold text-foreground flex items-center">
               <ImageIcon className="h-5 w-5 mr-2 text-indigo-600" />
               Logo de la Empresa
             </h3>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Subir Logo
               </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-blue-500 transition-colors">
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-border border-dashed rounded-md hover:border-blue-500 transition-colors">
                 <div className="space-y-1 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <div className="flex text-sm text-gray-600">
+                  <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <div className="flex text-sm text-muted-foreground">
                     <label
                       htmlFor="logo-upload"
-                      className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                      className="relative cursor-pointer bg-card rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
                     >
                       <span className="px-2">Subir un archivo</span>
                       <input
@@ -388,7 +386,7 @@ export default function ConfiguracionPage() {
                     </label>
                     <p className="pl-1">o arrastrar y soltar</p>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     PNG, JPG, GIF hasta 5MB
                   </p>
                 </div>
@@ -403,11 +401,11 @@ export default function ConfiguracionPage() {
 
             {configuracion.logo && (
               <div className="mt-4">
-                <p className="text-sm font-medium text-gray-700 mb-2">Vista previa:</p>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Vista previa:</p>
                 <img
                   src={configuracion.logo}
                   alt="Logo"
-                  className="h-20 w-auto border border-gray-200 rounded"
+                  className="h-20 w-auto border border-border rounded"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
@@ -417,11 +415,11 @@ export default function ConfiguracionPage() {
           </div>
 
           {/* Botones */}
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+          <div className="flex justify-end space-x-4 pt-6 border-t border-border">
             <button
               type="button"
               onClick={() => router.push('/dashboard')}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="px-4 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
               Cancelar
             </button>

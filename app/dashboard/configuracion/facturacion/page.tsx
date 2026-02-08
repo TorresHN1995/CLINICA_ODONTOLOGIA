@@ -206,8 +206,8 @@ export default function ConfiguracionFacturacionPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900">Configuración de Facturación (SAR)</h1>
-                <p className="text-gray-600 mt-1">Establece los parámetros de facturación autorizados por el SAR.</p>
+                <h1 className="text-3xl font-bold text-foreground">Configuración de Facturación (SAR)</h1>
+                <p className="text-muted-foreground mt-1">Establece los parámetros de facturación autorizados por el SAR.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -218,8 +218,8 @@ export default function ConfiguracionFacturacionPage() {
                             <ShieldCheck className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">Facturación SAR</h2>
-                            <p className="text-sm text-gray-500">Documento fiscal válido</p>
+                            <h2 className="text-xl font-bold text-foreground">Facturación SAR</h2>
+                            <p className="text-sm text-muted-foreground">Documento fiscal válido</p>
                         </div>
                     </div>
 
@@ -302,12 +302,12 @@ export default function ConfiguracionFacturacionPage() {
                                 <label className="label">Siguiente Número</label>
                                 <input
                                     type="number"
-                                    className="input-field bg-gray-50"
+                                    className="input-field bg-muted"
                                     value={facturaForm.siguiente}
                                     onChange={(e) => setFacturaForm({ ...facturaForm, siguiente: parseInt(e.target.value) })}
                                     min="1"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">Último usado + 1</p>
+                                <p className="text-xs text-muted-foreground mt-1">Último usado + 1</p>
                             </div>
                             <div>
                                 <label className="label">Fecha Límite</label>
@@ -321,7 +321,7 @@ export default function ConfiguracionFacturacionPage() {
                             </div>
                         </div>
 
-                        <div className="pt-4 border-t border-gray-100 flex justify-end">
+                        <div className="pt-4 border-t border-border flex justify-end">
                             <button
                                 type="submit"
                                 disabled={savingFactura}
@@ -338,11 +338,11 @@ export default function ConfiguracionFacturacionPage() {
                 <div className="card border-t-4 border-t-gray-500">
                     <div className="flex items-center space-x-3 mb-6">
                         <div className="p-2 bg-gray-100 rounded-lg">
-                            <FileText className="w-6 h-6 text-gray-600" />
+                            <FileText className="w-6 h-6 text-muted-foreground" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">Orden de Pedido</h2>
-                            <p className="text-sm text-gray-500">Control interno (Sin valor fiscal)</p>
+                            <h2 className="text-xl font-bold text-foreground">Orden de Pedido</h2>
+                            <p className="text-sm text-muted-foreground">Control interno (Sin valor fiscal)</p>
                         </div>
                     </div>
 
@@ -363,7 +363,7 @@ export default function ConfiguracionFacturacionPage() {
                                     placeholder="Ej. ORDEN-"
                                     required
                                 />
-                                <p className="text-xs text-gray-500 mt-1">Identificador del documento</p>
+                                <p className="text-xs text-muted-foreground mt-1">Identificador del documento</p>
                             </div>
                             <div>
                                 <label className="label">Siguiente Correlativo</label>
@@ -375,11 +375,11 @@ export default function ConfiguracionFacturacionPage() {
                                     min="1"
                                     required
                                 />
-                                <p className="text-xs text-gray-500 mt-1">Número actual</p>
+                                <p className="text-xs text-muted-foreground mt-1">Número actual</p>
                             </div>
                         </div>
 
-                        <div className="pt-4 border-t border-gray-100 flex justify-end">
+                        <div className="pt-4 border-t border-border flex justify-end">
                             <button
                                 type="submit"
                                 disabled={savingOrden}

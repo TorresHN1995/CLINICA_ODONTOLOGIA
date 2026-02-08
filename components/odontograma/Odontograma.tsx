@@ -106,7 +106,7 @@ export default function Odontograma({ data = {}, editable = true, onChange }: Od
             <line x1="10" y1="25" x2="30" y2="25" stroke="#fff" strokeWidth="2" />
           )}
         </svg>
-        <div className="text-center text-xs font-bold text-gray-700 mt-1">
+        <div className="text-center text-xs font-bold text-muted-foreground mt-1">
           {numero}
         </div>
       </div>
@@ -116,7 +116,7 @@ export default function Odontograma({ data = {}, editable = true, onChange }: Od
   return (
     <div className="space-y-6">
       {/* Odontograma */}
-      <div className="bg-gray-50 p-8 rounded-xl border-2 border-gray-200">
+      <div className="bg-muted p-8 rounded-xl border-2 border-border">
         {/* Dientes superiores */}
         <div className="mb-8">
           <div className="flex justify-center space-x-2">
@@ -133,7 +133,7 @@ export default function Odontograma({ data = {}, editable = true, onChange }: Od
         </div>
 
         {/* Línea divisoria */}
-        <div className="border-t-2 border-gray-400 my-4"></div>
+        <div className="border-t-2 border-border my-4"></div>
 
         {/* Dientes inferiores */}
         <div className="mt-8">
@@ -154,7 +154,7 @@ export default function Odontograma({ data = {}, editable = true, onChange }: Od
       {/* Panel de control */}
       {editable && selectedDiente && (
         <div className="card animate-slide-in">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
+          <h3 className="text-lg font-bold text-foreground mb-4">
             Diente #{selectedDiente}
           </h3>
           
@@ -166,11 +166,11 @@ export default function Odontograma({ data = {}, editable = true, onChange }: Od
                 className={`p-3 rounded-lg border-2 transition-all ${
                   odontogramaData[selectedDiente]?.estado === key
                     ? 'border-primary-600 bg-primary-50'
-                    : 'border-gray-300 hover:border-gray-400'
+                    : 'border-border hover:border-border'
                 }`}
               >
                 <div
-                  className="w-6 h-6 rounded mx-auto mb-2 border border-gray-400"
+                  className="w-6 h-6 rounded mx-auto mb-2 border border-border"
                   style={{ backgroundColor: estadosColores[key as DienteEstado['estado']] }}
                 ></div>
                 <div className="text-xs font-medium text-center">{label}</div>
@@ -205,15 +205,15 @@ export default function Odontograma({ data = {}, editable = true, onChange }: Od
 
       {/* Leyenda */}
       <div className="card">
-        <h3 className="text-sm font-bold text-gray-900 mb-3">Leyenda</h3>
+        <h3 className="text-sm font-bold text-foreground mb-3">Leyenda</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {Object.entries(estadosLabels).map(([key, label]) => (
             <div key={key} className="flex items-center space-x-2">
               <div
-                className="w-4 h-4 rounded border border-gray-400"
+                className="w-4 h-4 rounded border border-border"
                 style={{ backgroundColor: estadosColores[key as DienteEstado['estado']] }}
               ></div>
-              <span className="text-sm text-gray-700">{label}</span>
+              <span className="text-sm text-muted-foreground">{label}</span>
             </div>
           ))}
         </div>

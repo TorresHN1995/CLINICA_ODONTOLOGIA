@@ -3,21 +3,80 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    @apply border-gray-200;
+  :root {
+    --background: 249 250 251;
+    --foreground: 17 24 39;
+    --card: 255 255 255;
+    --card-foreground: 17 24 39;
+    --muted: 243 244 246;
+    --muted-foreground: 107 114 128;
+    --border: 229 231 235;
+    --input: 209 213 219;
+    --ring: 2 132 199;
+
+    /* Accent / Primary — default blue */
+    --accent: 2 132 199;
+    --accent-light: 56 189 248;
+    --accent-hover: 3 105 161;
+
+    /* Sidebar */
+    --sidebar: 255 255 255;
+    --sidebar-foreground: 55 65 81;
+    --sidebar-border: 229 231 235;
+    --sidebar-muted: 243 244 246;
+    --sidebar-active-bg: var(--accent);
+    --sidebar-active-text: 255 255 255;
   }
+
+  .dark {
+    --background: 17 24 39;
+    --foreground: 243 244 246;
+    --card: 31 41 55;
+    --card-foreground: 243 244 246;
+    --muted: 55 65 81;
+    --muted-foreground: 156 163 175;
+    --border: 55 65 81;
+    --input: 75 85 99;
+    --ring: var(--accent-light);
+    --sidebar: 31 41 55;
+    --sidebar-foreground: 209 213 219;
+    --sidebar-border: 55 65 81;
+    --sidebar-muted: 55 65 81;
+  }
+
+  /* Sidebar theme overrides */
+  .sidebar-light {
+    --sidebar: 255 255 255;
+    --sidebar-foreground: 55 65 81;
+    --sidebar-border: 229 231 235;
+    --sidebar-muted: 243 244 246;
+  }
+
+  .sidebar-dark {
+    --sidebar: 15 23 42;
+    --sidebar-foreground: 203 213 225;
+    --sidebar-border: 30 41 59;
+    --sidebar-muted: 30 41 59;
+  }
+
+  * {
+    border-color: rgb(var(--border));
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900;
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+    background-color: rgb(var(--accent));
+    @apply hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
   }
 
   .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply bg-muted hover:opacity-80 text-foreground font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
   }
 
   .btn-danger {
@@ -25,49 +84,111 @@
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-md p-6 border border-gray-200;
+    @apply bg-card text-card-foreground rounded-xl shadow-md p-6 border border-border;
   }
 
   .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+    @apply w-full px-4 py-2 border border-input bg-card text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200;
   }
 
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-2;
+    @apply block text-sm font-medium text-muted-foreground mb-2;
   }
 }
 
 /* Animaciones */
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .animate-slide-in {
   animation: slideIn 0.3s ease-out;
 }
 
-/* Scrollbar personalizado */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+/* Spin slow for gear icon */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
 }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 rounded-full;
+/* React Big Calendar dark mode overrides */
+.dark .rbc-calendar {
+  color: rgb(var(--foreground));
+}
+.dark .rbc-toolbar button {
+  color: rgb(var(--foreground));
+  border-color: rgb(var(--border));
+}
+.dark .rbc-toolbar button:hover,
+.dark .rbc-toolbar button:focus {
+  background-color: rgb(var(--muted));
+  color: rgb(var(--foreground));
+}
+.dark .rbc-toolbar button.rbc-active {
+  background-color: rgb(var(--accent));
+  color: white;
+  border-color: rgb(var(--accent));
+}
+.dark .rbc-header {
+  border-color: rgb(var(--border));
+  color: rgb(var(--muted-foreground));
+}
+.dark .rbc-month-view,
+.dark .rbc-time-view,
+.dark .rbc-agenda-view {
+  border-color: rgb(var(--border));
+}
+.dark .rbc-day-bg,
+.dark .rbc-month-row {
+  border-color: rgb(var(--border));
+}
+.dark .rbc-off-range-bg {
+  background-color: rgb(var(--muted) / 0.5);
+}
+.dark .rbc-today {
+  background-color: rgb(var(--accent) / 0.1);
+}
+.dark .rbc-date-cell {
+  color: rgb(var(--foreground));
+}
+.dark .rbc-off-range {
+  color: rgb(var(--muted-foreground));
+}
+.dark .rbc-time-content,
+.dark .rbc-time-header-content,
+.dark .rbc-time-header {
+  border-color: rgb(var(--border));
+}
+.dark .rbc-timeslot-group {
+  border-color: rgb(var(--border));
+}
+.dark .rbc-time-slot {
+  color: rgb(var(--muted-foreground));
+}
+.dark .rbc-agenda-table {
+  border-color: rgb(var(--border));
+  color: rgb(var(--foreground));
+}
+.dark .rbc-agenda-table td,
+.dark .rbc-agenda-table th {
+  border-color: rgb(var(--border));
 }
 
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500;
-}
-
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background-color: rgb(var(--muted)); }
+::-webkit-scrollbar-thumb { @apply rounded-full; background-color: rgb(var(--muted-foreground)); }
+::-webkit-scrollbar-thumb:hover { opacity: 0.8; }

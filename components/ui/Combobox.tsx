@@ -56,18 +56,18 @@ export function Combobox({
                 onClick={() => setOpen(!open)}
                 className="input-field w-full flex items-center justify-between text-left"
             >
-                <span className={!selectedOption ? 'text-gray-500' : 'text-gray-900'}>
+                <span className={!selectedOption ? 'text-muted-foreground' : 'text-foreground'}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </button>
 
             {open && (
-                <div className="absolute z-10 mt-1 max-h-60 w-full overflow-hidden rounded-md border border-gray-200 bg-white text-gray-950 shadow-md">
+                <div className="absolute z-10 mt-1 max-h-60 w-full overflow-hidden rounded-md border border-border bg-card text-foreground shadow-md">
                     <div className="flex items-center border-b px-3">
                         <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                         <input
-                            className="flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
                             placeholder={searchPlaceholder}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -76,7 +76,7 @@ export function Combobox({
                     </div>
                     <div className="max-h-[200px] overflow-y-auto p-1">
                         {filteredOptions.length === 0 ? (
-                            <div className="py-6 text-center text-sm text-gray-500">
+                            <div className="py-6 text-center text-sm text-muted-foreground">
                                 {emptyMessage}
                             </div>
                         ) : (
@@ -88,7 +88,7 @@ export function Combobox({
                                         setOpen(false)
                                         setSearchTerm('')
                                     }}
-                                    className={`relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-gray-100 hover:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${value === option.id ? 'bg-gray-100' : ''
+                                    className={`relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-muted hover:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${value === option.id ? 'bg-gray-100' : ''
                                         }`}
                                 >
                                     <Check

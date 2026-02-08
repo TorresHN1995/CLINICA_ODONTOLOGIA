@@ -119,8 +119,8 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {/* Encabezado */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">
           {format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
         </p>
       </div>
@@ -189,7 +189,7 @@ export default async function DashboardPage() {
       {/* Citas de Hoy */}
       <div className="card">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Citas de Hoy</h2>
+          <h2 className="text-xl font-bold text-foreground">Citas de Hoy</h2>
           <a href="/dashboard/citas" className="text-primary-600 hover:text-primary-700 font-medium">
             Ver todas →
           </a>
@@ -197,15 +197,15 @@ export default async function DashboardPage() {
 
         {stats.citasHoy.length === 0 ? (
           <div className="text-center py-12">
-            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">No hay citas programadas para hoy</p>
+            <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No hay citas programadas para hoy</p>
           </div>
         ) : (
           <div className="space-y-3">
             {stats.citasHoy.map((cita) => (
               <div
                 key={cita.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex items-center justify-between p-4 bg-muted rounded-lg hover:opacity-80 transition-colors"
               >
                 <div className="flex items-center space-x-4">
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center ${cita.estado === 'COMPLETADA' ? 'bg-green-100' :
@@ -219,16 +219,16 @@ export default async function DashboardPage() {
                           <AlertCircle className="w-6 h-6 text-yellow-600" />}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-foreground">
                       {cita.paciente.nombre} {cita.paciente.apellido}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {cita.horaInicio} - {cita.horaFin} • {cita.tipoCita}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-foreground">
                     Dr. {cita.odontologo.nombre} {cita.odontologo.apellido}
                   </p>
                   <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${cita.estado === 'COMPLETADA' ? 'bg-green-100 text-green-800' :
@@ -249,69 +249,69 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Resumen de Citas */}
         <div className="card">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Resumen de Citas - Este Mes</h3>
+          <h3 className="text-lg font-bold text-foreground mb-4">Resumen de Citas - Este Mes</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                   <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
-                <span className="text-gray-700">Completadas</span>
+                <span className="text-foreground">Completadas</span>
               </div>
-              <span className="text-2xl font-bold text-gray-900">{citasCompletadas}</span>
+              <span className="text-2xl font-bold text-foreground">{citasCompletadas}</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
                   <Clock className="w-5 h-5 text-yellow-600" />
                 </div>
-                <span className="text-gray-700">Programadas</span>
+                <span className="text-foreground">Programadas</span>
               </div>
-              <span className="text-2xl font-bold text-gray-900">{citasProgramadas}</span>
+              <span className="text-2xl font-bold text-foreground">{citasProgramadas}</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
                   <XCircle className="w-5 h-5 text-red-600" />
                 </div>
-                <span className="text-gray-700">Canceladas</span>
+                <span className="text-foreground">Canceladas</span>
               </div>
-              <span className="text-2xl font-bold text-gray-900">{citasCanceladas}</span>
+              <span className="text-2xl font-bold text-foreground">{citasCanceladas}</span>
             </div>
           </div>
         </div>
 
         {/* Acciones Rápidas */}
         <div className="card">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Acciones Rápidas</h3>
+          <h3 className="text-lg font-bold text-foreground mb-4">Acciones Rápidas</h3>
           <div className="grid grid-cols-2 gap-3">
             <a
               href="/dashboard/pacientes/nuevo"
-              className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-center"
+              className="p-4 bg-blue-50 dark:bg-blue-900/20 hover:opacity-80 rounded-lg transition-colors text-center"
             >
-              <Users className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-blue-900">Nuevo Paciente</p>
+              <Users className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-300">Nuevo Paciente</p>
             </a>
             <a
               href="/dashboard/citas/nueva"
-              className="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-center"
+              className="p-4 bg-purple-50 dark:bg-purple-900/20 hover:opacity-80 rounded-lg transition-colors text-center"
             >
-              <Calendar className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-purple-900">Nueva Cita</p>
+              <Calendar className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
+              <p className="text-sm font-medium text-purple-900 dark:text-purple-300">Nueva Cita</p>
             </a>
             <a
               href="/dashboard/facturacion/nueva"
-              className="p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-center"
+              className="p-4 bg-green-50 dark:bg-green-900/20 hover:opacity-80 rounded-lg transition-colors text-center"
             >
-              <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-green-900">Nueva Factura</p>
+              <DollarSign className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
+              <p className="text-sm font-medium text-green-900 dark:text-green-300">Nueva Factura</p>
             </a>
             <a
               href="/dashboard/reportes"
-              className="p-4 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors text-center"
+              className="p-4 bg-orange-50 dark:bg-orange-900/20 hover:opacity-80 rounded-lg transition-colors text-center"
             >
-              <TrendingUp className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-orange-900">Ver Reportes</p>
+              <TrendingUp className="w-8 h-8 text-orange-600 dark:text-orange-400 mx-auto mb-2" />
+              <p className="text-sm font-medium text-orange-900 dark:text-orange-300">Ver Reportes</p>
             </a>
           </div>
         </div>

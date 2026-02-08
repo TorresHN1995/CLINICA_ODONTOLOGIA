@@ -99,19 +99,19 @@ export default function NuevoTratamientoPage() {
     <div className="space-y-6">
       {/* Encabezado */}
       <div className="flex items-center space-x-4">
-        <Link href="/dashboard/tratamientos" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+        <Link href="/dashboard/tratamientos" className="p-2 hover:bg-muted rounded-lg transition-colors">
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nuevo Tratamiento</h1>
-          <p className="text-gray-600 mt-1">Crea un plan de tratamiento para el paciente</p>
+          <h1 className="text-3xl font-bold text-foreground">Nuevo Tratamiento</h1>
+          <p className="text-muted-foreground mt-1">Crea un plan de tratamiento para el paciente</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
         {/* Paciente y datos principales */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Información del Tratamiento</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Información del Tratamiento</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="label">Paciente *</label>
@@ -145,7 +145,7 @@ export default function NuevoTratamientoPage() {
         {/* Etapas */}
         <div className="card">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Etapas</h2>
+            <h2 className="text-xl font-bold text-foreground">Etapas</h2>
             <button type="button" onClick={agregarEtapa} className="btn-secondary inline-flex items-center space-x-2">
               <Plus className="w-5 h-5" />
               <span>Agregar etapa</span>
@@ -177,7 +177,7 @@ export default function NuevoTratamientoPage() {
             ))}
           </div>
           <div className="mt-6 flex items-center justify-end space-x-4">
-            <div className="text-sm text-gray-700">Costo total</div>
+            <div className="text-sm text-muted-foreground">Costo total</div>
             <div className="text-2xl font-bold text-primary-600">{formatearMoneda(costoTotal)}</div>
           </div>
         </div>

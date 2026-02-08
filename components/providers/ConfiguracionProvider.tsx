@@ -34,7 +34,7 @@ export function ConfiguracionProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const fetchConfiguracion = async () => {
             try {
-                const response = await fetch('/api/configuracion-empresa')
+                const response = await fetch('/api/configuracion/empresa')
                 if (response.ok) {
                     const data = await response.json()
                     if (data) {

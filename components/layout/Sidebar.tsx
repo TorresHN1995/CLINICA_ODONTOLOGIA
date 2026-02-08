@@ -68,18 +68,18 @@ export default function Sidebar({ userRole }: { userRole: string }) {
   }
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 flex flex-col z-20">
+    <aside data-sidebar className="fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-border flex flex-col z-20">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--accent))' }}>
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
             </svg>
           </div>
           <div>
-            <h2 className="font-bold text-gray-900">Clínica</h2>
-            <p className="text-xs text-gray-600">Odontológica</p>
+            <h2 className="font-bold text-foreground">Clínica</h2>
+            <p className="text-xs text-muted-foreground">Odontológica</p>
           </div>
         </div>
       </div>
@@ -99,8 +99,9 @@ export default function Sidebar({ userRole }: { userRole: string }) {
                   <div>
                     <button
                       onClick={() => toggleSubmenu(item.name)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${isActive ? 'bg-gray-50 text-primary-600' : 'text-gray-700 hover:bg-gray-100'
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${isActive ? 'bg-muted' : 'text-sidebar-foreground hover:bg-muted'
                         }`}
+                      style={isActive ? { color: 'rgb(var(--accent))' } : {}}
                     >
                       <div className="flex items-center space-x-3">
                         <Icon className="w-5 h-5" />
@@ -114,7 +115,7 @@ export default function Sidebar({ userRole }: { userRole: string }) {
                     </button>
 
                     {isExpanded && (
-                      <ul className="mt-1 ml-4 space-y-1 border-l-2 border-gray-100 pl-2">
+                      <ul className="mt-1 ml-4 space-y-1 border-l-2 border-border pl-2">
                         {item.children?.map(child => {
                           const ChildIcon = child.icon
                           const isChildActive = pathname === child.href
@@ -123,9 +124,10 @@ export default function Sidebar({ userRole }: { userRole: string }) {
                               <Link
                                 href={child.href}
                                 className={`flex items-center space-x-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isChildActive
-                                  ? 'text-primary-600 font-medium bg-primary-50'
-                                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                                  ? 'font-medium'
+                                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                                   }`}
+                                style={isChildActive ? { color: 'rgb(var(--accent))', backgroundColor: 'rgb(var(--accent) / 0.1)' } : {}}
                               >
                                 <ChildIcon className="w-4 h-4" />
                                 <span>{child.name}</span>
@@ -140,9 +142,10 @@ export default function Sidebar({ userRole }: { userRole: string }) {
                   <Link
                     href={item.href}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                      ? 'bg-primary-600 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'text-white shadow-md'
+                      : 'text-sidebar-foreground hover:bg-muted'
                       }`}
+                    style={isActive ? { backgroundColor: 'rgb(var(--accent))' } : {}}
                   >
                     <Icon className="w-5 h-5" />
                     <span className="font-medium">{item.name}</span>
@@ -155,7 +158,7 @@ export default function Sidebar({ userRole }: { userRole: string }) {
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-border">
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
           className="flex items-center space-x-3 px-4 py-3 w-full text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"

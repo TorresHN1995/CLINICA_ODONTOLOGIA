@@ -124,10 +124,10 @@ export default function ExpedienteDetallePage({ params }: Params) {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <Link href="/dashboard/expedientes" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <Link href="/dashboard/expedientes" className="p-2 hover:bg-muted rounded-lg transition-colors">
             <ArrowLeft className="w-6 h-6" />
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Expediente no encontrado</h1>
+          <h1 className="text-2xl font-bold text-foreground">Expediente no encontrado</h1>
         </div>
       </div>
     )
@@ -137,12 +137,12 @@ export default function ExpedienteDetallePage({ params }: Params) {
     <div className="space-y-6">
       {/* Encabezado */}
       <div className="flex items-center space-x-4">
-        <Link href="/dashboard/expedientes" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+        <Link href="/dashboard/expedientes" className="p-2 hover:bg-muted rounded-lg transition-colors">
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Expediente</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-foreground">Expediente</h1>
+          <p className="text-muted-foreground mt-1">
             {expediente.paciente.nombre} {expediente.paciente.apellido} · {expediente.paciente.identificacion}
           </p>
         </div>
@@ -151,18 +151,18 @@ export default function ExpedienteDetallePage({ params }: Params) {
       {/* Resumen */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card">
-          <p className="text-sm text-gray-600">Fecha de apertura</p>
-          <p className="text-lg font-semibold text-gray-900">
+          <p className="text-sm text-muted-foreground">Fecha de apertura</p>
+          <p className="text-lg font-semibold text-foreground">
             {format(new Date(expediente.fecha), "dd/MM/yyyy", { locale: es })}
           </p>
         </div>
         <div className="card">
-          <p className="text-sm text-gray-600">Procedimientos</p>
-          <p className="text-lg font-semibold text-gray-900">{expediente.procedimientos.length}</p>
+          <p className="text-sm text-muted-foreground">Procedimientos</p>
+          <p className="text-lg font-semibold text-foreground">{expediente.procedimientos.length}</p>
         </div>
         <div className="card">
-          <p className="text-sm text-gray-600">Próxima cita</p>
-          <p className="text-lg font-semibold text-gray-900">
+          <p className="text-sm text-muted-foreground">Próxima cita</p>
+          <p className="text-lg font-semibold text-foreground">
             {expediente.proximaCita
               ? format(new Date(expediente.proximaCita), "dd/MM/yyyy", { locale: es })
               : 'No programada'}
@@ -172,7 +172,7 @@ export default function ExpedienteDetallePage({ params }: Params) {
 
       {/* Formulario de evolución */}
       <form onSubmit={guardar} className="card space-y-4">
-        <h2 className="text-lg font-bold text-gray-900 flex items-center">
+        <h2 className="text-lg font-bold text-foreground flex items-center">
           <FileText className="w-5 h-5 mr-2" />
           Evolución y Plan
         </h2>
@@ -237,33 +237,33 @@ export default function ExpedienteDetallePage({ params }: Params) {
 
       {/* Procedimientos */}
       <div className="card">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Procedimientos</h2>
+        <h2 className="text-lg font-bold text-foreground mb-4">Procedimientos</h2>
         {expediente.procedimientos.length === 0 ? (
-          <p className="text-gray-600">Sin procedimientos registrados.</p>
+          <p className="text-muted-foreground">Sin procedimientos registrados.</p>
         ) : (
           <div className="overflow-x-auto -mx-4 sm:-mx-6 md:mx-0">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Procedimiento</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Diente</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profesional</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Costo</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Fecha</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Procedimiento</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Diente</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Profesional</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Costo</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-card divide-y divide-border">
                 {expediente.procedimientos.map((proc) => (
-                  <tr key={proc.id} className="hover:bg-gray-50">
-                    <td className="px-4 sm:px-6 py-3 text-sm text-gray-700">
+                  <tr key={proc.id} className="hover:bg-muted">
+                    <td className="px-4 sm:px-6 py-3 text-sm text-muted-foreground">
                       {format(new Date(proc.fecha), 'dd/MM/yyyy', { locale: es })}
                     </td>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-gray-900 font-medium">{proc.nombre}</td>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-gray-700">{proc.diente || '-'}</td>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-gray-700">
+                    <td className="px-4 sm:px-6 py-3 text-sm text-foreground font-medium">{proc.nombre}</td>
+                    <td className="px-4 sm:px-6 py-3 text-sm text-muted-foreground">{proc.diente || '-'}</td>
+                    <td className="px-4 sm:px-6 py-3 text-sm text-muted-foreground">
                       Dr. {proc.odontologo.nombre} {proc.odontologo.apellido}
                     </td>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-gray-900 font-semibold">
+                    <td className="px-4 sm:px-6 py-3 text-sm text-foreground font-semibold">
                       ${Number(proc.precio).toLocaleString()}
                     </td>
                   </tr>

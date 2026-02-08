@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-// GET - Obtener configuración de empresa
+// GET - Obtener configuración de empresa (accesible para cualquier usuario autenticado)
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -12,19 +12,21 @@ export async function GET() {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar si el usuario es admin
-    const usuario = await prisma.usuario.findUnique({
-      where: { id: session.user.id },
-      select: { rol: true }
-    });
-
-    if (usuario?.rol !== 'ADMINISTRADOR') {
-      return NextResponse.json({ error: 'Solo administradores pueden ver la configuración' }, { status: 403 });
-    }
-
-    const configuracion = await prisma.configuracionEmpresa.findFirst({
+    let configuracion = await prisma.configuracionEmpresa.findFirst({
       where: { activo: true }
     });
+
+    if (!configuracion) {
+      // Crear configuración por defecto si no existe
+      configuracion = await prisma.configuracionEmpresa.create({
+        data: {
+          nombre: 'Mi Clínica Dental',
+          moneda: 'HNL',
+          simboloMoneda: 'L.',
+          pais: 'Honduras',
+        }
+      });
+    }
 
     return NextResponse.json(configuracion);
   } catch (error) {

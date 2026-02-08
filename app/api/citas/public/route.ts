@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { z } from 'zod'
 import { addMinutes, format } from 'date-fns'
 
@@ -18,6 +19,16 @@ const bookingSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+    // Rate limit: 5 bookings per minute per IP
+    const key = getRateLimitKey(request)
+    const { success } = rateLimit(`public-cita:${key}`, 5, 60 * 1000)
+    if (!success) {
+        return NextResponse.json(
+            { error: 'Demasiadas solicitudes. Intente de nuevo en un momento.' },
+            { status: 429 }
+        )
+    }
+
     try {
         const body = await request.json()
         const validatedData = bookingSchema.parse(body)

@@ -6,11 +6,11 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url)
         const identificacion = searchParams.get('identificacion')
 
-        if (!identificacion) {
-            return NextResponse.json({ error: 'Identificación requerida' }, { status: 400 })
+        if (!identificacion || identificacion.length < 5) {
+            return NextResponse.json({ error: 'Identificación requerida (mínimo 5 caracteres)' }, { status: 400 })
         }
 
-        // Buscar paciente exacto por identificación
+        // Buscar paciente exacto por identificación — solo datos mínimos
         const paciente = await prisma.paciente.findUnique({
             where: { identificacion: identificacion },
             select: {
@@ -18,9 +18,6 @@ export async function GET(request: NextRequest) {
                 identificacion: true,
                 nombre: true,
                 apellido: true,
-                telefono: true,
-                email: true,
-                fechaNacimiento: true
             }
         })
 

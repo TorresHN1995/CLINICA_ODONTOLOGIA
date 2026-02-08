@@ -61,8 +61,8 @@ export default function ExpedientesPage() {
       {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Expedientes Clínicos</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-foreground">Expedientes Clínicos</h1>
+          <p className="text-muted-foreground mt-1">
             Historial médico y odontológico de los pacientes
           </p>
         </div>
@@ -78,7 +78,7 @@ export default function ExpedientesPage() {
       {/* Barra de búsqueda */}
       <div className="card">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
           <input
             type="text"
             placeholder="Buscar expedientes por paciente o diagnóstico..."
@@ -98,7 +98,7 @@ export default function ExpedientesPage() {
         ) : expedientesFiltrados.length === 0 ? (
           <div className="card text-center py-12">
             <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">No se encontraron expedientes</p>
+            <p className="text-muted-foreground">No se encontraron expedientes</p>
           </div>
         ) : (
           expedientesFiltrados.map((expediente) => (
@@ -106,14 +106,14 @@ export default function ExpedientesPage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--accent))' }}>
                       <FileText className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">
+                      <h3 className="text-lg font-bold text-foreground">
                         {expediente.paciente.nombre} {expediente.paciente.apellido}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {expediente.paciente.identificacion}
                       </p>
                     </div>
@@ -121,24 +121,24 @@ export default function ExpedientesPage() {
 
                   <div className="mt-4 space-y-2">
                     <div>
-                      <span className="text-sm font-semibold text-gray-700">Diagnóstico:</span>
-                      <p className="text-sm text-gray-600 mt-1">{expediente.diagnostico}</p>
+                      <span className="text-sm font-semibold text-muted-foreground">Diagnóstico:</span>
+                      <p className="text-sm text-muted-foreground mt-1">{expediente.diagnostico}</p>
                     </div>
                     
                     <div>
-                      <span className="text-sm font-semibold text-gray-700">Tratamiento:</span>
-                      <p className="text-sm text-gray-600 mt-1">{expediente.tratamiento}</p>
+                      <span className="text-sm font-semibold text-muted-foreground">Tratamiento:</span>
+                      <p className="text-sm text-muted-foreground mt-1">{expediente.tratamiento}</p>
                     </div>
 
                     {expediente.evolucion && (
                       <div>
-                        <span className="text-sm font-semibold text-gray-700">Evolución:</span>
-                        <p className="text-sm text-gray-600 mt-1">{expediente.evolucion}</p>
+                        <span className="text-sm font-semibold text-muted-foreground">Evolución:</span>
+                        <p className="text-sm text-muted-foreground mt-1">{expediente.evolucion}</p>
                       </div>
                     )}
                   </div>
 
-                  <div className="mt-4 flex items-center space-x-6 text-sm text-gray-600">
+                  <div className="mt-4 flex items-center space-x-6 text-sm text-muted-foreground">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4" />
                       <span>

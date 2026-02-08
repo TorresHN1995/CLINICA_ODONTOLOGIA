@@ -85,13 +85,13 @@ export default function NuevoEgresoPage() {
       <div className="flex items-center space-x-4">
         <Link
           href="/dashboard/contabilidad"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-muted rounded-lg transition-colors"
         >
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Registrar Gasto</h1>
-          <p className="text-gray-600 mt-1">Registra un nuevo egreso de la clínica</p>
+          <h1 className="text-3xl font-bold text-foreground">Registrar Gasto</h1>
+          <p className="text-muted-foreground mt-1">Registra un nuevo egreso de la clínica</p>
         </div>
       </div>
 
@@ -99,7 +99,7 @@ export default function NuevoEgresoPage() {
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
         {/* Información del Gasto */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Información del Gasto</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Información del Gasto</h2>
           
           <div className="space-y-6">
             <div>
@@ -185,7 +185,7 @@ export default function NuevoEgresoPage() {
 
         {/* Información del Proveedor */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Información del Proveedor (Opcional)</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Información del Proveedor (Opcional)</h2>
           
           <div className="space-y-6">
             <div>

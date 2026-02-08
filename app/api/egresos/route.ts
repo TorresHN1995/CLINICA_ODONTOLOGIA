@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { registrarFlujoCaja } from '@/lib/flujo-caja'
 import { z } from 'zod'
 
 const egresoSchema = z.object({
@@ -141,36 +142,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Función auxiliar para registrar flujo de caja
-async function registrarFlujoCaja(
-  tipo: 'INGRESO' | 'EGRESO' | 'AJUSTE',
-  concepto: string,
-  monto: number,
-  referencia: string
-) {
-  try {
-    // Obtener el último saldo
-    const ultimoFlujo = await prisma.flujoCaja.findFirst({
-      orderBy: { fecha: 'desc' },
-    })
-
-    const saldoAnterior = ultimoFlujo ? Number(ultimoFlujo.saldoActual) : 0
-    const saldoActual = tipo === 'INGRESO' 
-      ? saldoAnterior + monto 
-      : saldoAnterior - monto
-
-    await prisma.flujoCaja.create({
-      data: {
-        tipo,
-        concepto,
-        monto,
-        saldoAnterior,
-        saldoActual,
-        referencia,
-      },
-    })
-  } catch (error) {
-    console.error('Error al registrar flujo de caja:', error)
-  }
-}
 

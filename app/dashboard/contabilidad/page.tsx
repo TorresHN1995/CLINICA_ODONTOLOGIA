@@ -104,8 +104,8 @@ export default function ContabilidadPage() {
       {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Contabilidad</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-foreground">Contabilidad</h1>
+          <p className="text-muted-foreground mt-1">
             Control financiero de la clínica
           </p>
         </div>
@@ -182,7 +182,7 @@ export default function ContabilidadPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Ingresos por Categoría */}
         <div className="card">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
+          <h3 className="text-lg font-bold text-foreground mb-4 flex items-center space-x-2">
             <TrendingUp className="w-5 h-5 text-green-600" />
             <span>Ingresos por Estado</span>
           </h3>
@@ -203,7 +203,7 @@ export default function ContabilidadPage() {
 
         {/* Egresos por Categoría */}
         <div className="card">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
+          <h3 className="text-lg font-bold text-foreground mb-4 flex items-center space-x-2">
             <TrendingDown className="w-5 h-5 text-red-600" />
             <span>Egresos por Categoría</span>
           </h3>
@@ -225,32 +225,32 @@ export default function ContabilidadPage() {
 
       {/* Evolución de Últimos 6 Meses */}
       <div className="card">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
+        <h3 className="text-lg font-bold text-foreground mb-4 flex items-center space-x-2">
           <BarChart3 className="w-5 h-5 text-blue-600" />
           <span>Evolución de Últimos 6 Meses</span>
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Mes
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Ingresos
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Egresos
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Ganancia
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-card divide-y divide-border">
               {estadisticas.ultimosMeses.map((mes, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                <tr key={index} className="hover:bg-muted">
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground">
                     {mes.mes}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-green-600 font-medium">
@@ -272,7 +272,7 @@ export default function ContabilidadPage() {
 
       {/* Acciones Rápidas */}
       <div className="card">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Acciones Rápidas</h3>
+        <h3 className="text-lg font-bold text-foreground mb-4">Acciones Rápidas</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => window.open('/dashboard/contabilidad/egreso', '_blank')}

@@ -30,19 +30,23 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const pacienteId = searchParams.get('pacienteId')
     const estado = searchParams.get('estado')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '50')
+    const skip = (page - 1) * limit
 
     const where: any = {}
     if (pacienteId) where.pacienteId = pacienteId
     if (estado) where.estado = estado
 
-    const facturas = await prisma.factura.findMany({
-      where,
-      include: {
-        paciente: {
-          select: {
-            nombre: true,
-            apellido: true,
-            identificacion: true,
+    const [facturas, total] = await Promise.all([
+      prisma.factura.findMany({
+        where,
+        include: {
+          paciente: {
+            select: {
+              nombre: true,
+              apellido: true,
+              identificacion: true,
           },
         },
         emitente: {
@@ -55,9 +59,21 @@ export async function GET(request: NextRequest) {
         pagos: true,
       },
       orderBy: { fecha: 'desc' },
-    })
+      skip,
+      take: limit,
+    }),
+      prisma.factura.count({ where }),
+    ])
 
-    return NextResponse.json(facturas)
+    return NextResponse.json({
+      facturas,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    })
   } catch (error) {
     console.error('Error al obtener facturas:', error)
     return NextResponse.json(
@@ -88,7 +104,6 @@ export async function POST(request: NextRequest) {
       where: {
         tipo: validatedData.tipoDocumento,
         activo: true,
-        siguiente: { lte: prisma.correlativo.fields.rangoFinal }, // Asegurar que no se ha agotado (aunque 'activo' lo controla, doble check)
         fechaLimite: { gte: new Date() } // Asegurar que no esté vencido
       },
       orderBy: { createdAt: 'desc' } // Priorizar el más reciente si hubiera múltiples (no debería)
