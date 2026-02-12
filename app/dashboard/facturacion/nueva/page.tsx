@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { ArrowLeft, Save, Loader2, Plus, Trash2, FileText, Calendar, User, X, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Plus, Trash2, FileText, Calendar, User, X, CheckCircle2, Search } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -23,6 +23,17 @@ interface Item {
   descripcion: string
   cantidad: number
   precioUnitario: number
+  productoId?: string
+}
+
+interface ProductoServicio {
+  id: string
+  codigo: string
+  nombre: string
+  descripcion: string | null
+  tipo: 'PRODUCTO' | 'SERVICIO'
+  precio: number
+  isv: number
 }
 
 interface Correlativo {
@@ -46,7 +57,10 @@ export default function NuevaFacturaPage() {
   const [loading, setLoading] = useState(false)
   const [pacientes, setPacientes] = useState<Paciente[]>([])
   const [correlativos, setCorrelativos] = useState<Correlativo[]>([])
-
+  const [productos, setProductos] = useState<ProductoServicio[]>([])
+  const [productoBusqueda, setProductoBusqueda] = useState('')
+  const [productoResultados, setProductoResultados] = useState<ProductoServicio[]>([])
+  const [showProductoDropdown, setShowProductoDropdown] = useState<string | null>(null)
   // State for Modal & Document Type
   const [showTypeModal, setShowTypeModal] = useState(true)
   const [tipoDocumento, setTipoDocumento] = useState('FACTURA')
@@ -66,6 +80,7 @@ export default function NuevaFacturaPage() {
   useEffect(() => {
     fetchPacientes()
     fetchCorrelativos()
+    fetchProductos()
   }, [])
 
   const fetchPacientes = async () => {
@@ -90,6 +105,44 @@ export default function NuevaFacturaPage() {
     } catch (error) {
       console.error('Error al cargar correlativos:', error)
     }
+  }
+
+  const fetchProductos = async () => {
+    try {
+      const res = await fetch('/api/productos')
+      if (res.ok) {
+        const data = await res.json()
+        setProductos(data)
+      }
+    } catch (error) {
+      console.error('Error al cargar productos:', error)
+    }
+  }
+
+  const buscarProductos = (query: string) => {
+    setProductoBusqueda(query)
+    if (!query.trim()) {
+      setProductoResultados(productos.slice(0, 10))
+      return
+    }
+    const q = query.toLowerCase()
+    setProductoResultados(
+      productos.filter(p =>
+        p.nombre.toLowerCase().includes(q) ||
+        p.codigo.toLowerCase().includes(q) ||
+        (p.descripcion && p.descripcion.toLowerCase().includes(q))
+      ).slice(0, 10)
+    )
+  }
+
+  const seleccionarProducto = (itemId: string, producto: ProductoServicio) => {
+    setItems(items.map(item =>
+      item.id === itemId
+        ? { ...item, descripcion: producto.nombre, precioUnitario: Number(producto.precio), productoId: producto.id }
+        : item
+    ))
+    setShowProductoDropdown(null)
+    setProductoBusqueda('')
   }
 
   const correlativoActivo = correlativos.find(c => c.tipo === tipoDocumento && c.activo !== false)
@@ -348,9 +401,10 @@ export default function NuevaFacturaPage() {
                   {/* Header Items */}
                   <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-muted-foreground px-2 mb-2">
                     <div className="col-span-1 text-center">#</div>
-                    <div className="col-span-6">Descripción</div>
+                    <div className="col-span-5">Descripción</div>
                     <div className="col-span-2 text-center">Cant.</div>
                     <div className="col-span-2 text-right">Precio (Inc. ISV)</div>
+                    <div className="col-span-1 text-right">Subtotal</div>
                     <div className="col-span-1"></div>
                   </div>
 
@@ -359,15 +413,55 @@ export default function NuevaFacturaPage() {
                       <div className="col-span-1 text-center text-muted-foreground text-sm font-medium">
                         {index + 1}
                       </div>
-                      <div className="col-span-6">
-                        <input
-                          type="text"
-                          required
-                          className="input-field py-1.5 text-sm"
-                          placeholder="Descripción del servicio..."
-                          value={item.descripcion}
-                          onChange={(e) => actualizarItem(item.id, 'descripcion', e.target.value)}
-                        />
+                      <div className="col-span-5 relative">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            className="input-field py-1.5 text-sm pr-8"
+                            placeholder="Buscar producto o escribir..."
+                            value={showProductoDropdown === item.id ? productoBusqueda : item.descripcion}
+                            onFocus={() => {
+                              setShowProductoDropdown(item.id)
+                              setProductoBusqueda(item.descripcion)
+                              buscarProductos(item.descripcion)
+                            }}
+                            onChange={(e) => {
+                              buscarProductos(e.target.value)
+                              actualizarItem(item.id, 'descripcion', e.target.value)
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => setShowProductoDropdown(null), 200)
+                            }}
+                          />
+                          <Search className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
+                        {showProductoDropdown === item.id && productoResultados.length > 0 && (
+                          <div className="absolute z-20 mt-1 w-full bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                            {productoResultados.map(p => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                className="w-full text-left px-3 py-2 hover:bg-muted text-sm flex justify-between items-center border-b border-border last:border-0"
+                                onMouseDown={(e) => {
+                                  e.preventDefault()
+                                  seleccionarProducto(item.id, p)
+                                }}
+                              >
+                                <div>
+                                  <span className="font-medium text-foreground">{p.nombre}</span>
+                                  <span className="text-xs text-muted-foreground ml-2">({p.codigo})</span>
+                                  <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
+                                    p.tipo === 'PRODUCTO' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                                  }`}>
+                                    {p.tipo === 'PRODUCTO' ? 'Prod.' : 'Serv.'}
+                                  </span>
+                                </div>
+                                <span className="font-mono text-xs text-foreground">{moneda} {Number(p.precio).toFixed(2)}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className="col-span-2">
                         <input
@@ -376,10 +470,10 @@ export default function NuevaFacturaPage() {
                           min="1"
                           className="input-field py-1.5 text-sm text-center"
                           value={item.cantidad}
-                          onChange={(e) => actualizarItem(item.id, 'cantidad', parseInt(e.target.value))}
+                          onChange={(e) => actualizarItem(item.id, 'cantidad', parseInt(e.target.value) || 1)}
                         />
                       </div>
-                      <div className="col-span-2 relative">
+                      <div className="col-span-2">
                         <input
                           type="number"
                           required
@@ -387,8 +481,11 @@ export default function NuevaFacturaPage() {
                           step="0.01"
                           className="input-field py-1.5 text-sm text-right pr-2"
                           value={item.precioUnitario}
-                          onChange={(e) => actualizarItem(item.id, 'precioUnitario', parseFloat(e.target.value))}
+                          onChange={(e) => actualizarItem(item.id, 'precioUnitario', parseFloat(e.target.value) || 0)}
                         />
+                      </div>
+                      <div className="col-span-1 text-right text-sm font-mono text-foreground">
+                        {(item.cantidad * item.precioUnitario).toFixed(2)}
                       </div>
                       <div className="col-span-1 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         {items.length > 1 && (

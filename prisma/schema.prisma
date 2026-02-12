@@ -571,6 +571,29 @@ enum TipoFlujo {
   AJUSTE
 }
 
+// Modelo de Productos y Servicios
+model ProductoServicio {
+  id            String   @id @default(uuid())
+  codigo        String   @unique
+  nombre        String
+  descripcion   String?  @db.Text
+  tipo          TipoProductoServicio
+  precio        Decimal  @db.Decimal(10, 2) // Precio con impuesto incluido
+  isv           Decimal  @default(15) @db.Decimal(5, 2) // Porcentaje de ISV
+  activo        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tipo])
+  @@index([nombre])
+  @@map("productos_servicios")
+}
+
+enum TipoProductoServicio {
+  PRODUCTO
+  SERVICIO
+}
+
 model ConfiguracionEmpresa {
   id          Int      @id @default(autoincrement())
   nombre      String   @unique

@@ -18,7 +18,8 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  ShoppingBag
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
@@ -37,6 +38,7 @@ const menuItems: MenuItem[] = [
   { name: 'Expedientes', href: '/dashboard/expedientes', icon: FileText },
   { name: 'Tratamientos', href: '/dashboard/tratamientos', icon: Heart },
   { name: 'Facturación', href: '/dashboard/facturacion', icon: CreditCard },
+  { name: 'Productos/Servicios', href: '/dashboard/productos', icon: ShoppingBag },
   { name: 'Contabilidad', href: '/dashboard/contabilidad', icon: Calculator },
   { name: 'Inventario', href: '/dashboard/inventario', icon: Package },
   { name: 'Reportes', href: '/dashboard/reportes', icon: BarChart3 },
