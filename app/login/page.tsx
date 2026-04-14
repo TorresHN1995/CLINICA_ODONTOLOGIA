@@ -32,14 +32,14 @@ export default function LoginPage() {
         callbackUrl: callbackUrl,
       })
 
-      // Si llegamos aquí, hubo un error
+      // Si llegamos aquí, hubo un error (signIn con redirect: true no retorna si es exitoso)
       if (result?.error) {
-        toast.error('Credenciales inválidas')
+        toast.error('Usuario o contraseña incorrectos')
         setLoading(false)
       }
     } catch (error) {
       console.error('Error en login:', error)
-      toast.error('Error al iniciar sesión')
+      toast.error('Error al iniciar sesión. Por favor intenta de nuevo.')
       setLoading(false)
     }
   }

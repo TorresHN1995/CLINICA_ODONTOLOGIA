@@ -13,39 +13,37 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) {
-          throw new Error('Usuario y contraseña requeridos')
+          return null
         }
 
-        const usuario = await prisma.usuario.findUnique({
-          where: { username: credentials.username }
-        })
+        try {
+          const usuario = await prisma.usuario.findUnique({
+            where: { username: credentials.username }
+          })
 
-        if (!usuario || !usuario.activo) {
-          throw new Error('Credenciales inválidas')
-        }
+          if (!usuario || !usuario.activo) {
+            return null
+          }
 
-        const passwordValida = await bcrypt.compare(
-          credentials.password,
-          usuario.password
-        )
+          const passwordValida = await bcrypt.compare(
+            credentials.password,
+            usuario.password
+          )
 
-        if (!passwordValida) {
-          throw new Error('Credenciales inválidas')
-        }
+          if (!passwordValida) {
+            return null
+          }
 
-        return {
-          id: usuario.id,
-          username: usuario.username, // Returning username instead of email in user object if needed? 
-          // Wait, the NextAuth User type usually expects email? 
-          // I should verify what I return. 
-          // NextAuth User interface usually has name, email, image.
-          // I can map username to name or just add it if I extend the type. 
-          // For now, I'll keep email if available, or just not return it if not needed.
-          // The previous code returned: email: usuario.email.
-          // I'll return email too since it exists.
-          email: usuario.email,
-          name: `${usuario.nombre} ${usuario.apellido}`,
-          role: usuario.rol,
+          return {
+            id: usuario.id,
+            username: usuario.username,
+            email: usuario.email,
+            name: `${usuario.nombre} ${usuario.apellido}`,
+            role: usuario.rol,
+          }
+        } catch (error) {
+          console.error('Error en authorize:', error)
+          return null
         }
       }
     })
