@@ -66,12 +66,17 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     async redirect({ url, baseUrl }) {
-      // Si hay una URL de callback, úsala
-      if (url.startsWith('/')) return `${baseUrl}${url}`
+      // Si la URL es una ruta relativa, úsala
+      if (url.startsWith('/')) return url
       // Si la URL es del mismo dominio, permite la redirección
-      if (new URL(url).origin === baseUrl) return url
+      try {
+        const urlObj = new URL(url)
+        if (urlObj.origin === baseUrl) return url
+      } catch (e) {
+        // URL inválida, ignorar
+      }
       // Por defecto, redirigir al dashboard
-      return `${baseUrl}/dashboard`
+      return '/dashboard'
     }
   },
   pages: {

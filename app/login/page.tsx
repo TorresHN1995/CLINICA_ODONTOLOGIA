@@ -17,44 +17,25 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // En build/prerender de Next.js no podemos depender de useSearchParams en la Page.
-      // Leemos el callbackUrl directamente del query string en tiempo de ejecución (cliente).
+      // Obtener el callbackUrl del query string
       const rawCallback =
         typeof window !== 'undefined'
           ? new URLSearchParams(window.location.search).get('callbackUrl')
           : null
       const callbackUrl = rawCallback ? decodeURIComponent(rawCallback) : '/dashboard'
       
-      // Intentar login con redirect automático
+      // Usar signIn con redirect: true para que NextAuth maneje todo
       const result = await signIn('credentials', {
         username: formData.username,
         password: formData.password,
-        redirect: false,
+        redirect: true,
+        callbackUrl: callbackUrl,
       })
 
+      // Si llegamos aquí, hubo un error
       if (result?.error) {
         toast.error('Credenciales inválidas')
         setLoading(false)
-      } else if (result?.ok) {
-        toast.success('¡Bienvenido!')
-        
-        // Esperar un momento para que la cookie se establezca
-        await new Promise(resolve => setTimeout(resolve, 300))
-        
-        // Redirigir usando el callbackUrl completo o solo la ruta
-        let redirectUrl = callbackUrl
-        if (callbackUrl.startsWith('http')) {
-          // Si es una URL completa, extraer solo la ruta
-          try {
-            const url = new URL(callbackUrl)
-            redirectUrl = url.pathname + url.search
-          } catch {
-            redirectUrl = '/dashboard'
-          }
-        }
-        
-        // Forzar recarga completa con la URL correcta
-        window.location.href = redirectUrl
       }
     } catch (error) {
       console.error('Error en login:', error)
