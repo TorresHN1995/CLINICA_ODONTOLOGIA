@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const [facturas, pagos, ingresos, egresos] = await Promise.all([
       prisma.factura.findMany({
         where: {
-          createdAt: { gte: fechaInicio, lte: fechaFin }
+          fecha: { gte: fechaInicio, lte: fechaFin }
         },
         include: { items: true, paciente: true }
       }),
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       }),
       prisma.egreso.findMany({
         where: {
-          createdAt: { gte: fechaInicio, lte: fechaFin }
+          fecha: { gte: fechaInicio, lte: fechaFin }
         }
       })
     ])
