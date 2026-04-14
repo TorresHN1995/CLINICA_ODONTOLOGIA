@@ -1,16 +1,43 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signIn } from 'next-auth/react'
 import { toast } from 'react-hot-toast'
 import { User, Lock, Loader2 } from 'lucide-react'
 
+type UsuarioOption = {
+  username: string
+  nombre: string
+  apellido: string
+  rol: string
+}
+
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
+  const [usuarios, setUsuarios] = useState<UsuarioOption[]>([])
+  const [loadingUsuarios, setLoadingUsuarios] = useState(true)
   const [formData, setFormData] = useState({
     username: '',
     password: ''
   })
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/usuarios/public', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: UsuarioOption[]) => {
+        if (!cancelled) setUsuarios(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {
+        if (!cancelled) setUsuarios([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingUsuarios(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,15 +97,27 @@ export default function LoginPage() {
                 Usuario
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <input
-                  type="text"
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5 pointer-events-none z-10" />
+                <select
                   required
-                  className="input-field pl-10"
-                  placeholder="nombre.usuario"
+                  disabled={loadingUsuarios}
+                  className="input-field pl-10 appearance-none"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                />
+                >
+                  <option value="" disabled>
+                    {loadingUsuarios
+                      ? 'Cargando usuarios...'
+                      : usuarios.length === 0
+                        ? 'No hay usuarios disponibles'
+                        : 'Selecciona un usuario'}
+                  </option>
+                  {usuarios.map((u) => (
+                    <option key={u.username} value={u.username}>
+                      {u.nombre} {u.apellido} ({u.username})
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
