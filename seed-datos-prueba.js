@@ -4,6 +4,7 @@
  * Ejecutar: node seed-datos-prueba.js
  */
 
+require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
