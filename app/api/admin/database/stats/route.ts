@@ -55,6 +55,10 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
+    // Convertir Decimal a number
+    const totalIngresosNum = totalIngresos._sum.monto ? parseFloat(totalIngresos._sum.monto.toString()) : 0
+    const totalEgresosNum = totalEgresos._sum.monto ? parseFloat(totalEgresos._sum.monto.toString()) : 0
+
     const stats = {
       usuarios: usuariosCount,
       pacientes: pacientesCount,
@@ -70,11 +74,11 @@ export async function GET(request: NextRequest) {
       facturasEstados: facturasEstados.map(f => ({
         estado: f.estado,
         cantidad: f._count,
-        total: f._sum.total || 0,
+        total: f._sum.total ? parseFloat(f._sum.total.toString()) : 0,
       })),
-      totalIngresos: totalIngresos._sum.monto || 0,
-      totalEgresos: totalEgresos._sum.monto || 0,
-      saldoNeto: (totalIngresos._sum.monto || 0) - (totalEgresos._sum.monto || 0),
+      totalIngresos: totalIngresosNum,
+      totalEgresos: totalEgresosNum,
+      saldoNeto: totalIngresosNum - totalEgresosNum,
     }
 
     return NextResponse.json(stats)
