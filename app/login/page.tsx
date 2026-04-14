@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { toast } from 'react-hot-toast'
 import { User, Lock, Loader2 } from 'lucide-react'
@@ -13,6 +14,7 @@ type UsuarioOption = {
 }
 
 export default function LoginPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [usuarios, setUsuarios] = useState<UsuarioOption[]>([])
   const [loadingUsuarios, setLoadingUsuarios] = useState(true)
@@ -39,30 +41,57 @@ export default function LoginPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const err = params.get('error')
+    if (err) {
+      toast.error('Usuario o contraseña incorrectos')
+    }
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      // Obtener el callbackUrl del query string
       const rawCallback =
         typeof window !== 'undefined'
           ? new URLSearchParams(window.location.search).get('callbackUrl')
           : null
       const callbackUrl = rawCallback ? decodeURIComponent(rawCallback) : '/dashboard'
-      
-      // Usar signIn con redirect: true para que NextAuth maneje todo
+
       const result = await signIn('credentials', {
         username: formData.username,
         password: formData.password,
-        redirect: true,
-        callbackUrl: callbackUrl,
+        redirect: false,
       })
 
-      // Si llegamos aquí, hubo un error (signIn con redirect: true no retorna si es exitoso)
-      if (result?.error) {
+      if (!result) {
+        toast.error('No se recibió respuesta del servidor')
+        setLoading(false)
+        return
+      }
+
+      if (result.error) {
         toast.error('Usuario o contraseña incorrectos')
         setLoading(false)
+        return
+      }
+
+      if (result.ok) {
+        toast.success('¡Bienvenido!')
+        let target = callbackUrl
+        if (target.startsWith('http')) {
+          try {
+            const u = new URL(target)
+            target = u.pathname + u.search
+          } catch {
+            target = '/dashboard'
+          }
+        }
+        router.push(target)
+        router.refresh()
       }
     } catch (error) {
       console.error('Error en login:', error)
