@@ -19,7 +19,10 @@ import {
   ChevronDown,
   ChevronRight,
   ShieldCheck,
-  ShoppingBag
+  ShoppingBag,
+  Stethoscope,
+  FilePlus,
+  Lock
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
@@ -34,15 +37,18 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Pacientes', href: '/dashboard/pacientes', icon: Users },
+  { name: 'Odontólogos', href: '/dashboard/odontologos', icon: Stethoscope },
   { name: 'Agenda y Citas', href: '/dashboard/citas', icon: Calendar },
   { name: 'Expedientes', href: '/dashboard/expedientes', icon: FileText },
   { name: 'Tratamientos', href: '/dashboard/tratamientos', icon: Heart },
+  { name: 'Documentos', href: '/dashboard/documentos', icon: FilePlus },
   { name: 'Facturación', href: '/dashboard/facturacion', icon: CreditCard },
   { name: 'Productos/Servicios', href: '/dashboard/productos', icon: ShoppingBag },
   { name: 'Contabilidad', href: '/dashboard/contabilidad', icon: Calculator },
   { name: 'Inventario', href: '/dashboard/inventario', icon: Package },
   { name: 'Reportes', href: '/dashboard/reportes', icon: BarChart3 },
   { name: 'Usuarios', href: '/dashboard/usuarios', icon: UserCog, roles: ['ADMINISTRADOR'] },
+  { name: 'Administración', href: '/dashboard/admin', icon: Lock, roles: ['ADMINISTRADOR'] },
   {
     name: 'Configuración',
     href: '/dashboard/configuracion',

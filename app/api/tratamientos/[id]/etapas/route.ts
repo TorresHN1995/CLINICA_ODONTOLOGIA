@@ -4,17 +4,14 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
-const etapaUpdateSchema = z.object({
-  id: z.string(),
-  nombre: z.string().optional(),
-  descripcion: z.string().nullable().optional(),
-  costo: z.number().min(0).optional(),
-  completada: z.boolean().optional(),
-  orden: z.number().int().min(1).optional(),
+const etapaSchema = z.object({
+  nombre: z.string().min(1),
+  descripcion: z.string().optional(),
+  costo: z.number(),
+  orden: z.number(),
 })
 
-// PUT - Actualizar varias etapas (toggle/update/reordenar)
-export async function PUT(
+export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -25,32 +22,16 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const etapas = z.array(etapaUpdateSchema).parse(body?.etapas || [])
+    const validatedData = etapaSchema.parse(body)
 
-    const updates = etapas.map(etapa =>
-      prisma.etapaTratamiento.update({
-        where: { id: etapa.id },
-        data: {
-          ...(etapa.nombre !== undefined && { nombre: etapa.nombre }),
-          ...(etapa.descripcion !== undefined && { descripcion: etapa.descripcion }),
-          ...(etapa.costo !== undefined && { costo: etapa.costo }),
-          ...(etapa.completada !== undefined && {
-            completada: etapa.completada,
-            fechaCompletada: etapa.completada ? new Date() : null,
-          }),
-          ...(etapa.orden !== undefined && { orden: etapa.orden }),
-        },
-      })
-    )
-
-    await prisma.$transaction(updates)
-
-    const tratamiento = await prisma.tratamiento.findUnique({
-      where: { id: params.id },
-      include: { etapas: { orderBy: { orden: 'asc' } } },
+    const etapa = await prisma.etapaTratamiento.create({
+      data: {
+        ...validatedData,
+        tratamientoId: params.id,
+      },
     })
 
-    return NextResponse.json(tratamiento)
+    return NextResponse.json(etapa, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -58,12 +39,7 @@ export async function PUT(
         { status: 400 }
       )
     }
-    console.error('Error al actualizar etapas:', error)
-    return NextResponse.json(
-      { error: 'Error al actualizar etapas' },
-      { status: 500 }
-    )
+    console.error('Error:', error)
+    return NextResponse.json({ error: 'Error al crear etapa' }, { status: 500 })
   }
 }
-
-

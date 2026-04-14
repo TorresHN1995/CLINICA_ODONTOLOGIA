@@ -4,7 +4,14 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
-// GET - Obtener tratamiento por ID
+const tratamientoSchema = z.object({
+  nombre: z.string().min(1),
+  descripcion: z.string().optional(),
+  estado: z.enum(['PLANIFICADO', 'EN_PROGRESO', 'PAUSADO', 'COMPLETADO', 'CANCELADO']),
+  costoTotal: z.number().optional(),
+  observaciones: z.string().optional(),
+})
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -18,46 +25,22 @@ export async function GET(
     const tratamiento = await prisma.tratamiento.findUnique({
       where: { id: params.id },
       include: {
-        paciente: {
-          select: {
-            id: true,
-            nombre: true,
-            apellido: true,
-            identificacion: true,
-          },
-        },
-        etapas: {
-          orderBy: { orden: 'asc' },
-        },
+        paciente: true,
+        etapas: { orderBy: { orden: 'asc' } },
       },
     })
 
     if (!tratamiento) {
-      return NextResponse.json({ error: 'Tratamiento no encontrado' }, { status: 404 })
+      return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
     }
 
     return NextResponse.json(tratamiento)
   } catch (error) {
-    console.error('Error al obtener tratamiento:', error)
-    return NextResponse.json(
-      { error: 'Error al obtener tratamiento' },
-      { status: 500 }
-    )
+    console.error('Error:', error)
+    return NextResponse.json({ error: 'Error al obtener tratamiento' }, { status: 500 })
   }
 }
 
-const updateTratamientoSchema = z.object({
-  nombre: z.string().optional(),
-  descripcion: z.string().optional(),
-  estado: z
-    .enum(['PLANIFICADO', 'EN_PROGRESO', 'PAUSADO', 'COMPLETADO', 'CANCELADO'])
-    .optional(),
-  fechaInicio: z.string().nullable().optional(),
-  fechaFin: z.string().nullable().optional(),
-  observaciones: z.string().nullable().optional(),
-})
-
-// PUT - Actualizar tratamiento (parcial)
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -69,26 +52,13 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const validated = updateTratamientoSchema.parse(body)
-
-    const dataUpdate: any = {
-      ...(validated.nombre !== undefined && { nombre: validated.nombre }),
-      ...(validated.descripcion !== undefined && { descripcion: validated.descripcion }),
-      ...(validated.estado !== undefined && { estado: validated.estado }),
-      ...(validated.observaciones !== undefined && { observaciones: validated.observaciones }),
-      ...(validated.fechaInicio !== undefined && {
-        fechaInicio: validated.fechaInicio ? new Date(validated.fechaInicio) : null,
-      }),
-      ...(validated.fechaFin !== undefined && {
-        fechaFin: validated.fechaFin ? new Date(validated.fechaFin) : null,
-      }),
-    }
+    const validatedData = tratamientoSchema.parse(body)
 
     const tratamiento = await prisma.tratamiento.update({
       where: { id: params.id },
-      data: dataUpdate,
+      data: validatedData,
       include: {
-        paciente: { select: { id: true, nombre: true, apellido: true, identificacion: true } },
+        paciente: true,
         etapas: { orderBy: { orden: 'asc' } },
       },
     })
@@ -101,12 +71,34 @@ export async function PUT(
         { status: 400 }
       )
     }
-    console.error('Error al actualizar tratamiento:', error)
-    return NextResponse.json(
-      { error: 'Error al actualizar tratamiento' },
-      { status: 500 }
-    )
+    console.error('Error:', error)
+    return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 })
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
 
+    // Eliminar etapas primero
+    await prisma.etapaTratamiento.deleteMany({
+      where: { tratamientoId: params.id },
+    })
+
+    // Luego eliminar tratamiento
+    await prisma.tratamiento.delete({
+      where: { id: params.id },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error:', error)
+    return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 })
+  }
+}

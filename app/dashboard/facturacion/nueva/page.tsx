@@ -147,6 +147,9 @@ export default function NuevaFacturaPage() {
 
   const correlativoActivo = correlativos.find(c => c.tipo === tipoDocumento && c.activo !== false)
 
+  // Para ORDEN_PEDIDO no se requiere correlativo SAR
+  const requiereCorrelativo = tipoDocumento === 'FACTURA'
+
   const handleTypeSelection = (type: string) => {
     setTipoDocumento(type)
     setShowTypeModal(false)
@@ -203,7 +206,7 @@ export default function NuevaFacturaPage() {
       return
     }
 
-    if (!correlativoActivo) {
+    if (requiereCorrelativo && !correlativoActivo) {
       toast.error(`No hay correlativo configurado para ${tipoDocumento}`)
       return
     }
@@ -235,8 +238,13 @@ export default function NuevaFacturaPage() {
       })
 
       if (response.ok) {
+        const data = await response.json()
+        const facturaId = data.factura?.id
+        
         toast.success(`${tipoDocumento === 'FACTURA' ? 'Factura' : 'Orden'} creada exitosamente`)
-        router.push('/dashboard/facturacion')
+        
+        // Redirigir a la página de pago con parámetro para mostrar modal
+        router.push(`/dashboard/facturacion/${facturaId}?pago=nuevo`)
       } else {
         const data = await response.json()
         toast.error(data.error || 'Error al crear documento')
@@ -254,6 +262,9 @@ export default function NuevaFacturaPage() {
   }))
 
   const getSiguienteCorrelativo = () => {
+    if (tipoDocumento === 'ORDEN_PEDIDO') {
+      return 'Numeración automática'
+    }
     if (!correlativoActivo) return 'No configurado'
     const num = String(correlativoActivo.siguiente).padStart(8, '0')
     return `${correlativoActivo.sucursal}-${correlativoActivo.puntoEmision}-${correlativoActivo.tipoDoc}-${num}`
@@ -321,9 +332,14 @@ export default function NuevaFacturaPage() {
                   {getSiguienteCorrelativo()}
                 </span>
               </h1>
-              {correlativoActivo && (
+              {correlativoActivo && tipoDocumento === 'FACTURA' && (
                 <div className="text-xs text-muted-foreground">
                   CAI: {correlativoActivo.cai || 'N/A'} • Vence: {format(new Date(correlativoActivo.fechaLimite || '2099-12-31'), 'dd/MM/yyyy')}
+                </div>
+              )}
+              {tipoDocumento === 'ORDEN_PEDIDO' && (
+                <div className="text-xs text-muted-foreground">
+                  Documento interno - No requiere CAI
                 </div>
               )}
             </div>

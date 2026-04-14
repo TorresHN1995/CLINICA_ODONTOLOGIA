@@ -99,36 +99,57 @@ export async function POST(request: NextRequest) {
 
     const validatedData = extendedSchema.parse(body)
 
-    // 1. Buscar Correlativo Activo
-    const correlativo = await prisma.correlativo.findFirst({
-      where: {
-        tipo: validatedData.tipoDocumento,
-        activo: true,
-        fechaLimite: { gte: new Date() } // Asegurar que no esté vencido
-      },
-      orderBy: { createdAt: 'desc' } // Priorizar el más reciente si hubiera múltiples (no debería)
-    })
+    // 1. Buscar Correlativo Activo (solo para FACTURA)
+    let correlativo = null
+    let numeroFactura = ''
 
-    if (!correlativo) {
-      return NextResponse.json(
-        { error: `No hay correlativo activo o disponible para ${validatedData.tipoDocumento}. Por favor configure uno en Ajustes.` },
-        { status: 400 }
-      )
+    if (validatedData.tipoDocumento === 'FACTURA') {
+      correlativo = await prisma.correlativo.findFirst({
+        where: {
+          tipo: validatedData.tipoDocumento,
+          activo: true,
+          fechaLimite: { gte: new Date() }
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+
+      if (!correlativo) {
+        return NextResponse.json(
+          { error: `No hay correlativo activo o disponible para ${validatedData.tipoDocumento}. Por favor configure uno en Ajustes.` },
+          { status: 400 }
+        )
+      }
+
+      if (correlativo.siguiente > correlativo.rangoFinal) {
+        return NextResponse.json(
+          { error: `El rango de facturación para ${validatedData.tipoDocumento} se ha agotado.` },
+          { status: 400 }
+        )
+      }
+
+      // 2. Generar Número SAR para FACTURA
+      const numeroActual = correlativo.siguiente
+      const numeroFormateado = String(numeroActual).padStart(8, '0')
+      numeroFactura = `${correlativo.sucursal}-${correlativo.puntoEmision}-${correlativo.tipoDoc}-${numeroFormateado}`
+    } else {
+      // Para ORDEN_PEDIDO, generar número simple sin correlativo SAR
+      const ultimaOrden = await prisma.factura.findFirst({
+        where: { tipoDocumento: 'ORDEN_PEDIDO' },
+        orderBy: { createdAt: 'desc' },
+        select: { numero: true }
+      })
+
+      let siguienteNumero = 1
+      if (ultimaOrden && ultimaOrden.numero) {
+        // Extraer el número de la última orden (formato: OP-00001)
+        const match = ultimaOrden.numero.match(/OP-(\d+)/)
+        if (match) {
+          siguienteNumero = parseInt(match[1]) + 1
+        }
+      }
+
+      numeroFactura = `OP-${String(siguienteNumero).padStart(5, '0')}`
     }
-
-    if (correlativo.siguiente > correlativo.rangoFinal) {
-      return NextResponse.json(
-        { error: `El rango de facturación para ${validatedData.tipoDocumento} se ha agotado.` },
-        { status: 400 }
-      )
-    }
-
-    // 2. Generar Número SAR
-    // Formato: SSS-PPP-TT-NNNNNNNN
-    // Ejemplo: 000-001-01-00000001
-    const numeroActual = correlativo.siguiente
-    const numeroFormateado = String(numeroActual).padStart(8, '0')
-    const numeroFactura = `${correlativo.sucursal}-${correlativo.puntoEmision}-${correlativo.tipoDoc}-${numeroFormateado}`
 
     // 3. Calcular totales
     const subtotal = validatedData.items.reduce(
@@ -137,16 +158,17 @@ export async function POST(request: NextRequest) {
     )
     const total = subtotal - validatedData.descuento + validatedData.impuesto
 
-    // 4. Transacción: Crear Factura + Actualizar Correlativo
+    // 4. Transacción: Crear Factura + Actualizar Correlativo (solo si es FACTURA)
     const result = await prisma.$transaction(async (tx) => {
-      // Incrementar siguiente
-      await tx.correlativo.update({
-        where: { id: correlativo.id },
-        data: {
-          siguiente: { increment: 1 },
-          // Desactivar si llegamos al final? Lo mantenemos activo hasta que se cree uno nuevo o se agote explícitamente.
-        }
-      })
+      // Incrementar siguiente solo para FACTURA
+      if (correlativo) {
+        await tx.correlativo.update({
+          where: { id: correlativo.id },
+          data: {
+            siguiente: { increment: 1 },
+          }
+        })
+      }
 
       // Crear factura
       const factura = await tx.factura.create({
@@ -160,10 +182,10 @@ export async function POST(request: NextRequest) {
           total,
           observaciones: validatedData.observaciones || null,
 
-          // Datos SAR
+          // Datos SAR (solo para FACTURA)
           tipoDocumento: validatedData.tipoDocumento,
-          correlativoId: correlativo.id,
-          cai: correlativo.cai, // null si es Orden de Pedido
+          correlativoId: correlativo?.id || null,
+          cai: correlativo?.cai || null,
 
           items: {
             create: validatedData.items.map(item => ({
