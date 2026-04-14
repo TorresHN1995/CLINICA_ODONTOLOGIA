@@ -58,13 +58,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Agrupar por método de pago
-    const metodosPago = {}
+    const metodosPago: Record<string, number> = {}
     pagos.forEach(p => {
       metodosPago[p.metodoPago] = (metodosPago[p.metodoPago] || 0) + parseFloat(p.monto.toString())
     })
 
     // Agrupar egresos por categoría
-    const egresosPorCategoria = {}
+    const egresosPorCategoria: Record<string, number> = {}
     egresos.forEach(e => {
       egresosPorCategoria[e.categoria] = (egresosPorCategoria[e.categoria] || 0) + parseFloat(e.monto.toString())
     })
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     const margenUtilidad = totalIngresos > 0 ? (utilidad / totalIngresos) * 100 : 0
 
     // Top pacientes por gasto
-    const pacientesGasto = {}
+    const pacientesGasto: Record<string, number> = {}
     facturas.forEach(f => {
       const key = `${f.paciente.nombre} ${f.paciente.apellido}`
       pacientesGasto[key] = (pacientesGasto[key] || 0) + parseFloat(f.total.toString())

@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Agrupar citas por tipo
-    const citasPorTipo = {}
+    const citasPorTipo: Record<string, number> = {}
     citas.forEach(c => {
       citasPorTipo[c.tipoCita] = (citasPorTipo[c.tipoCita] || 0) + 1
     })
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     // Calcular tasa de asistencia
     const citasCompletadas = citas.filter(c => c.estado === 'COMPLETADA').length
     const citasNoAsistio = citas.filter(c => c.estado === 'NO_ASISTIO').length
-    const tasaAsistencia = citas.length > 0 ? ((citasCompletadas / citas.length) * 100).toFixed(2) : 0
+    const tasaAsistencia = citas.length > 0 ? ((citasCompletadas / citas.length) * 100) : 0
 
     // Pacientes atendidos
     const pacientesUnicos = new Set(citas.map(c => c.pacienteId)).size
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     const costoProcedimientoPromedio = procedimientos.length > 0 ? (costoProcedimientos / procedimientos.length).toFixed(2) : 0
 
     // Procedimientos por tipo
-    const procedimientosPorTipo = {}
+    const procedimientosPorTipo: Record<string, number> = {}
     procedimientos.forEach(p => {
       procedimientosPorTipo[p.nombre] = (procedimientosPorTipo[p.nombre] || 0) + 1
     })
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
         tratamientosCreados: tratamientos.length,
         procedimientosRealizados: procedimientos.length,
         pacientesAtendidos: pacientesUnicos,
-        tasaAsistencia: parseFloat(tasaAsistencia),
+        tasaAsistencia: parseFloat(tasaAsistencia.toFixed(2)),
       },
       citas: {
         porEstado: citasPorEstado,

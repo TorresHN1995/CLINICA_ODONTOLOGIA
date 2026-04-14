@@ -26,12 +26,14 @@ export async function PATCH(
     const body = await request.json()
     const validatedData = etapaUpdateSchema.parse(body)
 
+    const { fechaInicio, fechaFin, ...otherData } = validatedData
+    
     const etapa = await prisma.etapaTratamiento.update({
       where: { id: params.etapaId },
       data: {
-        ...validatedData,
-        fechaInicio: validatedData.fechaInicio ? new Date(validatedData.fechaInicio) : undefined,
-        fechaFin: validatedData.fechaFin ? new Date(validatedData.fechaFin) : undefined,
+        ...otherData,
+        ...(fechaInicio && { fechaInicio: new Date(fechaInicio) }),
+        ...(fechaFin && { fechaFin: new Date(fechaFin) }),
       },
     })
 

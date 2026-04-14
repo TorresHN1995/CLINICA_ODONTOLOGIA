@@ -261,7 +261,7 @@ export default function ReportesPage() {
                         <Cell key={`cell-${index}`} fill={color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => `L. ${value.toFixed(2)}`} />
+                    <Tooltip formatter={(value) => `L. ${typeof value === 'number' ? value.toFixed(2) : value}`} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -277,8 +277,7 @@ export default function ReportesPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip formatter={(value) => `L. ${value.toFixed(2)}`} />
-                    <Bar dataKey="valor" fill="#3b82f6" />
+                    <Tooltip formatter={(value) => `L. ${typeof value === 'number' ? value.toFixed(2) : value}`} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
