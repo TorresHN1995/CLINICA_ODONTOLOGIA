@@ -59,11 +59,16 @@ export default function LoginPage() {
           : null
       const callbackUrl = rawCallback ? decodeURIComponent(rawCallback) : '/dashboard'
 
+      console.log('[LOGIN] Llamando signIn con username=', formData.username)
+
       const result = await signIn('credentials', {
         username: formData.username,
         password: formData.password,
         redirect: false,
       })
+
+      console.log('[LOGIN] signIn result:', result)
+      console.log('[LOGIN] document.cookie:', document.cookie)
 
       if (!result) {
         toast.error('No se recibió respuesta del servidor')
@@ -72,6 +77,7 @@ export default function LoginPage() {
       }
 
       if (result.error) {
+        console.log('[LOGIN] Error de NextAuth:', result.error)
         toast.error('Usuario o contraseña incorrectos')
         setLoading(false)
         return
@@ -88,10 +94,18 @@ export default function LoginPage() {
             target = '/dashboard'
           }
         }
-        // Esperar a que la cookie de sesión se comprometa en document.cookie
-        // antes de navegar, si no el middleware no la ve y nos devuelve al login.
-        await new Promise((r) => setTimeout(r, 250))
-        // Navegación dura: fuerza al browser a incluir la cookie en el próximo request.
+        console.log('[LOGIN] target navegación:', target)
+
+        // Verificar que la sesión sea visible en /api/auth/session antes de navegar
+        try {
+          const sess = await fetch('/api/auth/session', { cache: 'no-store' }).then((r) => r.json())
+          console.log('[LOGIN] /api/auth/session response:', sess)
+        } catch (err) {
+          console.log('[LOGIN] error consultando /api/auth/session:', err)
+        }
+
+        await new Promise((r) => setTimeout(r, 400))
+        console.log('[LOGIN] cookies antes de assign:', document.cookie)
         window.location.assign(target)
       }
     } catch (error) {
