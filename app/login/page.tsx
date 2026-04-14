@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { toast } from 'react-hot-toast'
 import { User, Lock, Loader2 } from 'lucide-react'
@@ -14,7 +13,6 @@ type UsuarioOption = {
 }
 
 export default function LoginPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [usuarios, setUsuarios] = useState<UsuarioOption[]>([])
   const [loadingUsuarios, setLoadingUsuarios] = useState(true)
@@ -90,8 +88,11 @@ export default function LoginPage() {
             target = '/dashboard'
           }
         }
-        router.push(target)
-        router.refresh()
+        // Esperar a que la cookie de sesión se comprometa en document.cookie
+        // antes de navegar, si no el middleware no la ve y nos devuelve al login.
+        await new Promise((r) => setTimeout(r, 250))
+        // Navegación dura: fuerza al browser a incluir la cookie en el próximo request.
+        window.location.assign(target)
       }
     } catch (error) {
       console.error('Error en login:', error)
