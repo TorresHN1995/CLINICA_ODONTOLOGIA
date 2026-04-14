@@ -58,13 +58,19 @@ export async function POST(request: NextRequest) {
             const horaFin = format(addMinutes(fechaDate, duracion), 'HH:mm')
 
             // 2. Validar Disponibilidad (Igual que al crear)
+            const nuevaFechaDate = new Date(data.nuevaFecha)
+            const inicioDelDia = new Date(nuevaFechaDate)
+            inicioDelDia.setHours(0, 0, 0, 0)
+            const finDelDia = new Date(nuevaFechaDate)
+            finDelDia.setHours(23, 59, 59, 999)
+
             // Odontólogo
             const colisionOdontologo = await prisma.cita.findFirst({
                 where: {
                     id: { not: cita.id }, // Excluir misma cita
                     fecha: {
-                        gte: new Date(data.nuevaFecha),
-                        lt: addMinutes(new Date(data.nuevaFecha), 24 * 60)
+                        gte: inicioDelDia,
+                        lte: finDelDia
                     },
                     horaInicio: data.nuevaHora,
                     estado: { not: 'CANCELADA' },
@@ -81,7 +87,10 @@ export async function POST(request: NextRequest) {
                 where: {
                     id: { not: cita.id }, // Excluir misma cita
                     pacienteId: cita.pacienteId,
-                    fecha: new Date(data.nuevaFecha),
+                    fecha: {
+                        gte: inicioDelDia,
+                        lte: finDelDia
+                    },
                     estado: { not: 'CANCELADA' },
                     horaInicio: data.nuevaHora
                 }

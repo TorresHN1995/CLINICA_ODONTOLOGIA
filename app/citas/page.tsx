@@ -599,8 +599,7 @@ export default function BookingPage() {
                                             {slots.map((slot) => (
                                                 <button
                                                     key={slot.hora}
-                                                    onClick={() => { setHora(slot.hora); handleReprogramar(); /* Direct logic or confirm step */ }}
-                                                    onMouseEnter={() => setHora(slot.hora)} // Preview?
+                                                    onClick={() => setHora(slot.hora)}
                                                     className={`py-2 px-3 text-sm font-medium text-center border rounded-lg hover:border-primary-500 hover:bg-primary-50 text-muted-foreground ${hora === slot.hora ? 'border-primary-500 bg-primary-50' : ''}`}
                                                 >
                                                     {format(new Date(`2000-01-01T${slot.hora}`), 'h:mm a')}
