@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
-import { ArrowLeft, DollarSign, Save, Loader2, X, CreditCard, CheckCircle, Clock } from 'lucide-react'
+import { ArrowLeft, DollarSign, Save, Loader2, X, CreditCard, CheckCircle, Clock, Download, FileText, Image } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useConfiguracion } from '@/components/providers/ConfiguracionProvider'
+import { generarTicketFactura } from '@/lib/generar-ticket-factura'
 
 interface Params {
   params: { id: string }
@@ -63,6 +64,62 @@ export default function FacturaDetallePage({ params }: Params) {
   const [referencia, setReferencia] = useState('')
   const [observaciones, setObservaciones] = useState('')
   const [showPagoModal, setShowPagoModal] = useState(false)
+  const [showTicketModal, setShowTicketModal] = useState(false)
+  const [ticketTipo, setTicketTipo] = useState<'pago' | 'pendiente'>('pago')
+
+  const obtenerEmpresa = async () => {
+    try {
+      const res = await fetch('/api/configuracion-empresa')
+      if (res.ok) return await res.json()
+    } catch {}
+    return { nombre: 'Clínica Dental' }
+  }
+
+  const generarTicket = async (formato: 'pdf' | 'png') => {
+    if (!factura) return
+    setShowTicketModal(false)
+    const toastId = toast.loading('Generando ticket...')
+    try {
+      const empresa = await obtenerEmpresa()
+      await generarTicketFactura({
+        empresa,
+        factura: {
+          numero: factura.numero,
+          fecha: format(new Date(factura.fecha), 'dd/MM/yyyy', { locale: es }),
+          paciente: factura.paciente,
+          items: factura.items.map(i => ({
+            descripcion: i.descripcion,
+            cantidad: i.cantidad,
+            precioUnitario: Number(i.precioUnitario),
+            subtotal: Number(i.subtotal),
+          })),
+          subtotal: Number(factura.subtotal),
+          descuento: Number(factura.descuento),
+          impuesto: Number(factura.impuesto),
+          total: Number(factura.total),
+          estado: factura.estado,
+        },
+        pagos: factura.pagos.map(p => ({
+          monto: Number(p.monto),
+          metodoPago: p.metodoPago,
+          referencia: p.referencia,
+          fecha: format(new Date(p.fecha), 'dd/MM/yyyy HH:mm', { locale: es }),
+        })),
+        totalPagado,
+        saldoPendiente: saldo,
+        tipo: ticketTipo,
+      }, formato)
+      toast.success(`Ticket generado en ${formato.toUpperCase()}`, { id: toastId })
+    } catch (error) {
+      console.error('Error generando ticket:', error)
+      toast.error('Error al generar ticket', { id: toastId })
+    }
+  }
+
+  const mostrarTicketModal = (tipo: 'pago' | 'pendiente') => {
+    setTicketTipo(tipo)
+    setShowTicketModal(true)
+  }
 
   const cargarFactura = async () => {
     try {
@@ -133,10 +190,8 @@ export default function FacturaDetallePage({ params }: Params) {
         setShowPagoModal(false)
         await cargarFactura()
         
-        // Si el pago cubre el total, redirigir a la lista
-        if (monto >= saldo) {
-          setTimeout(() => router.push('/dashboard/facturacion'), 1500)
-        }
+        // Mostrar modal de ticket después de registrar pago
+        mostrarTicketModal('pago')
       } else {
         toast.error(data.error || 'Error al registrar pago')
       }
@@ -150,7 +205,7 @@ export default function FacturaDetallePage({ params }: Params) {
   const dejarPendiente = () => {
     setShowPagoModal(false)
     toast.success('Factura guardada como pendiente')
-    router.push('/dashboard/facturacion')
+    mostrarTicketModal('pendiente')
   }
 
   if (loading) {
@@ -444,6 +499,59 @@ export default function FacturaDetallePage({ params }: Params) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Ticket */}
+      {showTicketModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-card rounded-xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className={`p-6 text-center ${ticketTipo === 'pago' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-amber-500 to-amber-600'}`}>
+              <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                {ticketTipo === 'pago' ? (
+                  <CheckCircle className="w-7 h-7 text-white" />
+                ) : (
+                  <Clock className="w-7 h-7 text-white" />
+                )}
+              </div>
+              <h2 className="text-lg font-bold text-white">
+                {ticketTipo === 'pago' ? 'Pago Registrado' : 'Cuenta Pendiente'}
+              </h2>
+              <p className="text-sm text-white/80 mt-1">¿Desea generar un ticket para el cliente?</p>
+            </div>
+
+            <div className="p-6 space-y-3">
+              <button
+                onClick={() => generarTicket('pdf')}
+                className="w-full px-4 py-3 border-2 border-border rounded-lg hover:bg-muted transition-colors flex items-center gap-3"
+              >
+                <FileText className="w-5 h-5 text-red-500" />
+                <div className="text-left">
+                  <div className="font-semibold text-foreground">Descargar PDF</div>
+                  <div className="text-xs text-muted-foreground">Formato para imprimir</div>
+                </div>
+              </button>
+              <button
+                onClick={() => generarTicket('png')}
+                className="w-full px-4 py-3 border-2 border-border rounded-lg hover:bg-muted transition-colors flex items-center gap-3"
+              >
+                <Image className="w-5 h-5 text-blue-500" />
+                <div className="text-left">
+                  <div className="font-semibold text-foreground">Descargar PNG</div>
+                  <div className="text-xs text-muted-foreground">Imagen para enviar por WhatsApp</div>
+                </div>
+              </button>
+              <button
+                onClick={() => {
+                  setShowTicketModal(false)
+                  router.push('/dashboard/facturacion')
+                }}
+                className="w-full px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Omitir y volver a facturación
+              </button>
+            </div>
           </div>
         </div>
       )}
