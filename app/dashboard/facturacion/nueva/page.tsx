@@ -239,7 +239,7 @@ export default function NuevaFacturaPage() {
 
       if (response.ok) {
         const data = await response.json()
-        const facturaId = data.factura?.id
+        const facturaId = data.id
         
         toast.success(`${tipoDocumento === 'FACTURA' ? 'Factura' : 'Orden'} creada exitosamente`)
         
