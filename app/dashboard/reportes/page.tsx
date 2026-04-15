@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { Calendar, TrendingUp, Users, DollarSign, Activity, AlertCircle } from 'lucide-react'
+import { Calendar, TrendingUp, Users, DollarSign, Activity, AlertCircle, Download, FileText, Image } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { generarTicketReporte } from '@/lib/generar-ticket-reporte'
 
 interface ReporteFinanciero {
   periodo: { mes: number; año: number; fechaInicio: string; fechaFin: string }
@@ -71,6 +72,81 @@ export default function ReportesPage() {
   const [loading, setLoading] = useState(false)
   const [reporteFinanciero, setReporteFinanciero] = useState<ReporteFinanciero | null>(null)
   const [reporteClinico, setReporteClinico] = useState<ReporteClinico | null>(null)
+  const [generando, setGenerando] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+
+  // Cerrar menú de exportación al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = () => setShowExportMenu(false)
+    if (showExportMenu) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [showExportMenu])
+
+  const generarTicket = async (formato: 'pdf' | 'png') => {
+    setShowExportMenu(false)
+    try {
+      setGenerando(true)
+      toast.loading('Generando ticket...', { id: 'ticket' })
+
+      // Obtener datos de empresa
+      const resEmpresa = await fetch('/api/configuracion-empresa')
+      const empresa = resEmpresa.ok
+        ? await resEmpresa.json()
+        : { nombre: 'Clínica Dental', rtn: null, telefono: null, email: null, direccion: null, ciudad: null }
+
+      if (activeTab === 'financiero' && reporteFinanciero) {
+        await generarTicketReporte({
+          tipo: 'financiero',
+          formato,
+          mes,
+          año,
+          empresa,
+          financiero: {
+            totalIngresos: reporteFinanciero.resumen.totalIngresos,
+            totalEgresos: reporteFinanciero.resumen.totalEgresos,
+            utilidad: reporteFinanciero.resumen.utilidad,
+            margenUtilidad: reporteFinanciero.resumen.margenUtilidad,
+            totalFacturas: reporteFinanciero.resumen.totalFacturas,
+            totalPagos: reporteFinanciero.resumen.totalPagos,
+            saldoPendiente: reporteFinanciero.resumen.saldoPendiente,
+            facturasQty: reporteFinanciero.facturas.cantidad,
+            facturasEstado: reporteFinanciero.facturas.porEstado,
+            egresosQty: reporteFinanciero.egresos.cantidad,
+            metodosPago: reporteFinanciero.pagos.metodosPago,
+          },
+        })
+      } else if (activeTab === 'clinico' && reporteClinico) {
+        await generarTicketReporte({
+          tipo: 'clinico',
+          formato,
+          mes,
+          año,
+          empresa,
+          clinico: {
+            citasTotal: reporteClinico.resumen.citasTotal,
+            pacientesAtendidos: reporteClinico.resumen.pacientesAtendidos,
+            tasaAsistencia: reporteClinico.resumen.tasaAsistencia,
+            procedimientosRealizados: reporteClinico.resumen.procedimientosRealizados,
+            expedientesCreados: reporteClinico.resumen.expedientesCreados,
+            tratamientosCreados: reporteClinico.resumen.tratamientosCreados,
+            citasCompletadas: reporteClinico.citas.completadas,
+            citasNoAsistio: reporteClinico.citas.noAsistio,
+            costoTotalTratamientos: reporteClinico.tratamientos.costoTotal,
+            costoPromedioTratamientos: reporteClinico.tratamientos.costoPromedio,
+          },
+        })
+      }
+
+      toast.success(`Ticket generado en ${formato.toUpperCase()}`, { id: 'ticket' })
+    } catch (error) {
+      console.error('Error generando ticket:', error)
+      toast.error('Error al generar el ticket', { id: 'ticket' })
+    } finally {
+      setGenerando(false)
+    }
+  }
 
   const cargarReportes = async () => {
     try {
@@ -154,6 +230,36 @@ export default function ReportesPage() {
             >
               {loading ? 'Cargando...' : 'Actualizar'}
             </button>
+
+            {/* Botón Generar Ticket */}
+            <div className="relative">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                disabled={generando || loading || (!reporteFinanciero && !reporteClinico)}
+                className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                {generando ? 'Generando...' : 'Generar Ticket'}
+              </button>
+              {showExportMenu && (
+                <div className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-xl border border-slate-200 py-2 z-50 min-w-[180px]">
+                  <button
+                    onClick={() => generarTicket('pdf')}
+                    className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                  >
+                    <FileText className="w-4 h-4 text-red-500" />
+                    Descargar PDF
+                  </button>
+                  <button
+                    onClick={() => generarTicket('png')}
+                    className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                  >
+                    <Image className="w-4 h-4 text-blue-500" />
+                    Descargar PNG
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
