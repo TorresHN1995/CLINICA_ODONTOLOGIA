@@ -74,8 +74,9 @@ function metodoLabel(m: string): string {
 
 function getSARInfo(factura: TicketFacturaOptions['factura']) {
   const corr = factura.correlativo
-  // Mostrar datos SAR si es FACTURA o si tiene correlativo asociado
-  const esSAR = factura.tipoDocumento === 'FACTURA' || !!corr
+  // Siempre mostrar datos SAR si no es explícitamente ORDEN_PEDIDO
+  const esOrden = factura.tipoDocumento === 'ORDEN_PEDIDO'
+  const esSAR = !esOrden
   const cai = factura.cai || corr?.cai || 'No configurado'
   let rangoStr = ''
   if (corr?.rangoInicial != null && corr?.rangoFinal != null) {

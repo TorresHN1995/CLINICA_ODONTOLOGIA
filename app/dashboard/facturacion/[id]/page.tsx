@@ -97,8 +97,8 @@ export default function FacturaDetallePage({ params }: Params) {
       factura: {
         numero: factura.numero,
         fecha: format(new Date(factura.fecha), 'dd/MM/yyyy', { locale: es }),
-        tipoDocumento: factura.tipoDocumento,
-        cai: factura.cai,
+        tipoDocumento: factura.tipoDocumento || 'FACTURA',
+        cai: factura.cai || null,
         paciente: factura.paciente,
         emitente: factura.emitente,
         items: factura.items.map(i => ({
