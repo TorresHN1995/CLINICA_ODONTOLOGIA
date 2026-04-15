@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Limpiar datos en orden (respetando relaciones)
+    // Limpiar datos operativos en orden (respetando relaciones)
+    // NO se eliminan: configuracionEmpresa, correlativos, productosServicios
     const deletedData = {
       documentos: await prisma.documento.deleteMany({}),
       imagenes: await prisma.imagenClinica.deleteMany({}),
@@ -43,9 +44,6 @@ export async function POST(request: NextRequest) {
       movimientosInventario: await prisma.movimientoInventario.deleteMany({}),
       inventario: await prisma.inventario.deleteMany({}),
       estadisticas: await prisma.estadisticaOdontologo.deleteMany({}),
-      correlativo: await prisma.correlativo.deleteMany({}),
-      configuracionEmpresa: await prisma.configuracionEmpresa.deleteMany({}),
-      productoServicio: await prisma.productoServicio.deleteMany({}),
     }
 
     return NextResponse.json({

@@ -72,7 +72,7 @@ export async function PUT(
   }
 }
 
-// DELETE - Eliminar material
+// DELETE - Desactivar material (soft delete)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -83,8 +83,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    await prisma.inventario.delete({ where: { id: params.id } })
-    return NextResponse.json({ message: 'Material eliminado' })
+    const item = await prisma.inventario.update({
+      where: { id: params.id },
+      data: { activo: false },
+    })
+    return NextResponse.json(item)
   } catch (error) {
     console.error('Error al eliminar material:', error)
     return NextResponse.json(

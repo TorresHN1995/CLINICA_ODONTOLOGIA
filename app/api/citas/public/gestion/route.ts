@@ -1,20 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { z } from 'zod'
 import { addMinutes, format } from 'date-fns'
 
 const gestionSchema = z.object({
     accion: z.enum(['CANCELAR', 'REPROGRAMAR']),
     citaId: z.string(),
-    identificacion: z.string(),
-    // Cancelar
-    motivo: z.string().optional(),
-    // Reprogramar
+    identificacion: z.string().max(50),
+    motivo: z.string().max(2000).optional(),
     nuevaFecha: z.string().optional(),
     nuevaHora: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
+    // Rate limit: 10 gestiones por minuto por IP
+    const key = getRateLimitKey(request)
+    const { success } = rateLimit(`public-gestion:${key}`, 10, 60 * 1000)
+    if (!success) {
+        return NextResponse.json(
+            { error: 'Demasiadas solicitudes. Intente de nuevo en un momento.' },
+            { status: 429 }
+        )
+    }
+
     try {
         const body = await request.json()
         const data = gestionSchema.parse(body)

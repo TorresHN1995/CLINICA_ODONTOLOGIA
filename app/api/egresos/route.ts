@@ -6,7 +6,7 @@ import { registrarFlujoCaja } from '@/lib/flujo-caja'
 import { z } from 'zod'
 
 const egresoSchema = z.object({
-  concepto: z.string().min(1, 'Concepto requerido'),
+  concepto: z.string().min(1, 'Concepto requerido').max(500),
   categoria: z.enum([
     'MATERIALES_DENTALES',
     'INSTRUMENTAL',
@@ -31,9 +31,9 @@ const egresoSchema = z.object({
     'CHEQUE',
     'OTRO'
   ]),
-  proveedor: z.string().optional(),
-  numeroFactura: z.string().optional(),
-  observaciones: z.string().optional(),
+  proveedor: z.string().max(300).optional(),
+  numeroFactura: z.string().max(100).optional(),
+  observaciones: z.string().max(5000).optional(),
 })
 
 // GET - Obtener egresos

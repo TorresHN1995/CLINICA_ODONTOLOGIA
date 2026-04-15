@@ -6,17 +6,17 @@ import { z } from 'zod'
 import { CategoriaIngreso } from '@prisma/client'
 
 const itemFacturaSchema = z.object({
-  descripcion: z.string(),
+  descripcion: z.string().max(500),
   cantidad: z.number().positive(),
   precioUnitario: z.number().positive(),
 })
 
 const facturaSchema = z.object({
   pacienteId: z.string(),
-  items: z.array(itemFacturaSchema),
+  items: z.array(itemFacturaSchema).min(1, 'Debe incluir al menos un item'),
   descuento: z.number().min(0).default(0),
   impuesto: z.number().min(0).default(0),
-  observaciones: z.string().optional(),
+  observaciones: z.string().max(5000).optional(),
 })
 
 // GET - Obtener facturas
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const pacienteId = searchParams.get('pacienteId')
     const estado = searchParams.get('estado')
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
     const skip = (page - 1) * limit
 
     const where: any = {}
@@ -92,82 +92,81 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    // Extendemos el schema para incluir tipoDocumento
     const extendedSchema = facturaSchema.extend({
       tipoDocumento: z.enum(['FACTURA', 'ORDEN_PEDIDO']).default('FACTURA'),
     })
 
     const validatedData = extendedSchema.parse(body)
 
-    // 1. Buscar Correlativo Activo (solo para FACTURA)
-    let correlativo = null
-    let numeroFactura = ''
-
-    if (validatedData.tipoDocumento === 'FACTURA') {
-      correlativo = await prisma.correlativo.findFirst({
-        where: {
-          tipo: validatedData.tipoDocumento,
-          activo: true,
-          fechaLimite: { gte: new Date() }
-        },
-        orderBy: { createdAt: 'desc' }
-      })
-
-      if (!correlativo) {
-        return NextResponse.json(
-          { error: `No hay correlativo activo o disponible para ${validatedData.tipoDocumento}. Por favor configure uno en Ajustes.` },
-          { status: 400 }
-        )
-      }
-
-      if (correlativo.siguiente > correlativo.rangoFinal) {
-        return NextResponse.json(
-          { error: `El rango de facturación para ${validatedData.tipoDocumento} se ha agotado.` },
-          { status: 400 }
-        )
-      }
-
-      // 2. Generar Número SAR para FACTURA
-      const numeroActual = correlativo.siguiente
-      const numeroFormateado = String(numeroActual).padStart(8, '0')
-      numeroFactura = `${correlativo.sucursal}-${correlativo.puntoEmision}-${correlativo.tipoDoc}-${numeroFormateado}`
-    } else {
-      // Para ORDEN_PEDIDO, generar número simple sin correlativo SAR
-      const ultimaOrden = await prisma.factura.findFirst({
-        where: { tipoDocumento: 'ORDEN_PEDIDO' },
-        orderBy: { createdAt: 'desc' },
-        select: { numero: true }
-      })
-
-      let siguienteNumero = 1
-      if (ultimaOrden && ultimaOrden.numero) {
-        // Extraer el número de la última orden (formato: OP-00001)
-        const match = ultimaOrden.numero.match(/OP-(\d+)/)
-        if (match) {
-          siguienteNumero = parseInt(match[1]) + 1
-        }
-      }
-
-      numeroFactura = `OP-${String(siguienteNumero).padStart(5, '0')}`
+    // Verificar que el paciente esté activo
+    const paciente = await prisma.paciente.findUnique({
+      where: { id: validatedData.pacienteId },
+      select: { activo: true },
+    })
+    if (!paciente || !paciente.activo) {
+      return NextResponse.json(
+        { error: 'El paciente no existe o está inactivo' },
+        { status: 400 }
+      )
     }
 
-    // 3. Calcular totales
+    // Calcular totales
     const subtotal = validatedData.items.reduce(
       (sum, item) => sum + item.cantidad * item.precioUnitario,
       0
     )
     const total = subtotal - validatedData.descuento + validatedData.impuesto
 
-    // 4. Transacción: Crear Factura + Actualizar Correlativo (solo si es FACTURA)
+    // Todo dentro de una transacción para evitar race conditions
     const result = await prisma.$transaction(async (tx) => {
-      // Incrementar siguiente solo para FACTURA
-      if (correlativo) {
+      let correlativo = null
+      let numeroFactura = ''
+
+      if (validatedData.tipoDocumento === 'FACTURA') {
+        // Leer y bloquear correlativo dentro de la transacción
+        correlativo = await tx.correlativo.findFirst({
+          where: {
+            tipo: validatedData.tipoDocumento,
+            activo: true,
+            fechaLimite: { gte: new Date() },
+          },
+          orderBy: { createdAt: 'desc' },
+        })
+
+        if (!correlativo) {
+          throw new Error(`No hay correlativo activo o disponible para ${validatedData.tipoDocumento}. Por favor configure uno en Ajustes.`)
+        }
+
+        if (correlativo.siguiente > correlativo.rangoFinal) {
+          throw new Error(`El rango de facturación para ${validatedData.tipoDocumento} se ha agotado.`)
+        }
+
+        // Generar número SAR
+        const numeroActual = correlativo.siguiente
+        const numeroFormateado = String(numeroActual).padStart(8, '0')
+        numeroFactura = `${correlativo.sucursal}-${correlativo.puntoEmision}-${correlativo.tipoDoc}-${numeroFormateado}`
+
+        // Incrementar correlativo inmediatamente
         await tx.correlativo.update({
           where: { id: correlativo.id },
-          data: {
-            siguiente: { increment: 1 },
-          }
+          data: { siguiente: { increment: 1 } },
         })
+      } else {
+        // ORDEN_PEDIDO: generar número simple
+        const ultimaOrden = await tx.factura.findFirst({
+          where: { tipoDocumento: 'ORDEN_PEDIDO' },
+          orderBy: { createdAt: 'desc' },
+          select: { numero: true },
+        })
+
+        let siguienteNumero = 1
+        if (ultimaOrden && ultimaOrden.numero) {
+          const match = ultimaOrden.numero.match(/OP-(\d+)/)
+          if (match) {
+            siguienteNumero = parseInt(match[1]) + 1
+          }
+        }
+        numeroFactura = `OP-${String(siguienteNumero).padStart(5, '0')}`
       }
 
       // Crear factura
@@ -181,12 +180,9 @@ export async function POST(request: NextRequest) {
           impuesto: validatedData.impuesto,
           total,
           observaciones: validatedData.observaciones || null,
-
-          // Datos SAR (solo para FACTURA)
           tipoDocumento: validatedData.tipoDocumento,
           correlativoId: correlativo?.id || null,
           cai: correlativo?.cai || null,
-
           items: {
             create: validatedData.items.map(item => ({
               descripcion: item.descripcion,
@@ -203,20 +199,33 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      // Registrar ingreso dentro de la transacción
+      let categoria: CategoriaIngreso = 'OTROS_SERVICIOS'
+      const conceptoLower = (validatedData.items[0]?.descripcion || '').toLowerCase()
+      if (conceptoLower.includes('consulta')) categoria = 'CONSULTA'
+      else if (conceptoLower.includes('limpieza')) categoria = 'LIMPIEZA'
+      else if (conceptoLower.includes('extracción') || conceptoLower.includes('extraccion')) categoria = 'EXTRACCION'
+      else if (conceptoLower.includes('endodoncia')) categoria = 'ENDODONCIA'
+      else if (conceptoLower.includes('ortodoncia')) categoria = 'ORTODONCIA'
+      else if (conceptoLower.includes('prótesis') || conceptoLower.includes('protesis')) categoria = 'PROTESIS'
+      else if (conceptoLower.includes('cirugía') || conceptoLower.includes('cirugia')) categoria = 'CIRUGIA'
+      else if (conceptoLower.includes('control')) categoria = 'CONTROL'
+      else if (conceptoLower.includes('emergencia')) categoria = 'EMERGENCIA'
+      else if (conceptoLower.includes('material')) categoria = 'MATERIALES'
+
+      await tx.ingreso.create({
+        data: {
+          facturaId: factura.id,
+          concepto: validatedData.items[0]?.descripcion || 'Servicios',
+          categoria,
+          monto: total,
+          metodoPago: 'OTRO',
+          estado: 'REGISTRADO',
+        },
+      })
+
       return factura
     })
-
-    // Registrar ingreso automático (fuera de la transacción principal para no bloquear si falla el log de ingreso)
-    // Nota: Idealmente debería estar dentro, pero mantenemos lógica original de "try/catch" independiente
-    try {
-      await registrarIngreso(
-        result.id,
-        validatedData.items[0]?.descripcion || 'Servicios',
-        total
-      )
-    } catch (error) {
-      console.error('Error al registrar ingreso:', error)
-    }
 
     return NextResponse.json(result, { status: 201 })
   } catch (error) {
@@ -226,46 +235,14 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+    // Errores de negocio lanzados como Error dentro de la transacción
+    if (error instanceof Error && (error.message.includes('correlativo') || error.message.includes('rango'))) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
     console.error('Error al crear factura:', error)
     return NextResponse.json(
       { error: 'Error al crear factura' },
       { status: 500 }
     )
-  }
-}
-
-// Función auxiliar para registrar ingreso automático
-async function registrarIngreso(facturaId: string, concepto: string, monto: number) {
-  try {
-    // Determinar categoría basada en el concepto
-    // Importamos el enum implícitamente al usar las strings, pero para TS strict necesitamos type cast
-    let categoria: CategoriaIngreso = 'OTROS_SERVICIOS'
-    const conceptoLower = concepto.toLowerCase()
-
-    if (conceptoLower.includes('consulta')) categoria = 'CONSULTA'
-    else if (conceptoLower.includes('limpieza')) categoria = 'LIMPIEZA'
-    else if (conceptoLower.includes('extracción') || conceptoLower.includes('extraccion')) categoria = 'EXTRACCION'
-    else if (conceptoLower.includes('endodoncia')) categoria = 'ENDODONCIA'
-    else if (conceptoLower.includes('ortodoncia')) categoria = 'ORTODONCIA'
-    else if (conceptoLower.includes('prótesis') || conceptoLower.includes('protesis')) categoria = 'PROTESIS'
-    else if (conceptoLower.includes('cirugía') || conceptoLower.includes('cirugia')) categoria = 'CIRUGIA'
-    else if (conceptoLower.includes('control')) categoria = 'CONTROL'
-    else if (conceptoLower.includes('emergencia')) categoria = 'EMERGENCIA'
-    else if (conceptoLower.includes('material')) categoria = 'MATERIALES'
-
-    await prisma.ingreso.create({
-      data: {
-        facturaId,
-        concepto,
-        categoria: categoria,
-        monto,
-        // Se define método de pago genérico hasta que se registre el pago real
-        metodoPago: 'OTRO',
-        estado: 'REGISTRADO',
-      },
-    })
-  } catch (error) {
-    console.error('Error al registrar ingreso:', error)
-    throw error // Re-throw para que el caller sepa (aunque lo ignoramos arriba, es buena práctica)
   }
 }

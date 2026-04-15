@@ -28,7 +28,20 @@ export async function GET(request: NextRequest) {
       inventario,
       documentos,
     ] = await Promise.all([
-      prisma.usuario.findMany(),
+      prisma.usuario.findMany({
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          nombre: true,
+          apellido: true,
+          telefono: true,
+          rol: true,
+          activo: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
       prisma.paciente.findMany(),
       prisma.cita.findMany(),
       prisma.expediente.findMany(),

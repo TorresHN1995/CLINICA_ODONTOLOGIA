@@ -57,8 +57,15 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Nombre único seguro
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'bin'
+    // Nombre único seguro - derivar extensión del MIME type, no del nombre del archivo
+    const MIME_TO_EXT: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
+      'application/pdf': 'pdf',
+    }
+    const ext = MIME_TO_EXT[file.type] || 'bin'
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
     const filename = `upload-${uniqueSuffix}.${ext}`
 

@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { startOfDay } from 'date-fns'
 
 export async function GET(request: NextRequest) {
+    // Rate limit: 15 consultas por minuto por IP
+    const key = getRateLimitKey(request)
+    const { success } = rateLimit(`public-mis-citas:${key}`, 15, 60 * 1000)
+    if (!success) {
+        return NextResponse.json(
+            { error: 'Demasiadas solicitudes. Intente de nuevo en un momento.' },
+            { status: 429 }
+        )
+    }
+
     try {
         const { searchParams } = new URL(request.url)
         const identificacion = searchParams.get('identificacion')

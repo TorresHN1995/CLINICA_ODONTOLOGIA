@@ -5,18 +5,18 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 const etapaSchema = z.object({
-  nombre: z.string(),
-  descripcion: z.string().optional(),
+  nombre: z.string().max(200),
+  descripcion: z.string().max(5000).optional(),
   costo: z.number().positive(),
 })
 
 const tratamientoSchema = z.object({
   pacienteId: z.string(),
-  nombre: z.string().min(1),
-  descripcion: z.string(),
+  nombre: z.string().min(1).max(200),
+  descripcion: z.string().max(10000),
   fechaInicio: z.string().optional(),
-  observaciones: z.string().optional(),
-  etapas: z.array(etapaSchema),
+  observaciones: z.string().max(5000).optional(),
+  etapas: z.array(etapaSchema).min(1, 'Debe incluir al menos una etapa'),
 })
 
 // GET - Obtener tratamientos

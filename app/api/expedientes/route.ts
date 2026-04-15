@@ -6,11 +6,11 @@ import { z } from 'zod'
 
 const expedienteSchema = z.object({
   pacienteId: z.string(),
-  diagnostico: z.string().min(1, 'Diagnóstico requerido'),
-  tratamiento: z.string().min(1, 'Tratamiento requerido'),
-  evolucion: z.string().optional(),
+  diagnostico: z.string().min(1, 'Diagnóstico requerido').max(10000),
+  tratamiento: z.string().min(1, 'Tratamiento requerido').max(10000),
+  evolucion: z.string().max(10000).optional(),
   proximaCita: z.string().optional(),
-  odontograma: z.string().optional(),
+  odontograma: z.string().max(500000).optional(),
 })
 
 // GET - Obtener expedientes

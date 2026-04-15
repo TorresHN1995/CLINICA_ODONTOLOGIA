@@ -86,17 +86,17 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Eliminar etapas primero
-    await prisma.etapaTratamiento.deleteMany({
-      where: { tratamientoId: params.id },
-    })
-
-    // Luego eliminar tratamiento
-    await prisma.tratamiento.delete({
+    // Soft delete: cambiar estado a CANCELADO en lugar de eliminar
+    const tratamiento = await prisma.tratamiento.update({
       where: { id: params.id },
+      data: { estado: 'CANCELADO' },
+      include: {
+        paciente: true,
+        etapas: { orderBy: { orden: 'asc' } },
+      },
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json(tratamiento)
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 })

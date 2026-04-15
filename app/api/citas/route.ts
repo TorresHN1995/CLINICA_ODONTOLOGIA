@@ -8,9 +8,9 @@ const citaSchema = z.object({
   pacienteId: z.string(),
   odontologoId: z.string(),
   fecha: z.string(),
-  horaInicio: z.string(),
-  horaFin: z.string(),
-  duracion: z.number(),
+  horaInicio: z.string().regex(/^\d{2}:\d{2}$/, 'Formato de hora inválido (HH:mm)'),
+  horaFin: z.string().regex(/^\d{2}:\d{2}$/, 'Formato de hora inválido (HH:mm)'),
+  duracion: z.number().int().positive('Duración debe ser positiva'),
   tipoCita: z.enum([
     'CONSULTA',
     'LIMPIEZA',
@@ -23,8 +23,8 @@ const citaSchema = z.object({
     'EMERGENCIA',
     'OTRO'
   ]),
-  motivo: z.string().optional(),
-  observaciones: z.string().optional(),
+  motivo: z.string().max(2000).optional(),
+  observaciones: z.string().max(5000).optional(),
 })
 
 // GET - Obtener citas
@@ -122,6 +122,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = citaSchema.parse(body)
 
+    // Verificar que el paciente esté activo
+    const paciente = await prisma.paciente.findUnique({
+      where: { id: validatedData.pacienteId },
+      select: { activo: true },
+    })
+    if (!paciente || !paciente.activo) {
+      return NextResponse.json(
+        { error: 'El paciente no existe o está inactivo' },
+        { status: 400 }
+      )
+    }
+
+    // Función auxiliar para convertir hora a minutos
+    const horaAMinutos = (hora: string) => {
+      const [h, m] = hora.split(':').map(Number)
+      return h * 60 + m
+    }
+
     // Verificar que no haya conflictos de horario
     const citasExistentes = await prisma.cita.findMany({
       where: {
@@ -133,12 +151,12 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const horaInicioNueva = parseInt(validatedData.horaInicio.replace(':', ''))
-    const horaFinNueva = parseInt(validatedData.horaFin.replace(':', ''))
+    const horaInicioNueva = horaAMinutos(validatedData.horaInicio)
+    const horaFinNueva = horaAMinutos(validatedData.horaFin)
 
     for (const cita of citasExistentes) {
-      const horaInicioCita = parseInt(cita.horaInicio.replace(':', ''))
-      const horaFinCita = parseInt(cita.horaFin.replace(':', ''))
+      const horaInicioCita = horaAMinutos(cita.horaInicio)
+      const horaFinCita = horaAMinutos(cita.horaFin)
 
       if (
         (horaInicioNueva >= horaInicioCita && horaInicioNueva < horaFinCita) ||

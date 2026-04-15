@@ -46,6 +46,20 @@ export async function POST(
       )
     }
 
+    if (factura.estado === 'ANULADA') {
+      return NextResponse.json(
+        { error: 'No se pueden registrar pagos en una factura anulada' },
+        { status: 400 }
+      )
+    }
+
+    if (factura.estado === 'PAGADA') {
+      return NextResponse.json(
+        { error: 'La factura ya está completamente pagada' },
+        { status: 400 }
+      )
+    }
+
     // Calcular total pagado
     const totalPagado = factura.pagos.reduce(
       (sum, pago) => sum + Number(pago.monto),

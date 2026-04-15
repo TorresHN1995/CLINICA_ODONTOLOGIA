@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { registrarFlujoCaja } from '@/lib/flujo-caja'
 import { z } from 'zod'
 
 // GET - Obtener factura por ID
@@ -78,6 +79,27 @@ export async function PUT(
 
     if (validated.estado) {
       dataUpdate.estado = validated.estado
+
+      // Si se anula la factura, anular el ingreso asociado y registrar contra-asiento
+      if (validated.estado === 'ANULADA') {
+        try {
+          const ingreso = await prisma.ingreso.findUnique({
+            where: { facturaId: params.id },
+          })
+          if (ingreso) {
+            await prisma.ingreso.delete({ where: { id: ingreso.id } })
+          }
+          // Registrar contra-asiento en flujo de caja
+          await registrarFlujoCaja(
+            'AJUSTE',
+            `Anulación factura ${facturaActual.numero}`,
+            Number(facturaActual.total),
+            params.id
+          )
+        } catch (e) {
+          console.error('Error al anular ingreso/flujo:', e)
+        }
+      }
     }
     if (validated.observaciones !== undefined) {
       dataUpdate.observaciones = validated.observaciones || null

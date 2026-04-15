@@ -5,22 +5,25 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 const pacienteSchema = z.object({
-  identificacion: z.string().min(1),
-  nombre: z.string().min(1),
-  apellido: z.string().min(1),
-  fechaNacimiento: z.string(),
-  email: z.string().email().optional().or(z.literal('')),
-  telefono: z.string().min(1),
-  celular: z.string().optional(),
-  direccion: z.string().optional(),
-  ciudad: z.string().optional(),
-  ocupacion: z.string().optional(),
-  contactoEmergencia: z.string().optional(),
-  telefonoEmergencia: z.string().optional(),
-  alergias: z.string().optional(),
-  medicamentos: z.string().optional(),
-  enfermedades: z.string().optional(),
-  observaciones: z.string().optional(),
+  identificacion: z.string().min(1).max(50),
+  nombre: z.string().min(1).max(100),
+  apellido: z.string().min(1).max(100),
+  fechaNacimiento: z.string().refine((val) => {
+    const date = new Date(val)
+    return !isNaN(date.getTime()) && date < new Date()
+  }, 'Fecha de nacimiento inválida o futura'),
+  email: z.string().email().max(200).optional().or(z.literal('')),
+  telefono: z.string().min(1).max(30),
+  celular: z.string().max(30).optional(),
+  direccion: z.string().max(300).optional(),
+  ciudad: z.string().max(100).optional(),
+  ocupacion: z.string().max(100).optional(),
+  contactoEmergencia: z.string().max(200).optional(),
+  telefonoEmergencia: z.string().max(30).optional(),
+  alergias: z.string().max(2000).optional(),
+  medicamentos: z.string().max(2000).optional(),
+  enfermedades: z.string().max(2000).optional(),
+  observaciones: z.string().max(5000).optional(),
 })
 
 // GET - Obtener un paciente por ID

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { registrarFlujoCaja } from '@/lib/flujo-caja'
 import { z } from 'zod'
 
 const egresoUpdateSchema = z.object({
@@ -81,9 +82,30 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
+    // Obtener egreso antes de eliminar para registrar contra-asiento
+    const egreso = await prisma.egreso.findUnique({
+      where: { id: params.id },
+    })
+
+    if (!egreso) {
+      return NextResponse.json({ error: 'Egreso no encontrado' }, { status: 404 })
+    }
+
     await prisma.egreso.delete({
       where: { id: params.id },
     })
+
+    // Registrar contra-asiento en flujo de caja
+    try {
+      await registrarFlujoCaja(
+        'AJUSTE',
+        `Eliminación egreso: ${egreso.concepto}`,
+        Number(egreso.monto),
+        params.id
+      )
+    } catch (e) {
+      console.error('Error al registrar contra-asiento:', e)
+    }
 
     return NextResponse.json({ message: 'Egreso eliminado' })
   } catch (error) {
