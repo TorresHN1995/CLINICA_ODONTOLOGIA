@@ -245,23 +245,28 @@ export default function ReportesPage() {
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={Object.entries(reporteFinanciero.facturas.montosPorEstado).map(([name, value]) => ({
-                        name: name.charAt(0).toUpperCase() + name.slice(1),
-                        value: parseFloat(value.toString())
-                      }))}
+                      data={Object.entries(reporteFinanciero.facturas.montosPorEstado)
+                        .filter(([, value]) => parseFloat(value.toString()) > 0)
+                        .map(([name, value]) => ({
+                          name: name.charAt(0).toUpperCase() + name.slice(1),
+                          value: parseFloat(value.toString())
+                        }))}
                       cx="50%"
                       cy="50%"
-                      labelLine={false}
-                      label={({ name, value }) => `${name}: L. ${value.toFixed(0)}`}
+                      labelLine={true}
+                      label={({ name, value, percent }) => `${name}: L. ${value.toFixed(0)}`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {COLORS.map((color, index) => (
-                        <Cell key={`cell-${index}`} fill={color} />
-                      ))}
+                      {Object.entries(reporteFinanciero.facturas.montosPorEstado)
+                        .filter(([, value]) => parseFloat(value.toString()) > 0)
+                        .map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
                     </Pie>
                     <Tooltip formatter={(value) => `L. ${typeof value === 'number' ? value.toFixed(2) : value}`} />
+                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -271,13 +276,18 @@ export default function ReportesPage() {
                 <h3 className="text-lg font-bold text-slate-900 mb-4">Métodos de Pago</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={Object.entries(reporteFinanciero.pagos.metodosPago).map(([name, value]) => ({
-                    name,
+                    name: name.replace(/_/g, ' '),
                     valor: parseFloat(value.toString())
                   }))}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
+                    <XAxis dataKey="name" angle={-25} textAnchor="end" height={60} tick={{ fontSize: 12 }} />
+                    <YAxis tickFormatter={(value) => `L.${value}`} />
                     <Tooltip formatter={(value) => `L. ${typeof value === 'number' ? value.toFixed(2) : value}`} />
+                    <Bar dataKey="valor" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                      {Object.entries(reporteFinanciero.pagos.metodosPago).map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -457,23 +467,28 @@ export default function ReportesPage() {
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={Object.entries(reporteClinico.tratamientos.porEstado).map(([name, value]) => ({
-                        name: name.charAt(0).toUpperCase() + name.slice(1),
-                        value
-                      }))}
+                      data={Object.entries(reporteClinico.tratamientos.porEstado)
+                        .filter(([, value]) => value > 0)
+                        .map(([name, value]) => ({
+                          name: name.charAt(0).toUpperCase() + name.slice(1),
+                          value
+                        }))}
                       cx="50%"
                       cy="50%"
-                      labelLine={false}
+                      labelLine={true}
                       label={({ name, value }) => `${name}: ${value}`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {COLORS.map((color, index) => (
-                        <Cell key={`cell-${index}`} fill={color} />
-                      ))}
+                      {Object.entries(reporteClinico.tratamientos.porEstado)
+                        .filter(([, value]) => value > 0)
+                        .map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
                     </Pie>
                     <Tooltip />
+                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
