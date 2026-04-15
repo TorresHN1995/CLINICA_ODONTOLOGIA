@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { registrarFlujoCaja } from '@/lib/flujo-caja'
+import { EstadoFactura } from '@prisma/client'
 import { z } from 'zod'
 
 const pagoSchema = z.object({
@@ -86,7 +87,7 @@ export async function POST(
     })
 
     // Actualizar estado de factura
-    let nuevoEstado = factura.estado
+    let nuevoEstado: EstadoFactura = factura.estado
     if (nuevoTotal >= Number(factura.total)) {
       nuevoEstado = 'PAGADA'
     } else if (nuevoTotal > 0) {
