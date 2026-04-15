@@ -11,6 +11,7 @@ const productoSchema = z.object({
   tipo: z.enum(['PRODUCTO', 'SERVICIO']),
   precio: z.number().positive('El precio debe ser mayor a 0'),
   isv: z.number().min(0).max(100).default(15),
+  inventarioId: z.string().nullable().optional(),
 })
 
 // GET - Listar productos/servicios
@@ -39,6 +40,11 @@ export async function GET(request: NextRequest) {
 
     const productos = await prisma.productoServicio.findMany({
       where,
+      include: {
+        inventario: {
+          select: { id: true, nombre: true, stock: true, stockMinimo: true, unidadMedida: true },
+        },
+      },
       orderBy: [{ nombre: 'asc' }],
     })
 
@@ -65,7 +71,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Ya existe un producto con ese código' }, { status: 400 })
     }
 
-    const producto = await prisma.productoServicio.create({ data: validated })
+    const producto = await prisma.productoServicio.create({
+      data: {
+        ...validated,
+        inventarioId: validated.inventarioId || null,
+      },
+      include: {
+        inventario: {
+          select: { id: true, nombre: true, stock: true, stockMinimo: true, unidadMedida: true },
+        },
+      },
+    })
     return NextResponse.json(producto, { status: 201 })
   } catch (error: any) {
     if (error.name === 'ZodError') {

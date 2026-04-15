@@ -9,6 +9,7 @@ const itemFacturaSchema = z.object({
   descripcion: z.string().max(500),
   cantidad: z.number().positive(),
   precioUnitario: z.number().positive(),
+  productoId: z.string().optional(),
 })
 
 const facturaSchema = z.object({
@@ -224,6 +225,45 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      // Descontar stock de inventario para productos vinculados
+      for (const item of validatedData.items) {
+        if (item.productoId) {
+          const producto = await tx.productoServicio.findUnique({
+            where: { id: item.productoId },
+            select: { inventarioId: true, tipo: true },
+          })
+
+          if (producto?.inventarioId && producto.tipo === 'PRODUCTO') {
+            const inventario = await tx.inventario.findUnique({
+              where: { id: producto.inventarioId },
+              select: { stock: true },
+            })
+
+            if (inventario) {
+              const nuevoStock = inventario.stock - item.cantidad
+              if (nuevoStock < 0) {
+                throw new Error(`Stock insuficiente para "${item.descripcion}". Disponible: ${inventario.stock}`)
+              }
+
+              await tx.inventario.update({
+                where: { id: producto.inventarioId },
+                data: { stock: nuevoStock },
+              })
+
+              await tx.movimientoInventario.create({
+                data: {
+                  inventarioId: producto.inventarioId,
+                  tipo: 'SALIDA',
+                  cantidad: item.cantidad,
+                  motivo: `Factura ${factura.numero}`,
+                  responsable: session.user.id,
+                },
+              })
+            }
+          }
+        }
+      }
+
       return factura
     })
 
@@ -236,7 +276,7 @@ export async function POST(request: NextRequest) {
       )
     }
     // Errores de negocio lanzados como Error dentro de la transacción
-    if (error instanceof Error && (error.message.includes('correlativo') || error.message.includes('rango'))) {
+    if (error instanceof Error && (error.message.includes('correlativo') || error.message.includes('rango') || error.message.includes('Stock insuficiente'))) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
     console.error('Error al crear factura:', error)

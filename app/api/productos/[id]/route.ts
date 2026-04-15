@@ -12,6 +12,7 @@ const updateSchema = z.object({
   precio: z.number().positive().optional(),
   isv: z.number().min(0).max(100).optional(),
   activo: z.boolean().optional(),
+  inventarioId: z.string().nullable().optional(),
 })
 
 // PUT - Actualizar producto/servicio

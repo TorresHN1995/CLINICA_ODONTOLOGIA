@@ -357,6 +357,7 @@ model Inventario {
 
   // Relaciones
   movimientos   MovimientoInventario[]
+  productos     ProductoServicio[]
 
   @@map("inventario")
 }
@@ -580,12 +581,17 @@ model ProductoServicio {
   tipo          TipoProductoServicio
   precio        Decimal  @db.Decimal(10, 2) // Precio con impuesto incluido
   isv           Decimal  @default(15) @db.Decimal(5, 2) // Porcentaje de ISV
+  inventarioId  String?  // Vínculo opcional con inventario
   activo        Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Relaciones
+  inventario    Inventario? @relation(fields: [inventarioId], references: [id])
+
   @@index([tipo])
   @@index([nombre])
+  @@index([inventarioId])
   @@map("productos_servicios")
 }
 
