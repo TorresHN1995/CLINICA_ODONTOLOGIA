@@ -25,6 +25,17 @@ export async function GET(
         emitente: { select: { nombre: true, apellido: true } },
         items: true,
         pagos: true,
+        correlativo: {
+          select: {
+            cai: true,
+            sucursal: true,
+            puntoEmision: true,
+            tipoDoc: true,
+            rangoInicial: true,
+            rangoFinal: true,
+            fechaLimite: true,
+          },
+        },
       },
     })
 

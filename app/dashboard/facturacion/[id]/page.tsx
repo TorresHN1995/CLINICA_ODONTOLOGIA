@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
-import { ArrowLeft, DollarSign, Save, Loader2, X, CreditCard, CheckCircle, Clock, Download, FileText, Image } from 'lucide-react'
+import { ArrowLeft, DollarSign, Save, Loader2, X, CreditCard, CheckCircle, Clock, Download, FileText, Image, Printer } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useConfiguracion } from '@/components/providers/ConfiguracionProvider'
-import { generarTicketFactura } from '@/lib/generar-ticket-factura'
+import { generarTicketFactura, imprimirTicketFactura } from '@/lib/generar-ticket-factura'
 
 interface Params {
   params: { id: string }
@@ -47,9 +47,21 @@ interface FacturaDetalle {
   total: number
   estado: 'PENDIENTE' | 'PAGADA_PARCIAL' | 'PAGADA' | 'ANULADA'
   observaciones: string | null
+  tipoDocumento?: string
+  cai?: string | null
   paciente: PacienteInfo
+  emitente?: { nombre: string; apellido: string } | null
   items: FacturaItem[]
   pagos: PagoItem[]
+  correlativo?: {
+    cai?: string | null
+    sucursal?: string
+    puntoEmision?: string
+    tipoDoc?: string
+    rangoInicial?: number
+    rangoFinal?: number
+    fechaLimite?: string
+  } | null
 }
 
 export default function FacturaDetallePage({ params }: Params) {
@@ -75,44 +87,77 @@ export default function FacturaDetallePage({ params }: Params) {
     return { nombre: 'Clínica Dental' }
   }
 
-  const generarTicket = async (formato: 'pdf' | 'png') => {
-    if (!factura) return
-    setShowTicketModal(false)
-    const toastId = toast.loading('Generando ticket...')
-    try {
-      const empresa = await obtenerEmpresa()
-      await generarTicketFactura({
-        empresa,
-        factura: {
-          numero: factura.numero,
-          fecha: format(new Date(factura.fecha), 'dd/MM/yyyy', { locale: es }),
-          paciente: factura.paciente,
-          items: factura.items.map(i => ({
-            descripcion: i.descripcion,
-            cantidad: i.cantidad,
-            precioUnitario: Number(i.precioUnitario),
-            subtotal: Number(i.subtotal),
-          })),
-          subtotal: Number(factura.subtotal),
-          descuento: Number(factura.descuento),
-          impuesto: Number(factura.impuesto),
-          total: Number(factura.total),
-          estado: factura.estado,
-        },
-        pagos: factura.pagos.map(p => ({
-          monto: Number(p.monto),
-          metodoPago: p.metodoPago,
-          referencia: p.referencia,
-          fecha: format(new Date(p.fecha), 'dd/MM/yyyy HH:mm', { locale: es }),
+  const [empresaCache] = useState<any>({ nombre: 'Clínica Dental' })
+
+  const buildTicketOpts = (tipo: 'pago' | 'pendiente') => {
+    if (!factura) return null
+    return {
+      empresa: empresaCache,
+      factura: {
+        numero: factura.numero,
+        fecha: format(new Date(factura.fecha), 'dd/MM/yyyy', { locale: es }),
+        tipoDocumento: factura.tipoDocumento,
+        cai: factura.cai,
+        paciente: factura.paciente,
+        emitente: factura.emitente,
+        items: factura.items.map(i => ({
+          descripcion: i.descripcion,
+          cantidad: i.cantidad,
+          precioUnitario: Number(i.precioUnitario),
+          subtotal: Number(i.subtotal),
         })),
-        totalPagado,
-        saldoPendiente: saldo,
-        tipo: ticketTipo,
-      }, formato)
-      toast.success(`Ticket generado en ${formato.toUpperCase()}`, { id: toastId })
+        subtotal: Number(factura.subtotal),
+        descuento: Number(factura.descuento),
+        impuesto: Number(factura.impuesto),
+        total: Number(factura.total),
+        estado: factura.estado,
+        correlativo: factura.correlativo,
+      },
+      pagos: factura.pagos.map(p => ({
+        monto: Number(p.monto),
+        metodoPago: p.metodoPago,
+        referencia: p.referencia,
+        fecha: format(new Date(p.fecha), 'dd/MM/yyyy HH:mm', { locale: es }),
+      })),
+      totalPagado,
+      saldoPendiente: saldo,
+      tipo,
+    }
+  }
+
+  const generarTicket = async (formato: 'pdf' | 'png') => {
+    const opts = buildTicketOpts(ticketTipo)
+    if (!opts) return
+    setShowTicketModal(false)
+    const toastId = toast.loading('Generando factura...')
+    try {
+      if (!empresaCache.nombre || empresaCache.nombre === 'Clínica Dental') {
+        const emp = await obtenerEmpresa()
+        Object.assign(empresaCache, emp)
+        opts.empresa = empresaCache
+      }
+      await generarTicketFactura(opts, formato)
+      toast.success(`Factura generada en ${formato.toUpperCase()}`, { id: toastId })
     } catch (error) {
-      console.error('Error generando ticket:', error)
-      toast.error('Error al generar ticket', { id: toastId })
+      console.error('Error generando factura:', error)
+      toast.error('Error al generar factura', { id: toastId })
+    }
+  }
+
+  const imprimirTicket = async () => {
+    const opts = buildTicketOpts(ticketTipo)
+    if (!opts) return
+    setShowTicketModal(false)
+    try {
+      if (!empresaCache.nombre || empresaCache.nombre === 'Clínica Dental') {
+        const emp = await obtenerEmpresa()
+        Object.assign(empresaCache, emp)
+        opts.empresa = empresaCache
+      }
+      await imprimirTicketFactura(opts)
+    } catch (error) {
+      console.error('Error imprimiendo:', error)
+      toast.error('Error al imprimir. Verifique que los popups estén permitidos.')
     }
   }
 
@@ -246,6 +291,13 @@ export default function FacturaDetallePage({ params }: Params) {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => mostrarTicketModal(saldo > 0 ? 'pendiente' : 'pago')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              Imprimir
+            </button>
             {saldo > 0 && (
               <button
                 onClick={() => setShowPagoModal(true)}
@@ -523,13 +575,23 @@ export default function FacturaDetallePage({ params }: Params) {
 
             <div className="p-6 space-y-3">
               <button
+                onClick={() => imprimirTicket()}
+                className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-3"
+              >
+                <Printer className="w-5 h-5" />
+                <div className="text-left">
+                  <div className="font-semibold">Imprimir Factura</div>
+                  <div className="text-xs text-blue-200">Enviar a impresora directamente</div>
+                </div>
+              </button>
+              <button
                 onClick={() => generarTicket('pdf')}
                 className="w-full px-4 py-3 border-2 border-border rounded-lg hover:bg-muted transition-colors flex items-center gap-3"
               >
                 <FileText className="w-5 h-5 text-red-500" />
                 <div className="text-left">
                   <div className="font-semibold text-foreground">Descargar PDF</div>
-                  <div className="text-xs text-muted-foreground">Formato para imprimir</div>
+                  <div className="text-xs text-muted-foreground">Guardar como archivo</div>
                 </div>
               </button>
               <button
