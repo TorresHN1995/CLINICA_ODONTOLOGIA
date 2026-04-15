@@ -8,7 +8,7 @@ import { ArrowLeft, DollarSign, Save, Loader2, X, CreditCard, CheckCircle, Clock
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useConfiguracion } from '@/components/providers/ConfiguracionProvider'
-import { generarTicketFactura, imprimirTicketFactura } from '@/lib/generar-ticket-factura'
+import { generarTicketFactura, imprimirTicketFactura, type TamanoTicket } from '@/lib/generar-ticket-factura'
 
 interface Params {
   params: { id: string }
@@ -78,6 +78,7 @@ export default function FacturaDetallePage({ params }: Params) {
   const [showPagoModal, setShowPagoModal] = useState(false)
   const [showTicketModal, setShowTicketModal] = useState(false)
   const [ticketTipo, setTicketTipo] = useState<'pago' | 'pendiente'>('pago')
+  const [tamanoTicket, setTamanoTicket] = useState<TamanoTicket>('carta')
 
   const obtenerEmpresa = async () => {
     try {
@@ -136,7 +137,7 @@ export default function FacturaDetallePage({ params }: Params) {
         Object.assign(empresaCache, emp)
         opts.empresa = empresaCache
       }
-      await generarTicketFactura(opts, formato)
+      await generarTicketFactura(opts, formato, tamanoTicket)
       toast.success(`Factura generada en ${formato.toUpperCase()}`, { id: toastId })
     } catch (error) {
       console.error('Error generando factura:', error)
@@ -154,7 +155,7 @@ export default function FacturaDetallePage({ params }: Params) {
         Object.assign(empresaCache, emp)
         opts.empresa = empresaCache
       }
-      await imprimirTicketFactura(opts)
+      await imprimirTicketFactura(opts, tamanoTicket)
     } catch (error) {
       console.error('Error imprimiendo:', error)
       toast.error('Error al imprimir. Verifique que los popups estén permitidos.')
@@ -570,10 +571,33 @@ export default function FacturaDetallePage({ params }: Params) {
               <h2 className="text-lg font-bold text-white">
                 {ticketTipo === 'pago' ? 'Pago Registrado' : 'Cuenta Pendiente'}
               </h2>
-              <p className="text-sm text-white/80 mt-1">¿Desea generar un ticket para el cliente?</p>
+              <p className="text-sm text-white/80 mt-1">Seleccione formato y tamaño</p>
             </div>
 
             <div className="p-6 space-y-3">
+              {/* Selector de tamaño */}
+              <div className="flex gap-2 p-1 bg-muted rounded-lg mb-4">
+                <button
+                  onClick={() => setTamanoTicket('carta')}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-colors ${
+                    tamanoTicket === 'carta'
+                      ? 'bg-white text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  📄 Tamaño Carta
+                </button>
+                <button
+                  onClick={() => setTamanoTicket('ticket')}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-colors ${
+                    tamanoTicket === 'ticket'
+                      ? 'bg-white text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  🧾 Ticket 80mm
+                </button>
+              </div>
               <button
                 onClick={() => imprimirTicket()}
                 className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-3"
