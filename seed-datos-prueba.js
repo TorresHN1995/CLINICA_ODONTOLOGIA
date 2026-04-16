@@ -195,7 +195,6 @@ async function main() {
   // ── 6. Citas ─────────────────────────────────────────────
   console.log('\n📅 CITAS');
   const citasData = [
-    // Citas pasadas (completadas)
     { pacIdx: 0, odIdx: 0, dias: -15, hora: '09:00', fin: '09:30', dur: 30, tipo: 'CONSULTA', estado: 'COMPLETADA', motivo: 'Revisión general y diagnóstico inicial' },
     { pacIdx: 1, odIdx: 1, dias: -12, hora: '10:00', fin: '11:00', dur: 60, tipo: 'LIMPIEZA', estado: 'COMPLETADA', motivo: 'Profilaxis dental semestral' },
     { pacIdx: 2, odIdx: 0, dias: -10, hora: '14:00', fin: '15:00', dur: 60, tipo: 'EXTRACCION', estado: 'COMPLETADA', motivo: 'Extracción de tercer molar inferior derecho' },
@@ -203,11 +202,9 @@ async function main() {
     { pacIdx: 4, odIdx: 1, dias: -5, hora: '11:00', fin: '12:00', dur: 60, tipo: 'ENDODONCIA', estado: 'COMPLETADA', motivo: 'Tratamiento de conducto pieza 36' },
     { pacIdx: 5, odIdx: 0, dias: -3, hora: '15:00', fin: '15:30', dur: 30, tipo: 'CONTROL', estado: 'COMPLETADA', motivo: 'Control post-extracción' },
     { pacIdx: 6, odIdx: 2, dias: -2, hora: '09:00', fin: '10:00', dur: 60, tipo: 'CONSULTA', estado: 'NO_ASISTIO', motivo: 'Evaluación para prótesis' },
-    // Citas de hoy
     { pacIdx: 0, odIdx: 0, dias: 0, hora: '09:00', fin: '10:00', dur: 60, tipo: 'ENDODONCIA', estado: 'PROGRAMADA', motivo: 'Inicio de endodoncia pieza 16' },
     { pacIdx: 7, odIdx: 1, dias: 0, hora: '10:00', fin: '10:30', dur: 30, tipo: 'CONSULTA', estado: 'CONFIRMADA', motivo: 'Primera consulta' },
     { pacIdx: 8, odIdx: 2, dias: 0, hora: '11:00', fin: '12:00', dur: 60, tipo: 'LIMPIEZA', estado: 'PROGRAMADA', motivo: 'Limpieza dental de rutina' },
-    // Citas futuras
     { pacIdx: 1, odIdx: 0, dias: 1, hora: '09:00', fin: '10:30', dur: 90, tipo: 'ENDODONCIA', estado: 'PROGRAMADA', motivo: 'Tratamiento de conducto pieza 26' },
     { pacIdx: 3, odIdx: 2, dias: 2, hora: '14:00', fin: '15:00', dur: 60, tipo: 'PROTESIS', estado: 'PROGRAMADA', motivo: 'Toma de impresión para corona' },
     { pacIdx: 9, odIdx: 1, dias: 3, hora: '08:30', fin: '09:30', dur: 60, tipo: 'CONSULTA', estado: 'PROGRAMADA', motivo: 'Evaluación integral, paciente nueva' },
@@ -303,7 +300,6 @@ async function main() {
   }
   console.log(`  ✓ ${procCreados} procedimientos creados`);
 
-
   // ── 9. Tratamientos con Etapas ───────────────────────────
   console.log('\n🦷 TRATAMIENTOS');
   const tratamientosData = [
@@ -381,7 +377,31 @@ async function main() {
     }
   }
 
-  // ── 10. Facturas con Items y Pagos ───────────────────────
+
+  // ── 10. Correlativo SAR (ANTES de facturas) ──────────────
+  console.log('\n🔢 CORRELATIVOS SAR');
+  let correlativoSAR = await prisma.correlativo.findFirst({ where: { activo: true, tipo: 'FACTURA' } });
+  if (!correlativoSAR) {
+    correlativoSAR = await prisma.correlativo.create({
+      data: {
+        tipo: 'FACTURA',
+        cai: 'A1B2C3-D4E5F6-G7H8I9-J0K1L2-M3N4O5-P6',
+        sucursal: '000',
+        puntoEmision: '001',
+        tipoDoc: '01',
+        rangoInicial: 1,
+        rangoFinal: 5000,
+        siguiente: 1,
+        fechaLimite: diasDesdeHoy(365),
+        activo: true,
+      },
+    });
+    console.log('  ✓ Correlativo SAR para facturas creado');
+  } else {
+    console.log('  ⏭  Correlativo SAR ya existe');
+  }
+
+  // ── 11. Facturas con Items, Pagos y Correlativo SAR ──────
   console.log('\n💰 FACTURAS');
   const facturasData = [
     { pacIdx: 0, items: [{ desc: 'Consulta General', cant: 1, precio: 300 }, { desc: 'Radiografía Periapical', cant: 2, precio: 150 }], estado: 'PAGADA', metodo: 'EFECTIVO', descuento: 0 },
@@ -394,13 +414,8 @@ async function main() {
     { pacIdx: 9, items: [{ desc: 'Consulta General', cant: 1, precio: 300 }, { desc: 'Placa Oclusal', cant: 1, precio: 1800 }], estado: 'PAGADA_PARCIAL', metodo: 'TARJETA_DEBITO', descuento: 100 },
   ];
 
-  let factNum = 1;
-  // Buscar el último número de factura existente
-  const ultimaFactura = await prisma.factura.findFirst({ orderBy: { createdAt: 'desc' } });
-  if (ultimaFactura) {
-    const match = ultimaFactura.numero.match(/(\d+)$/);
-    if (match) factNum = parseInt(match[1]) + 1;
-  }
+  // Determinar siguiente número del correlativo
+  let factNum = correlativoSAR.siguiente;
 
   for (const f of facturasData) {
     const existeFactura = await prisma.factura.findFirst({
@@ -415,7 +430,11 @@ async function main() {
     const subtotal = items.reduce((s, i) => s + i.subtotal, 0);
     const impuesto = (subtotal - f.descuento) * 0.15;
     const total = subtotal - f.descuento + impuesto;
-    const numero = `FAC-${String(factNum++).padStart(6, '0')}`;
+
+    // Generar número SAR con formato correcto
+    const numeroFormateado = String(factNum).padStart(8, '0');
+    const numero = `${correlativoSAR.sucursal}-${correlativoSAR.puntoEmision}-${correlativoSAR.tipoDoc}-${numeroFormateado}`;
+    factNum++;
 
     const pagos = [];
     if (f.estado === 'PAGADA') {
@@ -427,10 +446,19 @@ async function main() {
 
     await prisma.factura.create({
       data: {
-        numero, pacienteId: pacientes[f.pacIdx].id, emitenteId: admin.id,
-        subtotal, descuento: f.descuento, impuesto: Math.round(impuesto * 100) / 100, total: Math.round(total * 100) / 100,
-        estado: f.estado, metodoPago: f.metodo,
+        numero,
+        pacienteId: pacientes[f.pacIdx].id,
+        emitenteId: admin.id,
+        subtotal,
+        descuento: f.descuento,
+        impuesto: Math.round(impuesto * 100) / 100,
+        total: Math.round(total * 100) / 100,
+        estado: f.estado,
+        metodoPago: f.metodo,
         fecha: diasAtras(Math.floor(Math.random() * 20)),
+        tipoDocumento: 'FACTURA',
+        cai: correlativoSAR.cai,
+        correlativoId: correlativoSAR.id,
         items: { create: items },
         pagos: pagos.length > 0 ? { create: pagos } : undefined,
       },
@@ -438,8 +466,14 @@ async function main() {
     console.log(`  ✓ ${numero} — ${pacientes[f.pacIdx].nombre} — L.${Math.round(total * 100) / 100} (${f.estado})`);
   }
 
+  // Actualizar el correlativo con el siguiente número
+  await prisma.correlativo.update({
+    where: { id: correlativoSAR.id },
+    data: { siguiente: factNum },
+  });
+  console.log(`  ✓ Correlativo SAR actualizado (siguiente: ${factNum})`);
 
-  // ── 11. Ingresos ─────────────────────────────────────────
+  // ── 12. Ingresos ─────────────────────────────────────────
   console.log('\n📈 INGRESOS');
   const facturasPagadas = await prisma.factura.findMany({
     where: { estado: { in: ['PAGADA', 'PAGADA_PARCIAL'] } },
@@ -464,7 +498,7 @@ async function main() {
   }
   console.log(`  ✓ ${ingresosCreados} ingresos registrados`);
 
-  // ── 12. Egresos ──────────────────────────────────────────
+  // ── 13. Egresos ──────────────────────────────────────────
   console.log('\n📉 EGRESOS');
   const egresosData = [
     { concepto: 'Compra de resinas y materiales restauradores', categoria: 'MATERIALES_DENTALES', monto: 4500.00, metodo: 'TRANSFERENCIA', proveedor: '3M Dental Honduras', numFact: 'DS-2024-0891', estado: 'PAGADO', dias: 25 },
@@ -497,7 +531,7 @@ async function main() {
   }
   console.log(`  ✓ ${egresosCreados} egresos registrados`);
 
-  // ── 13. Flujo de Caja ────────────────────────────────────
+  // ── 14. Flujo de Caja ────────────────────────────────────
   console.log('\n💵 FLUJO DE CAJA');
   const flujoExiste = await prisma.flujoCaja.findFirst();
   if (!flujoExiste) {
@@ -527,7 +561,7 @@ async function main() {
     console.log('  ⏭  Flujo de caja ya tiene datos');
   }
 
-  // ── 14. Estadísticas de Odontólogos ──────────────────────
+  // ── 15. Estadísticas de Odontólogos ──────────────────────
   console.log('\n📊 ESTADÍSTICAS DE ODONTÓLOGOS');
   const mesActual = new Date().getMonth() + 1;
   const anioActual = new Date().getFullYear();
@@ -540,8 +574,8 @@ async function main() {
   let statsCreadas = 0;
   for (const od of odontologos) {
     for (const m of meses) {
-      const existe = await prisma.estadisticaOdontologo.findFirst({
-        where: { odontologoId: od.id, mes: m.mes, anio: m.anio },
+      const existe = await prisma.estadisticaOdontologo.findUnique({
+        where: { odontologoId_mes_anio: { odontologoId: od.id, mes: m.mes, anio: m.anio } },
       });
       if (!existe) {
         await prisma.estadisticaOdontologo.create({
@@ -558,29 +592,6 @@ async function main() {
     }
   }
   console.log(`  ✓ ${statsCreadas} registros de estadísticas`);
-
-  // ── 15. Correlativo SAR ──────────────────────────────────
-  console.log('\n🔢 CORRELATIVOS SAR');
-  const corrExiste = await prisma.correlativo.findFirst({ where: { activo: true } });
-  if (!corrExiste) {
-    await prisma.correlativo.create({
-      data: {
-        tipo: 'FACTURA',
-        cai: 'A1B2C3-D4E5F6-G7H8I9-J0K1L2-M3N4O5-P6',
-        sucursal: '000',
-        puntoEmision: '001',
-        tipoDoc: '01',
-        rangoInicial: 1,
-        rangoFinal: 5000,
-        siguiente: factNum,
-        fechaLimite: diasDesdeHoy(365),
-        activo: true,
-      },
-    });
-    console.log('  ✓ Correlativo SAR para facturas creado');
-  } else {
-    console.log('  ⏭  Correlativo SAR ya existe');
-  }
 
   // ── RESUMEN ──────────────────────────────────────────────
   console.log('\n╔══════════════════════════════════════════════════╗');
@@ -605,7 +616,7 @@ async function main() {
   console.log('   • 15 citas (pasadas, hoy y futuras)');
   console.log('   • 8 expedientes clínicos con procedimientos');
   console.log('   • 5 planes de tratamiento con etapas');
-  console.log('   • 8 facturas con items y pagos');
+  console.log('   • 8 facturas con datos SAR (CAI + correlativo)');
   console.log('   • Ingresos, egresos y flujo de caja');
   console.log('   • Estadísticas de odontólogos (3 meses)');
   console.log('   • Correlativo SAR configurado');
