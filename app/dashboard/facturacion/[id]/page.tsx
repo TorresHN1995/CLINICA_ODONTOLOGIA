@@ -90,15 +90,36 @@ export default function FacturaDetallePage({ params }: Params) {
 
   const [empresaCache] = useState<any>({ nombre: 'Clínica Dental' })
 
-  const buildTicketOpts = (tipo: 'pago' | 'pendiente') => {
+  const obtenerCorrelativoActivo = async () => {
+    try {
+      const res = await fetch('/api/configuracion/correlativos')
+      if (res.ok) {
+        const data = await res.json()
+        const activo = Array.isArray(data) 
+          ? data.find((c: any) => c.activo && c.tipo === 'FACTURA')
+          : null
+        return activo || null
+      }
+    } catch {}
+    return null
+  }
+
+  const buildTicketOpts = async (tipo: 'pago' | 'pendiente') => {
     if (!factura) return null
+
+    // Si la factura no tiene correlativo asignado, buscar el activo como fallback
+    let correlativoData = factura.correlativo
+    if (!correlativoData && factura.tipoDocumento !== 'ORDEN_PEDIDO') {
+      correlativoData = await obtenerCorrelativoActivo()
+    }
+
     return {
       empresa: empresaCache,
       factura: {
         numero: factura.numero,
         fecha: format(new Date(factura.fecha), 'dd/MM/yyyy', { locale: es }),
         tipoDocumento: factura.tipoDocumento || 'FACTURA',
-        cai: factura.cai || null,
+        cai: factura.cai || correlativoData?.cai || null,
         paciente: factura.paciente,
         emitente: factura.emitente,
         items: factura.items.map(i => ({
@@ -112,7 +133,7 @@ export default function FacturaDetallePage({ params }: Params) {
         impuesto: Number(factura.impuesto),
         total: Number(factura.total),
         estado: factura.estado,
-        correlativo: factura.correlativo,
+        correlativo: correlativoData,
       },
       pagos: factura.pagos.map(p => ({
         monto: Number(p.monto),
@@ -127,7 +148,7 @@ export default function FacturaDetallePage({ params }: Params) {
   }
 
   const generarTicket = async (formato: 'pdf' | 'png') => {
-    const opts = buildTicketOpts(ticketTipo)
+    const opts = await buildTicketOpts(ticketTipo)
     if (!opts) return
     setShowTicketModal(false)
     const toastId = toast.loading('Generando factura...')
@@ -146,7 +167,7 @@ export default function FacturaDetallePage({ params }: Params) {
   }
 
   const imprimirTicket = async () => {
-    const opts = buildTicketOpts(ticketTipo)
+    const opts = await buildTicketOpts(ticketTipo)
     if (!opts) return
     setShowTicketModal(false)
     try {
