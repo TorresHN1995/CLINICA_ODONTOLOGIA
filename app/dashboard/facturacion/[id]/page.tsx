@@ -88,11 +88,7 @@ export default function FacturaDetallePage({ params }: Params) {
     return { nombre: 'Clínica Dental' }
   }
 
-  const [empresaCache, setEmpresaCache] = useState<any>({ nombre: 'Clínica Dental' })
-
-  useEffect(() => {
-    obtenerEmpresa().then(setEmpresaCache)
-  }, [])
+  const [empresaCache] = useState<any>({ nombre: 'Clínica Dental' })
 
   const obtenerCorrelativoActivo = async () => {
     try {
@@ -157,7 +153,11 @@ export default function FacturaDetallePage({ params }: Params) {
     setShowTicketModal(false)
     const toastId = toast.loading('Generando factura...')
     try {
-      opts.empresa = empresaCache
+      if (!empresaCache.nombre || empresaCache.nombre === 'Clínica Dental') {
+        const emp = await obtenerEmpresa()
+        Object.assign(empresaCache, emp)
+        opts.empresa = empresaCache
+      }
       await generarTicketFactura(opts, formato, tamanoTicket)
       toast.success(`Factura generada en ${formato.toUpperCase()}`, { id: toastId })
     } catch (error) {
@@ -171,7 +171,11 @@ export default function FacturaDetallePage({ params }: Params) {
     if (!opts) return
     setShowTicketModal(false)
     try {
-      opts.empresa = empresaCache
+      if (!empresaCache.nombre || empresaCache.nombre === 'Clínica Dental') {
+        const emp = await obtenerEmpresa()
+        Object.assign(empresaCache, emp)
+        opts.empresa = empresaCache
+      }
       await imprimirTicketFactura(opts, tamanoTicket)
     } catch (error) {
       console.error('Error imprimiendo:', error)
