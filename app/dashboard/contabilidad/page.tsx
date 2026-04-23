@@ -7,13 +7,9 @@ import {
   TrendingDown,
   Wallet,
   Plus,
-  Filter,
-  Calendar,
   BarChart3
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
-import { format, startOfMonth, endOfMonth } from 'date-fns'
-import { es } from 'date-fns/locale'
 import { useConfiguracion } from '@/components/providers/ConfiguracionProvider'
 
 interface Estadisticas {
@@ -45,8 +41,6 @@ export default function ContabilidadPage() {
   const { formatearMoneda } = useConfiguracion()
   const [estadisticas, setEstadisticas] = useState<Estadisticas | null>(null)
   const [loading, setLoading] = useState(true)
-  const [fechaInicio, setFechaInicio] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'))
-  const [fechaFin, setFechaFin] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'))
 
   useEffect(() => {
     fetchEstadisticas()

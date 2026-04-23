@@ -9,8 +9,8 @@ const etapaUpdateSchema = z.object({
   descripcion: z.string().optional(),
   costo: z.number().optional(),
   completada: z.boolean().optional(),
-  fechaInicio: z.string().optional(),
-  fechaFin: z.string().optional(),
+  fechaCompletada: z.string().optional(),
+  observaciones: z.string().optional(),
 })
 
 export async function PATCH(
@@ -26,14 +26,13 @@ export async function PATCH(
     const body = await request.json()
     const validatedData = etapaUpdateSchema.parse(body)
 
-    const { fechaInicio, fechaFin, ...otherData } = validatedData
+    const { fechaCompletada, ...otherData } = validatedData
     
     const etapa = await prisma.etapaTratamiento.update({
       where: { id: params.etapaId },
       data: {
         ...otherData,
-        ...(fechaInicio && { fechaInicio: new Date(fechaInicio) }),
-        ...(fechaFin && { fechaFin: new Date(fechaFin) }),
+        ...(fechaCompletada !== undefined && { fechaCompletada: fechaCompletada ? new Date(fechaCompletada) : null }),
       },
     })
 

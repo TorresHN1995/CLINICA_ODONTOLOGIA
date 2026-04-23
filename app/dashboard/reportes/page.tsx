@@ -5,6 +5,7 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { Calendar, TrendingUp, Users, DollarSign, Activity, AlertCircle, Download, FileText, Image } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { generarTicketReporte } from '@/lib/generar-ticket-reporte'
+import { useConfiguracion } from '@/components/providers/ConfiguracionProvider'
 
 interface ReporteFinanciero {
   periodo: { mes: number; año: number; fechaInicio: string; fechaFin: string }
@@ -66,6 +67,7 @@ interface ReporteClinico {
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
 export default function ReportesPage() {
+  const { formatearMoneda } = useConfiguracion()
   const [activeTab, setActiveTab] = useState<'financiero' | 'clinico'>('financiero')
   const [mes, setMes] = useState(new Date().getMonth() + 1)
   const [año, setAño] = useState(new Date().getFullYear())
@@ -299,7 +301,7 @@ export default function ReportesPage() {
                   <div>
                     <p className="text-slate-600 text-sm font-medium">Total Ingresos</p>
                     <p className="text-3xl font-bold text-slate-900 mt-2">
-                      L. {reporteFinanciero.resumen.totalIngresos.toFixed(2)}
+                      {formatearMoneda(reporteFinanciero.resumen.totalIngresos)}
                     </p>
                   </div>
                   <DollarSign className="w-12 h-12 text-blue-500 opacity-20" />
@@ -311,7 +313,7 @@ export default function ReportesPage() {
                   <div>
                     <p className="text-slate-600 text-sm font-medium">Total Egresos</p>
                     <p className="text-3xl font-bold text-slate-900 mt-2">
-                      L. {reporteFinanciero.resumen.totalEgresos.toFixed(2)}
+                      {formatearMoneda(reporteFinanciero.resumen.totalEgresos)}
                     </p>
                   </div>
                   <TrendingUp className="w-12 h-12 text-green-500 opacity-20" />
@@ -323,7 +325,7 @@ export default function ReportesPage() {
                   <div>
                     <p className="text-slate-600 text-sm font-medium">Utilidad</p>
                     <p className={`text-3xl font-bold mt-2 ${reporteFinanciero.resumen.utilidad >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      L. {reporteFinanciero.resumen.utilidad.toFixed(2)}
+                      {formatearMoneda(reporteFinanciero.resumen.utilidad)}
                     </p>
                   </div>
                   <TrendingUp className={`w-12 h-12 opacity-20 ${reporteFinanciero.resumen.utilidad >= 0 ? 'text-emerald-500' : 'text-red-500'}`} />
@@ -360,7 +362,7 @@ export default function ReportesPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={true}
-                      label={({ name, value, percent }) => `${name}: L. ${value.toFixed(0)}`}
+                      label={({ name, value, percent }) => `${name}: ${formatearMoneda(value)}`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
@@ -371,7 +373,7 @@ export default function ReportesPage() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                     </Pie>
-                    <Tooltip formatter={(value) => `L. ${typeof value === 'number' ? value.toFixed(2) : value}`} />
+                    <Tooltip formatter={(value) => formatearMoneda(typeof value === 'number' ? value : 0)} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -387,8 +389,8 @@ export default function ReportesPage() {
                   }))}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" angle={-25} textAnchor="end" height={60} tick={{ fontSize: 12 }} />
-                    <YAxis tickFormatter={(value) => `L.${value}`} />
-                    <Tooltip formatter={(value) => `L. ${typeof value === 'number' ? value.toFixed(2) : value}`} />
+                    <YAxis tickFormatter={(value) => formatearMoneda(value)} />
+                    <Tooltip formatter={(value) => formatearMoneda(typeof value === 'number' ? value : 0)} />
                     <Bar dataKey="valor" fill="#3b82f6" radius={[4, 4, 0, 0]}>
                       {Object.entries(reporteFinanciero.pagos.metodosPago).map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -417,7 +419,7 @@ export default function ReportesPage() {
                       return (
                         <tr key={index} className="border-b border-slate-100 hover:bg-slate-50">
                           <td className="py-3 px-4 text-slate-900">{index + 1}. {paciente.nombre}</td>
-                          <td className="py-3 px-4 text-right font-semibold text-slate-900">L. {paciente.total.toFixed(2)}</td>
+                          <td className="py-3 px-4 text-right font-semibold text-slate-900">{formatearMoneda(paciente.total)}</td>
                           <td className="py-3 px-4 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <div className="w-24 bg-slate-200 rounded-full h-2">
@@ -466,15 +468,15 @@ export default function ReportesPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-slate-600">Total Facturas:</span>
-                    <span className="font-semibold">L. {reporteFinanciero.resumen.totalFacturas.toFixed(2)}</span>
+                    <span className="font-semibold">{formatearMoneda(reporteFinanciero.resumen.totalFacturas)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Total Pagos:</span>
-                    <span className="font-semibold text-green-600">L. {reporteFinanciero.resumen.totalPagos.toFixed(2)}</span>
+                    <span className="font-semibold text-green-600">{formatearMoneda(reporteFinanciero.resumen.totalPagos)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Saldo Pendiente:</span>
-                    <span className="font-semibold text-red-600">L. {reporteFinanciero.resumen.saldoPendiente.toFixed(2)}</span>
+                    <span className="font-semibold text-red-600">{formatearMoneda(reporteFinanciero.resumen.saldoPendiente)}</span>
                   </div>
                 </div>
               </div>
@@ -484,7 +486,7 @@ export default function ReportesPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-slate-600">Total Egresos:</span>
-                    <span className="font-semibold">L. {reporteFinanciero.resumen.totalEgresos.toFixed(2)}</span>
+                    <span className="font-semibold">{formatearMoneda(reporteFinanciero.resumen.totalEgresos)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Cantidad:</span>
@@ -493,7 +495,7 @@ export default function ReportesPage() {
                   <div className="flex justify-between">
                     <span className="text-slate-600">Promedio:</span>
                     <span className="font-semibold">
-                      L. {(reporteFinanciero.resumen.totalEgresos / Math.max(reporteFinanciero.egresos.cantidad, 1)).toFixed(2)}
+                      {formatearMoneda(reporteFinanciero.resumen.totalEgresos / Math.max(reporteFinanciero.egresos.cantidad, 1))}
                     </span>
                   </div>
                 </div>
@@ -667,11 +669,11 @@ export default function ReportesPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Costo Total:</span>
-                    <span className="font-semibold">L. {reporteClinico.tratamientos.costoTotal.toFixed(2)}</span>
+                    <span className="font-semibold">{formatearMoneda(reporteClinico.tratamientos.costoTotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Costo Promedio:</span>
-                    <span className="font-semibold">L. {reporteClinico.tratamientos.costoPromedio}</span>
+                    <span className="font-semibold">{formatearMoneda(parseFloat(reporteClinico.tratamientos.costoPromedio))}</span>
                   </div>
                 </div>
               </div>
@@ -685,11 +687,11 @@ export default function ReportesPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Costo Total:</span>
-                    <span className="font-semibold">L. {reporteClinico.procedimientos.costoTotal.toFixed(2)}</span>
+                    <span className="font-semibold">{formatearMoneda(reporteClinico.procedimientos.costoTotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Costo Promedio:</span>
-                    <span className="font-semibold">L. {reporteClinico.procedimientos.costoPromedio}</span>
+                    <span className="font-semibold">{formatearMoneda(parseFloat(reporteClinico.procedimientos.costoPromedio))}</span>
                   </div>
                 </div>
               </div>
