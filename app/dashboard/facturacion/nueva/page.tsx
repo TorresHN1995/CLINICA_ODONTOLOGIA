@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { ArrowLeft, Save, Loader2, Plus, Trash2, FileText, Calendar, User, X, CheckCircle2, Search } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Trash2, FileText, Calendar, User, X, CheckCircle2, Search } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -136,11 +136,17 @@ export default function NuevaFacturaPage() {
   }
 
   const seleccionarProducto = (itemId: string, producto: ProductoServicio) => {
-    setItems(items.map(item =>
+    const nuevosItems = items.map(item =>
       item.id === itemId
         ? { ...item, descripcion: producto.nombre, precioUnitario: Number(producto.precio), productoId: producto.id }
         : item
-    ))
+    )
+    // Si el item seleccionado es el último, agregar fila vacía automáticamente
+    const esUltimo = items[items.length - 1].id === itemId
+    if (esUltimo) {
+      nuevosItems.push({ id: Date.now().toString(), descripcion: '', cantidad: 1, precioUnitario: 0 })
+    }
+    setItems(nuevosItems)
     setShowProductoDropdown(null)
     setProductoBusqueda('')
   }
@@ -403,14 +409,6 @@ export default function NuevaFacturaPage() {
               <div className="card min-h-[400px]">
                 <div className="flex items-center justify-between mb-4 border-b pb-4">
                   <h2 className="font-bold text-foreground">Conceptos / Servicios</h2>
-                  <button
-                    type="button"
-                    onClick={agregarItem}
-                    className="btn-secondary py-1.5 text-xs flex items-center space-x-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Agregar Fila</span>
-                  </button>
                 </div>
 
                 <div className="space-y-3">
