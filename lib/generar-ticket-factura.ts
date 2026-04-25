@@ -15,6 +15,7 @@ interface ItemTicket {
   cantidad: number
   precioUnitario: number
   subtotal: number
+  tasaIsv?: number  // 0 = exento, 15 = gravado 15%, 18 = gravado 18%
 }
 
 interface PagoTicket {
@@ -70,6 +71,50 @@ function metodoLabel(m: string): string {
     TRANSFERENCIA: 'Transferencia', CHEQUE: 'Cheque', OTRO: 'Otro',
   }
   return map[m] || m
+}
+
+function calcularDesgloseSAR(items: ItemTicket[], descuento: number, moneda: string) {
+  let gravado15 = 0, gravado18 = 0, exento = 0, exonerado = 0
+  let isv15 = 0, isv18 = 0
+
+  for (const item of items) {
+    const tasa = item.tasaIsv ?? 15
+    const totalItem = item.cantidad * item.precioUnitario
+    if (tasa === 15) {
+      const base = totalItem / 1.15
+      gravado15 += base
+      isv15 += totalItem - base
+    } else if (tasa === 18) {
+      const base = totalItem / 1.18
+      gravado18 += base
+      isv18 += totalItem - base
+    } else if (tasa === 0) {
+      exento += totalItem
+    } else {
+      exonerado += totalItem
+    }
+  }
+
+  const totalPagar = gravado15 + isv15 + gravado18 + isv18 + exento + exonerado - descuento
+  return { gravado15, gravado18, exento, exonerado, isv15, isv18, totalPagar }
+}
+
+function renderDesgloseSAR(d: ReturnType<typeof calcularDesgloseSAR>, descuento: number, moneda: string, esTicket: boolean): string {
+  const row = (label: string, val: number, bold = false, color = '') =>
+    esTicket
+      ? `<div style="display:flex;justify-content:space-between;font-size:9px;${bold ? 'font-weight:800;font-size:11px;' : ''}${color ? `color:${color};` : ''}"><span>${label}</span><span>${moneda} ${val.toFixed(2)}</span></div>`
+      : `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:${bold ? '14px' : '12px'};${bold ? 'font-weight:800;border-top:2px solid #0f172a;margin-top:4px;padding-top:8px;' : ''}${color ? `color:${color};` : 'color:#475569;'}"><span>${label}</span><span style="font-weight:${bold ? '800' : '600'};color:${bold ? '#0f172a' : '#1e293b'};">${moneda} ${val.toFixed(2)}</span></div>`
+
+  return `
+    ${row('Importe Exonerado:', d.exonerado)}
+    ${row('Importe Exento:', d.exento)}
+    ${row('Importe Gravado 15%:', d.gravado15)}
+    ${row('Importe Gravado 18%:', d.gravado18)}
+    ${row('ISV 15%:', d.isv15)}
+    ${row('ISV 18%:', d.isv18)}
+    ${row(`Descuento Total:`, -descuento)}
+    ${row('Total a Pagar:', d.totalPagar, true)}
+  `
 }
 
 function getSARInfo(factura: TicketFacturaOptions['factura']) {
@@ -133,13 +178,11 @@ function crearTicket80mm(opts: TicketFacturaOptions): HTMLDivElement {
   }
   h += `</table>`
 
-  // Totales
-  h += `<div style="font-size:11px;padding:6px;background:#f8fafc;border-radius:4px;margin-bottom:8px;">`
-  h += `<div style="display:flex;justify-content:space-between;"><span style="color:#475569;">Subtotal</span><span>${fmt(factura.subtotal, moneda)}</span></div>`
-  if (factura.descuento > 0) h += `<div style="display:flex;justify-content:space-between;"><span style="color:#475569;">Descuento</span><span style="color:#dc2626;">- ${fmt(factura.descuento, moneda)}</span></div>`
-  if (factura.impuesto > 0) h += `<div style="display:flex;justify-content:space-between;"><span style="color:#475569;">I.S.V. (15%)</span><span>${fmt(factura.impuesto, moneda)}</span></div>`
-  h += `<div style="border-top:2px solid #0f172a;margin:4px 0;"></div>`
-  h += `<div style="display:flex;justify-content:space-between;font-weight:800;font-size:13px;"><span>TOTAL</span><span>${fmt(factura.total, moneda)}</span></div></div>`
+  // Totales con desglose SAR
+  const desglose = calcularDesgloseSAR(factura.items, factura.descuento, moneda)
+  h += `<div style="font-size:9px;padding:6px;background:#f8fafc;border-radius:4px;margin-bottom:8px;border:1px solid #e2e8f0;">
+    ${renderDesgloseSAR(desglose, factura.descuento, moneda, true)}
+  </div>`
 
   if (pagos.length > 0) {
     h += `<div style="font-size:10px;padding:6px;background:#f0fdf4;border-radius:4px;margin-bottom:8px;">`
@@ -247,25 +290,11 @@ function crearFacturaCarta(opts: TicketFacturaOptions): HTMLDivElement {
   })
   h += `</tbody></table>`
 
-  // ── TOTALES ──
+  // ── TOTALES con desglose SAR ──
+  const desgloseCarta = calcularDesgloseSAR(factura.items, factura.descuento, moneda)
   h += `<div style="display:flex;justify-content:flex-end;margin-bottom:24px;">
-    <div style="width:320px;">
-      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #e2e8f0;">
-        <span style="color:#64748b;">Subtotal</span><span style="font-weight:600;">${fmt(factura.subtotal, moneda)}</span>
-      </div>`
-  if (factura.descuento > 0) {
-    h += `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #e2e8f0;">
-      <span style="color:#64748b;">Descuento</span><span style="font-weight:600;color:#dc2626;">- ${fmt(factura.descuento, moneda)}</span>
-    </div>`
-  }
-  if (factura.impuesto > 0) {
-    h += `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #e2e8f0;">
-      <span style="color:#64748b;">I.S.V. (15%)</span><span style="font-weight:600;">${fmt(factura.impuesto, moneda)}</span>
-    </div>`
-  }
-  h += `<div style="display:flex;justify-content:space-between;padding:12px 0;font-size:18px;font-weight:800;border-top:3px solid #1e40af;margin-top:4px;">
-      <span>TOTAL</span><span>${fmt(factura.total, moneda)}</span>
-    </div>
+    <div style="width:340px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;">
+      ${renderDesgloseSAR(desgloseCarta, factura.descuento, moneda, false)}
     </div>
   </div>`
 

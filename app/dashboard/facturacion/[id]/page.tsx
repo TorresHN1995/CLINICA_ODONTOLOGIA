@@ -127,6 +127,7 @@ export default function FacturaDetallePage({ params }: Params) {
           cantidad: i.cantidad,
           precioUnitario: Number(i.precioUnitario),
           subtotal: Number(i.subtotal),
+          tasaIsv: Number((i as any).tasaIsv ?? 15),
         })),
         subtotal: Number(factura.subtotal),
         descuento: Number(factura.descuento),

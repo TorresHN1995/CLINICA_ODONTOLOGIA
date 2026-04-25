@@ -23,6 +23,7 @@ interface Item {
   descripcion: string
   cantidad: number
   precioUnitario: number
+  tasaIsv: number  // 0 = exento, 15 = gravado 15%, 18 = gravado 18%
   productoId?: string
 }
 
@@ -69,7 +70,7 @@ export default function NuevaFacturaPage() {
   const [pacienteId, setPacienteId] = useState('')
   const [fecha] = useState(format(new Date(), 'yyyy-MM-dd')) // Read-only state
   const [items, setItems] = useState<Item[]>([
-    { id: '1', descripcion: '', cantidad: 1, precioUnitario: 0 }
+    { id: '1', descripcion: '', cantidad: 1, precioUnitario: 0, tasaIsv: 15 }
   ])
   const [descuento, setDescuento] = useState(0)
   const [impuesto, setImpuesto] = useState(0)
@@ -138,13 +139,13 @@ export default function NuevaFacturaPage() {
   const seleccionarProducto = (itemId: string, producto: ProductoServicio) => {
     const nuevosItems = items.map(item =>
       item.id === itemId
-        ? { ...item, descripcion: producto.nombre, precioUnitario: Number(producto.precio), productoId: producto.id }
+        ? { ...item, descripcion: producto.nombre, precioUnitario: Number(producto.precio), productoId: producto.id, tasaIsv: Number(producto.isv) }
         : item
     )
     // Si el item seleccionado es el último, agregar fila vacía automáticamente
     const esUltimo = items[items.length - 1].id === itemId
     if (esUltimo) {
-      nuevosItems.push({ id: Date.now().toString(), descripcion: '', cantidad: 1, precioUnitario: 0 })
+      nuevosItems.push({ id: Date.now().toString(), descripcion: '', cantidad: 1, precioUnitario: 0, tasaIsv: 15 })
     }
     setItems(nuevosItems)
     setShowProductoDropdown(null)
@@ -182,27 +183,39 @@ export default function NuevaFacturaPage() {
     ))
   }
 
-  // Constants
-  const TASA_ISV = 0.15
+  // ── Cálculos desglose SAR ──────────────────────────
+  const calcularDesglose = () => {
+    let gravado15 = 0, gravado18 = 0, exento = 0, exonerado = 0
+    let isv15 = 0, isv18 = 0
 
-  const calcularTotalItems = () => {
-    return items.reduce((sum, item) => sum + (item.cantidad * item.precioUnitario), 0)
+    for (const item of items) {
+      const totalItem = item.cantidad * item.precioUnitario
+      if (item.tasaIsv === 15) {
+        const base = totalItem / 1.15
+        gravado15 += base
+        isv15 += totalItem - base
+      } else if (item.tasaIsv === 18) {
+        const base = totalItem / 1.18
+        gravado18 += base
+        isv18 += totalItem - base
+      } else if (item.tasaIsv === 0) {
+        exento += totalItem
+      } else {
+        exonerado += totalItem
+      }
+    }
+
+    const totalBruto = gravado15 + isv15 + gravado18 + isv18 + exento + exonerado
+    const totalPagar = totalBruto - descuento
+
+    return { gravado15, gravado18, exento, exonerado, isv15, isv18, totalPagar }
   }
 
-  const calcularBaseImponible = () => {
-    const totalInclusive = calcularTotalItems()
-    return totalInclusive / (1 + TASA_ISV)
-  }
+  const desglose = calcularDesglose()
 
-  const calcularISV = () => {
-    const totalInclusive = calcularTotalItems()
-    return totalInclusive - (totalInclusive / (1 + TASA_ISV))
-  }
-
-  const calcularTotalPagar = () => {
-    const totalInclusive = calcularTotalItems()
-    return totalInclusive - descuento
-  }
+  // Para la API: impuesto total = isv15 + isv18
+  const calcularISVTotal = () => desglose.isv15 + desglose.isv18
+  const calcularTotalPagar = () => desglose.totalPagar
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -223,12 +236,17 @@ export default function NuevaFacturaPage() {
       // PREPARAR DATOS PARA API (Convertir montos inclusivos a base + impuesto)
       // Si el usuario ingresó 115 (Total), la API espera Base (100) + Impuesto (15)
 
-      const payloadItems = items.map(({ id, ...item }) => ({
-        ...item,
-        precioUnitario: item.precioUnitario / (1 + TASA_ISV) // Extraer precio base
-      }))
+      const payloadItems = items
+        .filter(item => item.descripcion.trim() !== '')
+        .map(({ id, ...item }) => ({
+          ...item,
+          precioUnitario: item.tasaIsv > 0
+            ? item.precioUnitario / (1 + item.tasaIsv / 100)
+            : item.precioUnitario,
+          tasaIsv: item.tasaIsv,
+        }))
 
-      const payloadImpuesto = calcularISV()
+      const payloadImpuesto = calcularISVTotal()
 
       const response = await fetch('/api/facturas', {
         method: 'POST',
@@ -535,14 +553,34 @@ export default function NuevaFacturaPage() {
               <div className="card sticky top-6">
                 <h2 className="font-bold text-foreground border-b pb-3 mb-4">Resumen</h2>
 
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center text-sm text-muted-foreground">
-                    <span>Subtotal (Base)</span>
-                    <span className="font-mono">{moneda} {calcularBaseImponible().toFixed(2)}</span>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Importe Exonerado:</span>
+                    <span className="font-mono">{moneda} {desglose.exonerado.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Importe Exento:</span>
+                    <span className="font-mono">{moneda} {desglose.exento.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Importe Gravado 15%:</span>
+                    <span className="font-mono">{moneda} {desglose.gravado15.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Importe Gravado 18%:</span>
+                    <span className="font-mono">{moneda} {desglose.gravado18.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>ISV 15%:</span>
+                    <span className="font-mono">{moneda} {desglose.isv15.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>ISV 18%:</span>
+                    <span className="font-mono">{moneda} {desglose.isv18.toFixed(2)}</span>
                   </div>
 
-                  <div className="flex justify-between items-center text-sm group">
-                    <span className="text-muted-foreground decoration-dotted underline cursor-help" title="Descuento aplicado">Descuento (-)</span>
+                  <div className="flex justify-between items-center pt-1 border-t border-border">
+                    <span className="text-muted-foreground">Descuento Total:</span>
                     <div className="w-24">
                       <input
                         type="number"
@@ -555,27 +593,19 @@ export default function NuevaFacturaPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">I.S.V. (15%) Included</span>
-                    <span className="font-mono text-foreground">{moneda} {calcularISV().toFixed(2)}</span>
-                  </div>
-
-                  <div className="border-t-2 border-dashed border-border my-4 pt-4">
-                    <div className="flex justify-between items-end">
-                      <span className="text-lg font-bold text-foreground">Total a Pagar</span>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-primary-600 leading-none">
-                          {moneda} {calcularTotalPagar().toFixed(2)}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">Impuestos incluidos</div>
-                      </div>
+                  <div className="border-t-2 border-border pt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-base font-bold text-foreground">Total a Pagar:</span>
+                      <span className="text-2xl font-bold text-primary-600 font-mono">
+                        {moneda} {calcularTotalPagar().toFixed(2)}
+                      </span>
                     </div>
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full btn-primary py-3 text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2"
+                    className="w-full btn-primary py-3 text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2 mt-2"
                   >
                     {loading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />

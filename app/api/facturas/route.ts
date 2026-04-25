@@ -10,6 +10,7 @@ const itemFacturaSchema = z.object({
   cantidad: z.number().positive(),
   precioUnitario: z.number().positive(),
   productoId: z.string().optional(),
+  tasaIsv: z.number().min(0).max(100).default(15),
 })
 
 const facturaSchema = z.object({
@@ -190,6 +191,7 @@ export async function POST(request: NextRequest) {
               cantidad: item.cantidad,
               precioUnitario: item.precioUnitario,
               subtotal: item.cantidad * item.precioUnitario,
+              tasaIsv: item.tasaIsv ?? 15,
             })),
           },
         },

@@ -311,6 +311,7 @@ model ItemFactura {
   cantidad      Int      @default(1)
   precioUnitario Decimal @db.Decimal(10, 2)
   subtotal      Decimal  @db.Decimal(10, 2)
+  tasaIsv       Decimal  @default(15) @db.Decimal(5, 2) // 0 = exento, 15 = gravado 15%, 18 = gravado 18%
   createdAt     DateTime @default(now())
 
   // Relaciones
