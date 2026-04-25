@@ -22,6 +22,7 @@ import {
   ShoppingBag,
   Stethoscope,
   FilePlus,
+  FileText,
   Lock
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
@@ -56,7 +57,8 @@ const menuItems: MenuItem[] = [
     roles: ['ADMINISTRADOR'],
     children: [
       { name: 'Empresa', href: '/dashboard/configuracion', icon: Settings },
-      { name: 'Facturación SAR', href: '/dashboard/configuracion/facturacion', icon: ShieldCheck }
+      { name: 'Facturación SAR', href: '/dashboard/configuracion/facturacion', icon: ShieldCheck },
+      { name: 'Orden de Pedido', href: '/dashboard/configuracion/orden-pedido', icon: FileText }
     ]
   },
 ]
