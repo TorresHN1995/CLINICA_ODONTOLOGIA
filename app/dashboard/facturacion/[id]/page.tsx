@@ -603,7 +603,7 @@ export default function FacturaDetallePage({ params }: Params) {
                   onClick={() => setTamanoTicket('carta')}
                   className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-colors ${
                     tamanoTicket === 'carta'
-                      ? 'bg-white text-foreground shadow-sm'
+                      ? 'bg-card text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -613,7 +613,7 @@ export default function FacturaDetallePage({ params }: Params) {
                   onClick={() => setTamanoTicket('ticket')}
                   className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-colors ${
                     tamanoTicket === 'ticket'
-                      ? 'bg-white text-foreground shadow-sm'
+                      ? 'bg-card text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
