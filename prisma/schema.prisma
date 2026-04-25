@@ -358,6 +358,7 @@ model Inventario {
   // Relaciones
   movimientos   MovimientoInventario[]
   productos     ProductoServicio[]
+  insumos       ServicioInsumo[]
 
   @@map("inventario")
 }
@@ -588,11 +589,29 @@ model ProductoServicio {
 
   // Relaciones
   inventario    Inventario? @relation(fields: [inventarioId], references: [id])
+  insumos       ServicioInsumo[] // Insumos requeridos para este servicio
 
   @@index([tipo])
   @@index([nombre])
   @@index([inventarioId])
   @@map("productos_servicios")
+}
+
+// Insumos de inventario requeridos por un servicio
+model ServicioInsumo {
+  id               String          @id @default(uuid())
+  servicioId       String
+  inventarioId     String
+  cantidad         Int             @default(1)
+  createdAt        DateTime        @default(now())
+
+  servicio         ProductoServicio @relation(fields: [servicioId], references: [id], onDelete: Cascade)
+  inventario       Inventario       @relation(fields: [inventarioId], references: [id])
+
+  @@unique([servicioId, inventarioId])
+  @@index([servicioId])
+  @@index([inventarioId])
+  @@map("servicio_insumos")
 }
 
 enum TipoProductoServicio {

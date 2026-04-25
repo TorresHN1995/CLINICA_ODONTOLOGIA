@@ -230,9 +230,10 @@ export async function POST(request: NextRequest) {
         if (item.productoId) {
           const producto = await tx.productoServicio.findUnique({
             where: { id: item.productoId },
-            select: { inventarioId: true, tipo: true },
+            select: { inventarioId: true, tipo: true, insumos: { include: { inventario: { select: { stock: true, nombre: true } } } } },
           })
 
+          // 1. Si es PRODUCTO con inventario directo, descontar
           if (producto?.inventarioId && producto.tipo === 'PRODUCTO') {
             const inventario = await tx.inventario.findUnique({
               where: { id: producto.inventarioId },
@@ -244,20 +245,29 @@ export async function POST(request: NextRequest) {
               if (nuevoStock < 0) {
                 throw new Error(`Stock insuficiente para "${item.descripcion}". Disponible: ${inventario.stock}`)
               }
+              await tx.inventario.update({ where: { id: producto.inventarioId }, data: { stock: nuevoStock } })
+              await tx.movimientoInventario.create({
+                data: { inventarioId: producto.inventarioId, tipo: 'SALIDA', cantidad: item.cantidad, motivo: `Factura ${factura.numero}`, responsable: session.user.id },
+              })
+            }
+          }
+
+          // 2. Si es SERVICIO, descontar sus insumos configurados (multiplicado por cantidad de items)
+          if (producto?.tipo === 'SERVICIO' && producto.insumos && producto.insumos.length > 0) {
+            for (const insumo of producto.insumos) {
+              const cantidadADescontar = insumo.cantidad * item.cantidad
+              const stockActual = insumo.inventario.stock
+
+              if (stockActual < cantidadADescontar) {
+                throw new Error(`Stock insuficiente de "${insumo.inventario.nombre}" para el servicio "${item.descripcion}". Disponible: ${stockActual}, requerido: ${cantidadADescontar}`)
+              }
 
               await tx.inventario.update({
-                where: { id: producto.inventarioId },
-                data: { stock: nuevoStock },
+                where: { id: insumo.inventarioId },
+                data: { stock: { decrement: cantidadADescontar } },
               })
-
               await tx.movimientoInventario.create({
-                data: {
-                  inventarioId: producto.inventarioId,
-                  tipo: 'SALIDA',
-                  cantidad: item.cantidad,
-                  motivo: `Factura ${factura.numero}`,
-                  responsable: session.user.id,
-                },
+                data: { inventarioId: insumo.inventarioId, tipo: 'SALIDA', cantidad: cantidadADescontar, motivo: `Insumo de servicio - Factura ${factura.numero}`, responsable: session.user.id },
               })
             }
           }
