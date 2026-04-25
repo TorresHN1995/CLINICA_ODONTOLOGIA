@@ -167,7 +167,8 @@ export default function NuevaFacturaPage() {
       id: Date.now().toString(),
       descripcion: '',
       cantidad: 1,
-      precioUnitario: 0
+      precioUnitario: 0,
+      tasaIsv: 15,
     }])
   }
 
