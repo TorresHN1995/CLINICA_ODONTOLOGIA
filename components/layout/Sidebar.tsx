@@ -22,7 +22,6 @@ import {
   ShoppingBag,
   Stethoscope,
   FilePlus,
-  FileText,
   Lock
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
