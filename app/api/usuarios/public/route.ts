@@ -9,6 +9,7 @@ export async function GET() {
       where: { activo: true },
       select: {
         id: true,
+        username: true,
         nombre: true,
         apellido: true,
         rol: true,
