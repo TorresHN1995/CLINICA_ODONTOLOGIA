@@ -106,11 +106,15 @@ export default function ProductosPage() {
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
       if (res.ok) {
         const data = await res.json()
-        toast.success(editando ? 'Producto actualizado' : 'Producto creado')
         if (!editando) {
-          // Si es nuevo, cargar insumos para el nuevo producto
+          // Al crear, quedarse en el modal en modo edición para agregar insumos
+          toast.success('Producto creado. Ahora puedes agregar insumos.')
           setEditando(data)
           await cargarInsumos(data.id)
+          setShowInsumos(true)
+        } else {
+          toast.success('Producto actualizado')
+          setShowModal(false)
         }
         cargar()
       } else {
@@ -335,7 +339,7 @@ export default function ProductosPage() {
                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancelar</button>
                 <button type="submit" disabled={saving} className="btn-primary flex-1 flex items-center justify-center gap-2">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editando ? 'Actualizar' : 'Crear'}
+                  {editando ? 'Actualizar' : (formData.tipo === 'SERVICIO' ? 'Crear y agregar insumos →' : 'Crear')}
                 </button>
               </div>
             </form>
@@ -355,7 +359,6 @@ export default function ProductosPage() {
                   </div>
                   {showInsumos ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                 </button>
-
                 {showInsumos && (
                   <div className="px-5 pb-5 space-y-4">
                     <p className="text-xs text-muted-foreground">
@@ -410,6 +413,17 @@ export default function ProductosPage() {
                       >
                         {savingInsumo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                         Agregar
+                      </button>
+                    </div>
+
+                    {/* Botón Listo */}
+                    <div className="flex justify-end pt-2 border-t border-border">
+                      <button
+                        type="button"
+                        onClick={() => setShowModal(false)}
+                        className="btn-primary px-6"
+                      >
+                        Listo
                       </button>
                     </div>
                   </div>
