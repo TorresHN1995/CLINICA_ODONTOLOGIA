@@ -250,7 +250,7 @@ export default function NuevaCitaPage() {
                 <input
                   type="time"
                   readOnly
-                  className="input-field bg-gray-100"
+                  className="input-field bg-muted cursor-not-allowed"
                   value={formData.horaFin}
                 />
               </div>
