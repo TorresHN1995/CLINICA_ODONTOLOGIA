@@ -75,6 +75,7 @@ model Paciente {
   tratamientos      Tratamiento[]
   facturas          Factura[]
   documentos        Documento[]
+  presupuestos      Presupuesto[]
 
   @@map("pacientes")
 }
@@ -673,5 +674,61 @@ enum AccionAuditoria {
   EXPORTAR
   LIMPIAR
   OTRO
+}
+
+// Modelo de Presupuestos (cotizaciones que el paciente aprueba antes de facturar)
+// Los precios se manejan INCLUSIVOS de ISV (igual que en la facturación). El total
+// es el monto que verá/pagará el paciente; subtotal e impuesto se derivan de las tasas.
+model Presupuesto {
+  id             String            @id @default(uuid())
+  numero         String            @unique // PRE-00001
+  pacienteId     String
+  creadoPor      String?           // ID del usuario (denormalizado, sin relación a Usuario)
+  creadoPorNombre String?          // Nombre del usuario que lo creó
+  fecha          DateTime          @default(now())
+  validoHasta    DateTime?
+  subtotal       Decimal           @db.Decimal(10, 2) // base neta (sin ISV)
+  descuento      Decimal           @default(0) @db.Decimal(10, 2)
+  impuesto       Decimal           @default(0) @db.Decimal(10, 2) // ISV total
+  total          Decimal           @db.Decimal(10, 2) // total a pagar (inclusivo)
+  estado         EstadoPresupuesto @default(PROPUESTO)
+  observaciones  String?           @db.Text
+  facturaId      String?           // Factura generada al facturar el presupuesto
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  // Relaciones
+  paciente       Paciente          @relation(fields: [pacienteId], references: [id])
+  items          ItemPresupuesto[]
+
+  @@index([pacienteId])
+  @@index([estado])
+  @@map("presupuestos")
+}
+
+model ItemPresupuesto {
+  id             String      @id @default(uuid())
+  presupuestoId  String
+  descripcion    String
+  cantidad       Int         @default(1)
+  precioUnitario Decimal     @db.Decimal(10, 2) // precio inclusivo (con ISV)
+  subtotal       Decimal     @db.Decimal(10, 2) // cantidad * precioUnitario
+  tasaIsv        Decimal     @default(15) @db.Decimal(5, 2)
+  productoId     String?
+  createdAt      DateTime    @default(now())
+
+  // Relaciones
+  presupuesto    Presupuesto @relation(fields: [presupuestoId], references: [id], onDelete: Cascade)
+
+  @@index([presupuestoId])
+  @@map("items_presupuesto")
+}
+
+enum EstadoPresupuesto {
+  PROPUESTO
+  APROBADO
+  RECHAZADO
+  FACTURADO
+  VENCIDO
 }
 

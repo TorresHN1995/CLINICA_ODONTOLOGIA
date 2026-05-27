@@ -24,7 +24,8 @@ import {
   FilePlus,
   Lock,
   ScrollText,
-  Wallet
+  Wallet,
+  ClipboardList
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
@@ -43,6 +44,7 @@ const menuItems: MenuItem[] = [
   { name: 'Agenda y Citas', href: '/dashboard/citas', icon: Calendar },
   { name: 'Expedientes', href: '/dashboard/expedientes', icon: FileText },
   { name: 'Tratamientos', href: '/dashboard/tratamientos', icon: Heart },
+  { name: 'Presupuestos', href: '/dashboard/presupuestos', icon: ClipboardList },
   { name: 'Documentos', href: '/dashboard/documentos', icon: FilePlus },
   { name: 'Facturación', href: '/dashboard/facturacion', icon: CreditCard },
   { name: 'Cuentas por Cobrar', href: '/dashboard/cuentas-por-cobrar', icon: Wallet },

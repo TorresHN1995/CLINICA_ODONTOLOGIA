@@ -54,6 +54,8 @@ export default function NuevaFacturaPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const { data: config } = useConfiguracion()
+  // Si llega ?presupuestoId, esta factura proviene de un presupuesto aprobado
+  const [presupuestoId, setPresupuestoId] = useState<string | null>(null)
 
   const [loading, setLoading] = useState(false)
   const [pacientes, setPacientes] = useState<Paciente[]>([])
@@ -82,6 +84,45 @@ export default function NuevaFacturaPage() {
     fetchPacientes()
     fetchCorrelativos()
     fetchProductos()
+  }, [])
+
+  // Precargar datos desde un presupuesto aprobado (?presupuestoId=...)
+  useEffect(() => {
+    const pid = new URLSearchParams(window.location.search).get('presupuestoId')
+    if (!pid) return
+    setPresupuestoId(pid)
+    const cargarPresupuesto = async () => {
+      try {
+        const res = await fetch(`/api/presupuestos/${pid}`)
+        if (!res.ok) return
+        const p = await res.json()
+        if (p.estado === 'FACTURADO') {
+          toast.error('Este presupuesto ya fue facturado')
+          return
+        }
+        setTipoDocumento('FACTURA')
+        setShowTypeModal(false)
+        setPacienteId(p.pacienteId)
+        setDescuento(Number(p.descuento) || 0)
+        if (p.observaciones) setObservaciones(p.observaciones)
+        // Los items del presupuesto ya guardan el precio INCLUSIVO de ISV
+        setItems(
+          (p.items || []).map((it: any, idx: number) => ({
+            id: `${idx + 1}`,
+            descripcion: it.descripcion,
+            cantidad: it.cantidad,
+            precioUnitario: Number(it.precioUnitario),
+            tasaIsv: Number(it.tasaIsv),
+            productoId: it.productoId || undefined,
+          }))
+        )
+        toast.success(`Datos cargados del presupuesto ${p.numero}`)
+      } catch {
+        // silencioso: si falla, el usuario llena la factura manualmente
+      }
+    }
+    cargarPresupuesto()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchPacientes = async () => {
@@ -265,9 +306,22 @@ export default function NuevaFacturaPage() {
       if (response.ok) {
         const data = await response.json()
         const facturaId = data.id
-        
+
+        // Si provino de un presupuesto, marcarlo como FACTURADO y vincular la factura
+        if (presupuestoId) {
+          try {
+            await fetch(`/api/presupuestos/${presupuestoId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ estado: 'FACTURADO', facturaId }),
+            })
+          } catch {
+            // no bloquear la facturación si falla el marcado del presupuesto
+          }
+        }
+
         toast.success(`${tipoDocumento === 'FACTURA' ? 'Factura' : 'Orden'} creada exitosamente`)
-        
+
         // Redirigir a la página de pago con parámetro para mostrar modal
         router.push(`/dashboard/facturacion/${facturaId}?pago=nuevo`)
       } else {
