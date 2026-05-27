@@ -23,7 +23,8 @@ import {
   Stethoscope,
   FilePlus,
   Lock,
-  ScrollText
+  ScrollText,
+  Wallet
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
@@ -44,6 +45,7 @@ const menuItems: MenuItem[] = [
   { name: 'Tratamientos', href: '/dashboard/tratamientos', icon: Heart },
   { name: 'Documentos', href: '/dashboard/documentos', icon: FilePlus },
   { name: 'Facturación', href: '/dashboard/facturacion', icon: CreditCard },
+  { name: 'Cuentas por Cobrar', href: '/dashboard/cuentas-por-cobrar', icon: Wallet },
   { name: 'Productos/Servicios', href: '/dashboard/productos', icon: ShoppingBag },
   { name: 'Contabilidad', href: '/dashboard/contabilidad', icon: Calculator },
   { name: 'Inventario', href: '/dashboard/inventario', icon: Package },
