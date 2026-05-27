@@ -732,3 +732,27 @@ enum EstadoPresupuesto {
   VENCIDO
 }
 
+// Modelo de Cierre de Caja (arqueo diario)
+// Reconcilia el efectivo esperado (calculado del sistema) contra el contado físicamente.
+// Datos de usuario denormalizados (sin relación a Usuario).
+model CierreCaja {
+  id               String   @id @default(uuid())
+  fecha            DateTime // día cerrado (inicio del día)
+  usuarioId        String?
+  usuarioNombre    String?
+  fondoInicial     Decimal  @default(0) @db.Decimal(10, 2) // fondo/base de caja al iniciar
+  totalIngresos    Decimal  @db.Decimal(10, 2) // todos los pagos del día (todos los métodos)
+  totalEfectivo    Decimal  @db.Decimal(10, 2) // pagos en efectivo del día
+  totalEgresos     Decimal  @db.Decimal(10, 2) // egresos del día (todos los métodos)
+  egresosEfectivo  Decimal  @db.Decimal(10, 2) // egresos en efectivo del día
+  efectivoEsperado Decimal  @db.Decimal(10, 2) // fondo + efectivo - egresos en efectivo
+  efectivoContado  Decimal  @db.Decimal(10, 2) // efectivo físico contado
+  diferencia       Decimal  @db.Decimal(10, 2) // contado - esperado (+ sobrante / - faltante)
+  desglosePorMetodo Json?   // { EFECTIVO: x, TARJETA_CREDITO: y, ... }
+  observaciones    String?  @db.Text
+  createdAt        DateTime @default(now())
+
+  @@index([fecha])
+  @@map("cierres_caja")
+}
+
