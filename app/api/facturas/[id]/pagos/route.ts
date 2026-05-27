@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { registrarFlujoCaja } from '@/lib/flujo-caja'
+import { auditar } from '@/lib/auditoria'
 import { EstadoFactura } from '@prisma/client'
 import { z } from 'zod'
 
@@ -120,6 +121,14 @@ export async function POST(
       validatedData.monto,
       params.id
     )
+
+    await auditar(session, request, {
+      accion: 'CREAR',
+      entidad: 'Pago',
+      entidadId: pago.id,
+      descripcion: `Registró un pago de ${validatedData.monto.toFixed(2)} (${validatedData.metodoPago}) en la factura ${params.id}`,
+      datos: { monto: validatedData.monto, metodoPago: validatedData.metodoPago, facturaId: params.id, nuevoEstado },
+    })
 
     return NextResponse.json(pago, { status: 201 })
   } catch (error) {

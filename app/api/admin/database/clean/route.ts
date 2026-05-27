@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { auditar } from '@/lib/auditoria'
 
 export async function POST(request: NextRequest) {
   try {
@@ -74,6 +75,13 @@ export async function POST(request: NextRequest) {
       inventario: await prisma.inventario.count(),
       movimientos: await prisma.movimientoInventario.count(),
     }
+
+    await auditar(session, request, {
+      accion: 'LIMPIAR',
+      entidad: 'BaseDeDatos',
+      descripcion: 'Limpió los datos operativos de la base de datos (mantiene usuarios y productos)',
+      datos: { registrosAntes: countBefore },
+    })
 
     return NextResponse.json({
       success: true,

@@ -640,3 +640,38 @@ model ConfiguracionEmpresa {
   @@map("configuracion_empresa")
 }
 
+// Modelo de Bitácora de Auditoría
+// Registra acciones sensibles (crear/editar/anular/eliminar/exportar) del sistema.
+// Los datos del usuario se DENORMALIZAN (no se usa relación a Usuario) para que el
+// historial se preserve aunque la cuenta se elimine o cambie.
+model Auditoria {
+  id            String          @id @default(uuid())
+  fecha         DateTime        @default(now())
+  accion        AccionAuditoria
+  entidad       String          // "Factura", "Pago", "Paciente", "Egreso", etc.
+  entidadId     String?         // ID del registro afectado
+  descripcion   String          @db.Text // Texto legible de lo ocurrido
+  datos         Json?           // Metadatos opcionales (antes/después, montos, etc.)
+  usuarioId     String?         // ID del usuario que ejecutó la acción
+  usuarioNombre String?         // Nombre denormalizado del usuario
+  ip            String?         // IP de origen de la petición
+  createdAt     DateTime        @default(now())
+
+  @@index([fecha])
+  @@index([entidad])
+  @@index([entidadId])
+  @@index([usuarioId])
+  @@index([accion])
+  @@map("auditoria")
+}
+
+enum AccionAuditoria {
+  CREAR
+  ACTUALIZAR
+  ANULAR
+  ELIMINAR
+  EXPORTAR
+  LIMPIAR
+  OTRO
+}
+

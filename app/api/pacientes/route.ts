@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { auditar } from '@/lib/auditoria'
 import { z } from 'zod'
 
 const pacienteSchema = z.object({
@@ -111,6 +112,13 @@ export async function POST(request: NextRequest) {
         fechaNacimiento: new Date(validatedData.fechaNacimiento),
         email: validatedData.email || null,
       },
+    })
+
+    await auditar(session, request, {
+      accion: 'CREAR',
+      entidad: 'Paciente',
+      entidadId: paciente.id,
+      descripcion: `Creó al paciente ${paciente.nombre} ${paciente.apellido} (${paciente.identificacion})`,
     })
 
     return NextResponse.json(paciente, { status: 201 })

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { registrarFlujoCaja } from '@/lib/flujo-caja'
+import { auditar } from '@/lib/auditoria'
 import { z } from 'zod'
 
 const egresoSchema = z.object({
@@ -125,6 +126,14 @@ export async function POST(request: NextRequest) {
       validatedData.monto,
       egreso.id
     )
+
+    await auditar(session, request, {
+      accion: 'CREAR',
+      entidad: 'Egreso',
+      entidadId: egreso.id,
+      descripcion: `Registró el egreso "${validatedData.concepto}" por ${validatedData.monto.toFixed(2)}`,
+      datos: { concepto: validatedData.concepto, monto: validatedData.monto, categoria: validatedData.categoria },
+    })
 
     return NextResponse.json(egreso, { status: 201 })
   } catch (error) {

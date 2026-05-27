@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { auditar } from '@/lib/auditoria'
 import { z } from 'zod'
 
 // Whitelist explícita de campos editables (evita mass-assignment de columnas arbitrarias)
@@ -84,6 +85,14 @@ export async function PUT(
         const updated = await prisma.correlativo.update({
             where: { id: params.id },
             data: dataToUpdate
+        })
+
+        await auditar(session, request, {
+            accion: 'ACTUALIZAR',
+            entidad: 'Correlativo',
+            entidadId: params.id,
+            descripcion: `Modificó el correlativo ${correlativo.tipo} (${updated.sucursal}-${updated.puntoEmision}-${updated.tipoDoc})`,
+            datos: { cambios: dataToUpdate },
         })
 
         return NextResponse.json(updated)

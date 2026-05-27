@@ -22,7 +22,8 @@ import {
   ShoppingBag,
   Stethoscope,
   FilePlus,
-  Lock
+  Lock,
+  ScrollText
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
@@ -48,6 +49,7 @@ const menuItems: MenuItem[] = [
   { name: 'Inventario', href: '/dashboard/inventario', icon: Package },
   { name: 'Reportes', href: '/dashboard/reportes', icon: BarChart3 },
   { name: 'Usuarios', href: '/dashboard/usuarios', icon: UserCog, roles: ['ADMINISTRADOR'] },
+  { name: 'Auditoría', href: '/dashboard/auditoria', icon: ScrollText, roles: ['ADMINISTRADOR'] },
   { name: 'Administración', href: '/dashboard/admin', icon: Lock, roles: ['ADMINISTRADOR'] },
   {
     name: 'Configuración',

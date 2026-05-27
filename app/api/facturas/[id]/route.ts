@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { registrarFlujoCaja } from '@/lib/flujo-caja'
+import { auditar } from '@/lib/auditoria'
 import { z } from 'zod'
 
 // GET - Obtener factura por ID
@@ -170,6 +171,24 @@ export async function PUT(
         pagos: true,
       },
     })
+
+    if (validated.estado === 'ANULADA') {
+      await auditar(session, request, {
+        accion: 'ANULAR',
+        entidad: 'Factura',
+        entidadId: factura.id,
+        descripcion: `Anuló la factura ${factura.numero} (total ${Number(factura.total).toFixed(2)})`,
+        datos: { numero: factura.numero, total: factura.total },
+      })
+    } else {
+      await auditar(session, request, {
+        accion: 'ACTUALIZAR',
+        entidad: 'Factura',
+        entidadId: factura.id,
+        descripcion: `Actualizó la factura ${factura.numero}`,
+        datos: { estado: validated.estado, descuento: validated.descuento, impuesto: validated.impuesto },
+      })
+    }
 
     return NextResponse.json(factura)
   } catch (error) {

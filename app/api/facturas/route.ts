@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { CategoriaIngreso } from '@prisma/client'
+import { auditar } from '@/lib/auditoria'
 
 const itemFacturaSchema = z.object({
   descripcion: z.string().max(500),
@@ -317,6 +318,14 @@ export async function POST(request: NextRequest) {
       // Aísla la lectura+incremento del correlativo para evitar números de factura
       // duplicados bajo peticiones concurrentes.
       isolationLevel: 'Serializable',
+    })
+
+    await auditar(session, request, {
+      accion: 'CREAR',
+      entidad: 'Factura',
+      entidadId: result.id,
+      descripcion: `Emitió ${result.tipoDocumento === 'ORDEN_PEDIDO' ? 'la orden' : 'la factura'} ${result.numero} por ${total.toFixed(2)}`,
+      datos: { numero: result.numero, total, subtotal, impuesto, descuento: validatedData.descuento, pacienteId: validatedData.pacienteId },
     })
 
     return NextResponse.json(result, { status: 201 })

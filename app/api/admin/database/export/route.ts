@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { auditar } from '@/lib/auditoria'
 
 export async function GET(request: NextRequest) {
   try {
@@ -84,9 +85,17 @@ export async function GET(request: NextRequest) {
       },
     }
 
+    // Registrar la exportación de datos (incluye PII clínica) en la bitácora
+    await auditar(session, request, {
+      accion: 'EXPORTAR',
+      entidad: 'BaseDeDatos',
+      descripcion: 'Exportó un respaldo completo de la base de datos (incluye datos clínicos sensibles)',
+      datos: exportData.summary,
+    })
+
     // Crear archivo JSON
     const filename = `clinica-backup-${new Date().toISOString().split('T')[0]}.json`
-    
+
     return new NextResponse(JSON.stringify(exportData, null, 2), {
       status: 200,
       headers: {

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { auditar } from '@/lib/auditoria'
 import { z } from 'zod'
 
 const correlativoSchema = z.object({
@@ -67,6 +68,14 @@ export async function POST(request: Request) {
                 siguiente: body.rangoInicial,
                 activo: true
             }
+        })
+
+        await auditar(session, request, {
+            accion: 'CREAR',
+            entidad: 'Correlativo',
+            entidadId: correlativo.id,
+            descripcion: `Creó un correlativo ${body.tipo} (${body.sucursal}-${body.puntoEmision ?? ''}-${body.tipoDoc ?? ''}) rango ${body.rangoInicial}-${body.rangoFinal}`,
+            datos: { tipo: body.tipo, rangoInicial: body.rangoInicial, rangoFinal: body.rangoFinal, cai: body.cai },
         })
 
         return NextResponse.json(correlativo)

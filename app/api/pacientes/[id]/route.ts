@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { auditar } from '@/lib/auditoria'
 import { z } from 'zod'
 
 const pacienteSchema = z.object({
@@ -106,6 +107,13 @@ export async function PUT(
       },
     })
 
+    await auditar(session, request, {
+      accion: 'ACTUALIZAR',
+      entidad: 'Paciente',
+      entidadId: paciente.id,
+      descripcion: `Actualizó al paciente ${paciente.nombre} ${paciente.apellido} (${paciente.identificacion})`,
+    })
+
     return NextResponse.json(paciente)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -137,6 +145,13 @@ export async function DELETE(
     const paciente = await prisma.paciente.update({
       where: { id: params.id },
       data: { activo: false },
+    })
+
+    await auditar(session, request, {
+      accion: 'ELIMINAR',
+      entidad: 'Paciente',
+      entidadId: paciente.id,
+      descripcion: `Desactivó al paciente ${paciente.nombre} ${paciente.apellido} (${paciente.identificacion})`,
     })
 
     return NextResponse.json(paciente)

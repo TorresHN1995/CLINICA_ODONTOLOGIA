@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { registrarFlujoCaja } from '@/lib/flujo-caja'
+import { auditar } from '@/lib/auditoria'
 import { z } from 'zod'
 
 const egresoUpdateSchema = z.object({
@@ -75,6 +76,14 @@ export async function PUT(
       }
     }
 
+    await auditar(session, request, {
+      accion: 'ACTUALIZAR',
+      entidad: 'Egreso',
+      entidadId: params.id,
+      descripcion: `Editó el egreso "${egreso.concepto}"`,
+      datos: { montoAnterior: egresoPrevio.monto, montoNuevo: validatedData.monto ?? egresoPrevio.monto },
+    })
+
     return NextResponse.json(egreso)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -126,6 +135,14 @@ export async function DELETE(
     } catch (e) {
       console.error('Error al registrar contra-asiento:', e)
     }
+
+    await auditar(session, request, {
+      accion: 'ELIMINAR',
+      entidad: 'Egreso',
+      entidadId: params.id,
+      descripcion: `Eliminó el egreso "${egreso.concepto}" (${Number(egreso.monto).toFixed(2)})`,
+      datos: { concepto: egreso.concepto, monto: egreso.monto, categoria: egreso.categoria },
+    })
 
     return NextResponse.json({ message: 'Egreso eliminado' })
   } catch (error) {
