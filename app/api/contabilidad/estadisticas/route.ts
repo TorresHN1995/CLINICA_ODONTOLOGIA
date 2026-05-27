@@ -23,19 +23,16 @@ export async function GET(request: NextRequest) {
     const inicioMes = startOfMonth(fechaBase)
     const finMes = endOfMonth(fechaBase)
 
-    // Ingresos del mes
-    const ingresosMes = await prisma.factura.aggregate({
+    // Ingresos del mes = efectivo realmente cobrado (suma de pagos), base de caja
+    const ingresosMes = await prisma.pago.aggregate({
       where: {
         fecha: {
           gte: inicioMes,
           lte: finMes,
         },
-        estado: {
-          in: ['PAGADA', 'PAGADA_PARCIAL'],
-        },
       },
       _sum: {
-        total: true,
+        monto: true,
       },
     })
 
@@ -55,7 +52,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Ingresos por categoría
+    // Facturación por estado (excluyendo anuladas)
     const ingresosPorCategoria = await prisma.factura.groupBy({
       by: ['estado'],
       where: {
@@ -63,6 +60,7 @@ export async function GET(request: NextRequest) {
           gte: inicioMes,
           lte: finMes,
         },
+        estado: { not: 'ANULADA' },
       },
       _sum: {
         total: true,
@@ -93,12 +91,12 @@ export async function GET(request: NextRequest) {
       const finMesConsulta = endOfMonth(mesConsulta)
 
       const [ingresos, egresos] = await Promise.all([
-        prisma.factura.aggregate({
+        // Ingresos = efectivo cobrado (suma de pagos del mes)
+        prisma.pago.aggregate({
           where: {
             fecha: { gte: inicioMesConsulta, lte: finMesConsulta },
-            estado: { in: ['PAGADA', 'PAGADA_PARCIAL'] },
           },
-          _sum: { total: true },
+          _sum: { monto: true },
         }),
         prisma.egreso.aggregate({
           where: {
@@ -111,9 +109,9 @@ export async function GET(request: NextRequest) {
 
       ultimosMeses.push({
         mes: mesConsulta.toLocaleDateString('es', { month: 'short', year: 'numeric' }),
-        ingresos: Number(ingresos._sum.total || 0),
+        ingresos: Number(ingresos._sum.monto || 0),
         egresos: Number(egresos._sum.monto || 0),
-        ganancia: Number(ingresos._sum.total || 0) - Number(egresos._sum.monto || 0),
+        ganancia: Number(ingresos._sum.monto || 0) - Number(egresos._sum.monto || 0),
       })
     }
 
@@ -124,9 +122,9 @@ export async function GET(request: NextRequest) {
 
     const estadisticas = {
       resumen: {
-        ingresosMes: Number(ingresosMes._sum.total || 0),
+        ingresosMes: Number(ingresosMes._sum.monto || 0),
         egresosMes: Number(egresosMes._sum.monto || 0),
-        gananciaMes: Number(ingresosMes._sum.total || 0) - Number(egresosMes._sum.monto || 0),
+        gananciaMes: Number(ingresosMes._sum.monto || 0) - Number(egresosMes._sum.monto || 0),
         saldoActual: ultimoFlujo ? Number(ultimoFlujo.saldoActual) : 0,
       },
       ingresosPorCategoria: ingresosPorCategoria.map(item => ({

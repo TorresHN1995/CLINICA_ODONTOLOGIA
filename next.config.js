@@ -2,13 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
+    // Las imágenes se almacenan localmente y se sirven con rutas relativas (/uploads/...),
+    // por lo que no se requiere permitir hosts remotos arbitrarios. Si en el futuro se
+    // cargan imágenes desde un CDN/almacenamiento externo, añadir aquí su hostname específico.
     domains: ['localhost'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
   },
   experimental: {
     serverActions: {

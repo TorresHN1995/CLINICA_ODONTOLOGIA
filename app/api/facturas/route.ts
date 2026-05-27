@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const pacienteId = searchParams.get('pacienteId')
     const estado = searchParams.get('estado')
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1)
+    const limit = Math.min(Math.max(1, parseInt(searchParams.get('limit') || '50') || 50), 100)
     const skip = (page - 1) * limit
 
     const where: any = {}
@@ -67,8 +67,31 @@ export async function GET(request: NextRequest) {
       prisma.factura.count({ where }),
     ])
 
+    // Estadísticas agregadas sobre TODAS las facturas que cumplen el filtro
+    // (no solo la página actual), para que los totales del dashboard sean correctos.
+    const [pagadaAgg, pendientesFacturas] = await Promise.all([
+      prisma.factura.aggregate({
+        where: { ...where, estado: 'PAGADA' },
+        _sum: { total: true },
+      }),
+      prisma.factura.findMany({
+        where: { ...where, estado: { in: ['PENDIENTE', 'PAGADA_PARCIAL'] } },
+        select: { total: true, pagos: { select: { monto: true } } },
+      }),
+    ])
+
+    const totalIngresos = Number(pagadaAgg._sum.total || 0)
+    const totalPendiente = pendientesFacturas.reduce((sum, f) => {
+      const pagado = f.pagos.reduce((s, p) => s + Number(p.monto), 0)
+      return sum + (Number(f.total) - pagado)
+    }, 0)
+
     return NextResponse.json({
       facturas,
+      stats: {
+        totalIngresos,
+        totalPendiente,
+      },
       pagination: {
         page,
         limit,
@@ -112,12 +135,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calcular totales
+    // Calcular totales. El impuesto se DERIVA de la tasa de ISV de cada item
+    // (precioUnitario ya viene como base neta), nunca se confía en el impuesto del cliente.
     const subtotal = validatedData.items.reduce(
       (sum, item) => sum + item.cantidad * item.precioUnitario,
       0
     )
-    const total = subtotal - validatedData.descuento + validatedData.impuesto
+    const impuesto = validatedData.items.reduce(
+      (sum, item) => sum + item.cantidad * item.precioUnitario * ((item.tasaIsv ?? 15) / 100),
+      0
+    )
+
+    if (validatedData.descuento > subtotal + impuesto) {
+      return NextResponse.json(
+        { error: 'El descuento no puede ser mayor que el total de la factura' },
+        { status: 400 }
+      )
+    }
+
+    const total = subtotal - validatedData.descuento + impuesto
 
     // Todo dentro de una transacción para evitar race conditions
     const result = await prisma.$transaction(async (tx) => {
@@ -179,7 +215,7 @@ export async function POST(request: NextRequest) {
           emitenteId: session.user.id,
           subtotal,
           descuento: validatedData.descuento,
-          impuesto: validatedData.impuesto,
+          impuesto,
           total,
           observaciones: validatedData.observaciones || null,
           tipoDocumento: validatedData.tipoDocumento,
@@ -277,6 +313,10 @@ export async function POST(request: NextRequest) {
       }
 
       return factura
+    }, {
+      // Aísla la lectura+incremento del correlativo para evitar números de factura
+      // duplicados bajo peticiones concurrentes.
+      isolationLevel: 'Serializable',
     })
 
     return NextResponse.json(result, { status: 201 })

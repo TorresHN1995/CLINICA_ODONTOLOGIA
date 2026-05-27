@@ -7,11 +7,21 @@ import { z } from 'zod'
 const etapaUpdateSchema = z.object({
   nombre: z.string().optional(),
   descripcion: z.string().optional(),
-  costo: z.number().optional(),
+  costo: z.number().min(0, 'El costo no puede ser negativo').optional(),
   completada: z.boolean().optional(),
-  fechaInicio: z.string().optional(),
-  fechaFin: z.string().optional(),
 })
+
+// Recalcula el costoTotal del tratamiento como la suma de los costos de sus etapas
+async function recalcularCostoTotal(tratamientoId: string) {
+  const agg = await prisma.etapaTratamiento.aggregate({
+    where: { tratamientoId },
+    _sum: { costo: true },
+  })
+  await prisma.tratamiento.update({
+    where: { id: tratamientoId },
+    data: { costoTotal: agg._sum.costo ?? 0 },
+  })
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -26,16 +36,21 @@ export async function PATCH(
     const body = await request.json()
     const validatedData = etapaUpdateSchema.parse(body)
 
-    const { fechaInicio, fechaFin, ...otherData } = validatedData
-    
     const etapa = await prisma.etapaTratamiento.update({
       where: { id: params.etapaId },
       data: {
-        ...otherData,
-        ...(fechaInicio && { fechaInicio: new Date(fechaInicio) }),
-        ...(fechaFin && { fechaFin: new Date(fechaFin) }),
+        ...validatedData,
+        // Registrar la fecha al marcar/desmarcar como completada
+        ...(validatedData.completada !== undefined && {
+          fechaCompletada: validatedData.completada ? new Date() : null,
+        }),
       },
     })
+
+    // Si cambió el costo, mantener sincronizado el costoTotal del tratamiento
+    if (validatedData.costo !== undefined) {
+      await recalcularCostoTotal(params.id)
+    }
 
     return NextResponse.json(etapa)
   } catch (error) {
@@ -63,6 +78,9 @@ export async function DELETE(
     await prisma.etapaTratamiento.delete({
       where: { id: params.etapaId },
     })
+
+    // Recalcular el costo total del tratamiento tras eliminar la etapa
+    await recalcularCostoTotal(params.id)
 
     return NextResponse.json({ success: true })
   } catch (error) {

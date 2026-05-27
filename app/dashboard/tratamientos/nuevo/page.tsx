@@ -44,7 +44,7 @@ export default function NuevoTratamientoPage() {
 
   const fetchPacientes = async () => {
     try {
-      const response = await fetch('/api/pacientes')
+      const response = await fetch('/api/pacientes?limit=1000')
       if (!response.ok) throw new Error('Error al cargar')
       const data = await response.json()
       setPacientes(data.pacientes || data)
@@ -96,10 +96,10 @@ export default function NuevoTratamientoPage() {
       if (!tratamientoResponse.ok) throw new Error('Error al crear tratamiento')
       const tratamiento = await tratamientoResponse.json()
 
-      // Crear etapas
+      // Crear etapas (abortando si alguna falla, para no dejar el tratamiento incompleto en silencio)
       for (let i = 0; i < etapas.length; i++) {
         const etapa = etapas[i]
-        await fetch(`/api/tratamientos/${tratamiento.id}/etapas`, {
+        const etapaResp = await fetch(`/api/tratamientos/${tratamiento.id}/etapas`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -109,13 +109,16 @@ export default function NuevoTratamientoPage() {
             orden: i + 1,
           }),
         })
+        if (!etapaResp.ok) {
+          throw new Error(`No se pudo crear la etapa "${etapa.nombre || i + 1}"`)
+        }
       }
 
       toast.success('Tratamiento creado exitosamente')
       router.push(`/dashboard/tratamientos/${tratamiento.id}`)
     } catch (error) {
       console.error('Error:', error)
-      toast.error('Error al crear tratamiento')
+      toast.error(error instanceof Error ? error.message : 'Error al crear tratamiento')
     } finally {
       setLoading(false)
     }

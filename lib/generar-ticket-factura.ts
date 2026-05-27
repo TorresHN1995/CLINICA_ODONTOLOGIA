@@ -79,19 +79,20 @@ function calcularDesgloseSAR(items: ItemTicket[], descuento: number, moneda: str
 
   for (const item of items) {
     const tasa = item.tasaIsv ?? 15
-    const totalItem = item.cantidad * item.precioUnitario
+    // precioUnitario / subtotal ya se almacenan como BASE NETA (sin ISV);
+    // el frontend convierte el precio inclusivo a base antes de guardar.
+    // Por lo tanto el ISV se calcula SOBRE la base, no se extrae de ella.
+    const base = item.cantidad * item.precioUnitario
     if (tasa === 15) {
-      const base = totalItem / 1.15
       gravado15 += base
-      isv15 += totalItem - base
+      isv15 += base * 0.15
     } else if (tasa === 18) {
-      const base = totalItem / 1.18
       gravado18 += base
-      isv18 += totalItem - base
+      isv18 += base * 0.18
     } else if (tasa === 0) {
-      exento += totalItem
+      exento += base
     } else {
-      exonerado += totalItem
+      exonerado += base
     }
   }
 

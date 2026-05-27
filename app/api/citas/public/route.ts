@@ -73,21 +73,30 @@ export async function POST(request: NextRequest) {
         const duracion = 60 // Default 60 mins
         const horaFin = format(addMinutes(fechaDate, duracion), 'HH:mm')
 
-        // Verificar colisión doble check (concurrencia básica)
-        // Verificar colisión de ODONTÓLOGO
-        const colisionOdontologo = await prisma.cita.findFirst({
+        // Verificar colisión de ODONTÓLOGO por SOLAPAMIENTO de rango (no solo hora exacta)
+        const horaAMinutos = (hora: string) => {
+            const [h, m] = hora.split(':').map(Number)
+            return h * 60 + m
+        }
+        const inicioNueva = horaAMinutos(validatedData.hora)
+        const finNueva = horaAMinutos(horaFin)
+
+        const citasOdontologo = await prisma.cita.findMany({
             where: {
-                fecha: {
-                    gte: new Date(validatedData.fecha),
-                    lt: addMinutes(new Date(validatedData.fecha), 24 * 60)
-                },
-                horaInicio: validatedData.hora,
+                fecha: new Date(validatedData.fecha),
                 estado: { not: 'CANCELADA' },
                 odontologoId: odontologo.id
             }
         })
 
-        if (colisionOdontologo) {
+        const haySolapamiento = citasOdontologo.some((cita) => {
+            const ini = horaAMinutos(cita.horaInicio)
+            const fin = horaAMinutos(cita.horaFin)
+            // Dos rangos se solapan si inicioNueva < fin existente && finNueva > inicio existente
+            return inicioNueva < fin && finNueva > ini
+        })
+
+        if (haySolapamiento) {
             return NextResponse.json({ error: 'El horario seleccionado ya no está disponible.' }, { status: 409 })
         }
 

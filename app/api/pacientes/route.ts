@@ -36,8 +36,9 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search') || ''
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 100)
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1)
+    // Tope amplio (1000) para permitir poblar <select> con todos los pacientes
+    const limit = Math.min(Math.max(1, parseInt(searchParams.get('limit') || '10') || 10), 1000)
     const skip = (page - 1) * limit
 
     const where = search

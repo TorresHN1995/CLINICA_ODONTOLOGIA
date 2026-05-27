@@ -76,15 +76,19 @@ export default function OdontologoDetailPage() {
       const data = await response.json()
 
       if (response.ok) {
-        const citasData = data.citas || []
+        // /api/citas devuelve un array plano de citas
+        const citasData: any[] = Array.isArray(data) ? data : (data.citas || [])
         setCitas(citasData.slice(0, 10))
 
         // Calcular estadísticas
-        const completadas = citasData.filter((c: Cita) => c.estado === 'COMPLETADA').length
-        const pendientes = citasData.filter((c: Cita) => 
+        const completadas = citasData.filter((c: any) => c.estado === 'COMPLETADA').length
+        const pendientes = citasData.filter((c: any) =>
           c.estado === 'PROGRAMADA' || c.estado === 'CONFIRMADA'
         ).length
-        const pacientesUnicos = new Set(citasData.map((c: Cita) => c.paciente)).size
+        // Pacientes únicos por id (no por referencia de objeto)
+        const pacientesUnicos = new Set(
+          citasData.map((c: any) => c.pacienteId ?? c.paciente?.id)
+        ).size
 
         setStats({
           totalCitas: citasData.length,

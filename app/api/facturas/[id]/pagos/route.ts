@@ -6,6 +6,15 @@ import { registrarFlujoCaja } from '@/lib/flujo-caja'
 import { EstadoFactura } from '@prisma/client'
 import { z } from 'zod'
 
+// Error de negocio con código HTTP asociado (para mapear dentro de la transacción)
+class PagoError extends Error {
+  status: number
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
+}
+
 const pagoSchema = z.object({
   monto: z.number().positive(),
   metodoPago: z.enum([
@@ -34,86 +43,63 @@ export async function POST(
     const body = await request.json()
     const validatedData = pagoSchema.parse(body)
 
-    // Obtener factura actual
-    const factura = await prisma.factura.findUnique({
-      where: { id: params.id },
-      include: { pagos: true },
-    })
+    // Todo el bloque crítico (leer pagos -> validar -> crear pago -> actualizar estado)
+    // se ejecuta en UNA transacción serializada para evitar sobrepagos por concurrencia.
+    const { pago, nuevoEstado } = await prisma.$transaction(async (tx) => {
+      const factura = await tx.factura.findUnique({
+        where: { id: params.id },
+        include: { pagos: true },
+      })
 
-    if (!factura) {
-      return NextResponse.json(
-        { error: 'Factura no encontrada' },
-        { status: 404 }
+      if (!factura) {
+        throw new PagoError('Factura no encontrada', 404)
+      }
+      if (factura.estado === 'ANULADA') {
+        throw new PagoError('No se pueden registrar pagos en una factura anulada', 400)
+      }
+      if (factura.estado === 'PAGADA') {
+        throw new PagoError('La factura ya está completamente pagada', 400)
+      }
+
+      // Total pagado recalculado DENTRO de la transacción
+      const totalPagado = factura.pagos.reduce(
+        (sum, p) => sum + Number(p.monto),
+        0
       )
-    }
+      const nuevoTotal = totalPagado + validatedData.monto
 
-    if (factura.estado === 'ANULADA') {
-      return NextResponse.json(
-        { error: 'No se pueden registrar pagos en una factura anulada' },
-        { status: 400 }
-      )
-    }
+      if (nuevoTotal > Number(factura.total)) {
+        throw new PagoError('El monto del pago excede el total de la factura', 400)
+      }
 
-    if (factura.estado === 'PAGADA') {
-      return NextResponse.json(
-        { error: 'La factura ya está completamente pagada' },
-        { status: 400 }
-      )
-    }
+      const pago = await tx.pago.create({
+        data: {
+          facturaId: params.id,
+          monto: validatedData.monto,
+          metodoPago: validatedData.metodoPago,
+          referencia: validatedData.referencia || null,
+          observaciones: validatedData.observaciones || null,
+        },
+      })
 
-    // Calcular total pagado
-    const totalPagado = factura.pagos.reduce(
-      (sum, pago) => sum + Number(pago.monto),
-      0
-    )
-    const nuevoTotal = totalPagado + validatedData.monto
+      let nuevoEstado: EstadoFactura = factura.estado
+      if (nuevoTotal >= Number(factura.total)) {
+        nuevoEstado = 'PAGADA'
+      } else if (nuevoTotal > 0) {
+        nuevoEstado = 'PAGADA_PARCIAL'
+      }
 
-    if (nuevoTotal > Number(factura.total)) {
-      return NextResponse.json(
-        { error: 'El monto del pago excede el total de la factura' },
-        { status: 400 }
-      )
-    }
+      await tx.factura.update({
+        where: { id: params.id },
+        data: { estado: nuevoEstado },
+      })
 
-    // Registrar pago
-    const pago = await prisma.pago.create({
-      data: {
-        facturaId: params.id,
-        monto: validatedData.monto,
-        metodoPago: validatedData.metodoPago,
-        referencia: validatedData.referencia || null,
-        observaciones: validatedData.observaciones || null,
-      },
-    })
-
-    // Actualizar estado de factura
-    let nuevoEstado: EstadoFactura = factura.estado
-    if (nuevoTotal >= Number(factura.total)) {
-      nuevoEstado = 'PAGADA'
-    } else if (nuevoTotal > 0) {
-      nuevoEstado = 'PAGADA_PARCIAL'
-    }
-
-    await prisma.factura.update({
-      where: { id: params.id },
-      data: { estado: nuevoEstado },
-    })
-
-    // Registrar en Flujo de Caja por el monto del pago
-    await registrarFlujoCaja(
-      'INGRESO',
-      `Pago factura ${params.id}`,
-      validatedData.monto,
-      params.id
-    )
-
-    // Actualizar Ingreso asociado a la factura
-    try {
-      const ingreso = await prisma.ingreso.findUnique({
+      // Actualizar Ingreso asociado dentro de la misma transacción
+      const ingreso = await tx.ingreso.findUnique({
         where: { facturaId: params.id },
       })
       if (ingreso) {
-        await prisma.ingreso.update({
+        await tx.ingreso.update({
           where: { id: ingreso.id },
           data: {
             metodoPago: validatedData.metodoPago,
@@ -121,12 +107,25 @@ export async function POST(
           },
         })
       }
-    } catch (e) {
-      console.error('No se pudo actualizar Ingreso vinculado a la factura:', e)
-    }
+
+      return { pago, nuevoEstado }
+    }, {
+      isolationLevel: 'Serializable',
+    })
+
+    // El flujo de caja se registra fuera (tiene su propia transacción) una vez confirmado el pago
+    await registrarFlujoCaja(
+      'INGRESO',
+      `Pago factura ${params.id}`,
+      validatedData.monto,
+      params.id
+    )
 
     return NextResponse.json(pago, { status: 201 })
   } catch (error) {
+    if (error instanceof PagoError) {
+      return NextResponse.json({ error: error.message }, { status: error.status })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Datos inválidos', details: error.errors },

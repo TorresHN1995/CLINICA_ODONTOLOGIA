@@ -219,12 +219,14 @@ export default function FacturaDetallePage({ params }: Params) {
   const totalPagado = factura?.pagos.reduce((sum, p) => sum + Number(p.monto), 0) || 0
   const saldo = factura ? Number(factura.total) - totalPagado : 0
 
-  // Inicializar monto con el saldo pendiente cuando se abre el modal
+  // Inicializar monto con el saldo pendiente SOLO al abrir el modal.
+  // (No depende de `saldo` para no pisar lo que el usuario teclee si la factura se recarga.)
   useEffect(() => {
     if (showPagoModal && saldo > 0) {
       setMonto(saldo)
     }
-  }, [showPagoModal, saldo])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPagoModal])
 
   const registrarPago = async (e: React.FormEvent) => {
     e.preventDefault()

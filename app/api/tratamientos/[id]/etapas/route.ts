@@ -7,7 +7,7 @@ import { z } from 'zod'
 const etapaSchema = z.object({
   nombre: z.string().min(1),
   descripcion: z.string().optional(),
-  costo: z.number(),
+  costo: z.number().min(0, 'El costo no puede ser negativo'),
   orden: z.number(),
 })
 
@@ -29,6 +29,16 @@ export async function POST(
         ...validatedData,
         tratamientoId: params.id,
       },
+    })
+
+    // Mantener sincronizado el costoTotal del tratamiento con la suma de etapas
+    const agg = await prisma.etapaTratamiento.aggregate({
+      where: { tratamientoId: params.id },
+      _sum: { costo: true },
+    })
+    await prisma.tratamiento.update({
+      where: { id: params.id },
+      data: { costoTotal: agg._sum.costo ?? 0 },
     })
 
     return NextResponse.json(etapa, { status: 201 })

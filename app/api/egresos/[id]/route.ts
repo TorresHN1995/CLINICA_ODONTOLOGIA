@@ -7,7 +7,6 @@ import { z } from 'zod'
 
 const egresoUpdateSchema = z.object({
   concepto: z.string().min(1).optional(),
-  descripcion: z.string().optional(),
   monto: z.number().positive().optional(),
   categoria: z.enum([
     'MATERIALES_DENTALES', 'INSTRUMENTAL', 'MEDICAMENTOS', 'EQUIPAMIENTO',
@@ -39,6 +38,15 @@ export async function PUT(
     const body = await request.json()
     const validatedData = egresoUpdateSchema.parse(body)
 
+    // Egreso previo para detectar cambios de monto y ajustar el flujo de caja
+    const egresoPrevio = await prisma.egreso.findUnique({
+      where: { id: params.id },
+      select: { monto: true, concepto: true },
+    })
+    if (!egresoPrevio) {
+      return NextResponse.json({ error: 'Egreso no encontrado' }, { status: 404 })
+    }
+
     const egreso = await prisma.egreso.update({
       where: { id: params.id },
       data: {
@@ -54,6 +62,18 @@ export async function PUT(
         },
       },
     })
+
+    // Si cambió el monto, registrar el ajuste en el flujo de caja para mantener el saldo coherente
+    if (validatedData.monto !== undefined) {
+      const delta = validatedData.monto - Number(egresoPrevio.monto)
+      if (delta > 0) {
+        // El egreso aumentó: sale más dinero de caja
+        await registrarFlujoCaja('EGRESO', `Ajuste egreso: ${egreso.concepto}`, delta, params.id)
+      } else if (delta < 0) {
+        // El egreso disminuyó: se devuelve dinero a caja
+        await registrarFlujoCaja('AJUSTE', `Ajuste egreso: ${egreso.concepto}`, -delta, params.id)
+      }
+    }
 
     return NextResponse.json(egreso)
   } catch (error) {

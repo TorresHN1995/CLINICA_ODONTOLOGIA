@@ -144,12 +144,12 @@ export default function ConfiguracionFacturacionPage() {
                         <div>
                             <label className="label">Rango Inicial</label>
                             <input type="number" className="input-field" value={form.rangoInicial}
-                                onChange={(e) => setForm({ ...form, rangoInicial: parseInt(e.target.value) })} min="1" required />
+                                onChange={(e) => setForm({ ...form, rangoInicial: parseInt(e.target.value) || 1 })} min="1" required />
                         </div>
                         <div>
                             <label className="label">Rango Final</label>
                             <input type="number" className="input-field" value={form.rangoFinal}
-                                onChange={(e) => setForm({ ...form, rangoFinal: parseInt(e.target.value) })} min="1" required />
+                                onChange={(e) => setForm({ ...form, rangoFinal: parseInt(e.target.value) || 1 })} min="1" required />
                         </div>
                     </div>
 
@@ -157,7 +157,7 @@ export default function ConfiguracionFacturacionPage() {
                         <div>
                             <label className="label">Siguiente Número</label>
                             <input type="number" className="input-field bg-muted" value={form.siguiente}
-                                onChange={(e) => setForm({ ...form, siguiente: parseInt(e.target.value) })} min="1" />
+                                onChange={(e) => setForm({ ...form, siguiente: parseInt(e.target.value) || 1 })} min="1" />
                             <p className="text-xs text-muted-foreground mt-1">Último usado + 1</p>
                         </div>
                         <div>

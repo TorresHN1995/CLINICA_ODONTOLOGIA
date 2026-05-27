@@ -38,19 +38,23 @@ export async function POST(request: NextRequest) {
       movimientos: await prisma.movimientoInventario.count(),
     }
 
-    // Limpiar datos (mantener usuarios y productos)
-    await Promise.all([
+    // Limpiar datos (mantener usuarios y productos).
+    // Se ejecuta dentro de UNA transacción y en orden hijo -> padre para respetar
+    // las claves foráneas (Factura->Paciente no tiene cascade). Si algo falla,
+    // se revierte todo y la BD no queda parcialmente borrada.
+    await prisma.$transaction([
       prisma.pago.deleteMany(),
       prisma.ingreso.deleteMany(),
       prisma.itemFactura.deleteMany(),
       prisma.factura.deleteMany(),
       prisma.procedimiento.deleteMany(),
+      prisma.imagenClinica.deleteMany(),
       prisma.expediente.deleteMany(),
       prisma.cita.deleteMany(),
       prisma.etapaTratamiento.deleteMany(),
       prisma.tratamiento.deleteMany(),
-      prisma.movimientoInventario.deleteMany(),
       prisma.documento.deleteMany(),
+      prisma.movimientoInventario.deleteMany(),
       prisma.paciente.deleteMany(),
       prisma.egreso.deleteMany(),
       prisma.flujoCaja.deleteMany(),

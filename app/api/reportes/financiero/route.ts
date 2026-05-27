@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const fechaFin = new Date(año, mes, 0, 23, 59, 59)
 
     // Obtener datos financieros
-    const [facturas, pagos, ingresos, egresos] = await Promise.all([
+    const [facturas, pagos, egresos] = await Promise.all([
       prisma.factura.findMany({
         where: {
           fecha: { gte: fechaInicio, lte: fechaFin }
@@ -31,11 +31,6 @@ export async function GET(request: NextRequest) {
           fecha: { gte: fechaInicio, lte: fechaFin }
         }
       }),
-      prisma.ingreso.findMany({
-        where: {
-          fecha: { gte: fechaInicio, lte: fechaFin }
-        }
-      }),
       prisma.egreso.findMany({
         where: {
           fecha: { gte: fechaInicio, lte: fechaFin }
@@ -43,11 +38,15 @@ export async function GET(request: NextRequest) {
       })
     ])
 
+    // Las facturas ANULADAS no deben contar como facturación ni como saldo pendiente
+    const facturasValidas = facturas.filter(f => f.estado !== 'ANULADA')
+
     // Calcular totales
-    const totalFacturas = facturas.reduce((sum, f) => sum + parseFloat(f.total.toString()), 0)
+    const totalFacturas = facturasValidas.reduce((sum, f) => sum + parseFloat(f.total.toString()), 0)
     const totalPagos = pagos.reduce((sum, p) => sum + parseFloat(p.monto.toString()), 0)
-    const totalIngresos = ingresos.reduce((sum, i) => sum + parseFloat(i.monto.toString()), 0)
     const totalEgresos = egresos.reduce((sum, e) => sum + parseFloat(e.monto.toString()), 0)
+    // Ingreso real = efectivo cobrado en el periodo (base de caja), no lo facturado
+    const totalIngresos = totalPagos
 
     // Agrupar por estado
     const facturasPorEstado = {
@@ -73,9 +72,9 @@ export async function GET(request: NextRequest) {
     const utilidad = totalIngresos - totalEgresos
     const margenUtilidad = totalIngresos > 0 ? (utilidad / totalIngresos) * 100 : 0
 
-    // Top pacientes por gasto
+    // Top pacientes por gasto (sin contar facturas anuladas)
     const pacientesGasto: Record<string, number> = {}
-    facturas.forEach(f => {
+    facturasValidas.forEach(f => {
       const key = `${f.paciente.nombre} ${f.paciente.apellido}`
       pacientesGasto[key] = (pacientesGasto[key] || 0) + parseFloat(f.total.toString())
     })

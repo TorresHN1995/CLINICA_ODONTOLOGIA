@@ -76,10 +76,10 @@ export async function PUT(
     const body = await request.json()
     const validated = updateFacturaSchema.parse(body)
 
-    // Obtener factura actual con items para recalcular totales si es necesario
+    // Obtener factura actual con items y pagos para recalcular totales / revertir caja
     const facturaActual = await prisma.factura.findUnique({
       where: { id: params.id },
-      include: { items: true },
+      include: { items: true, pagos: true },
     })
 
     if (!facturaActual) {
@@ -91,8 +91,14 @@ export async function PUT(
     if (validated.estado) {
       dataUpdate.estado = validated.estado
 
-      // Si se anula la factura, anular el ingreso asociado y registrar contra-asiento
+      // Si se anula la factura, anular el ingreso asociado y revertir el efectivo cobrado
       if (validated.estado === 'ANULADA') {
+        if (facturaActual.estado === 'ANULADA') {
+          return NextResponse.json(
+            { error: 'La factura ya está anulada' },
+            { status: 400 }
+          )
+        }
         try {
           const ingreso = await prisma.ingreso.findUnique({
             where: { facturaId: params.id },
@@ -100,13 +106,20 @@ export async function PUT(
           if (ingreso) {
             await prisma.ingreso.delete({ where: { id: ingreso.id } })
           }
-          // Registrar contra-asiento en flujo de caja
-          await registrarFlujoCaja(
-            'AJUSTE',
-            `Anulación factura ${facturaActual.numero}`,
-            Number(facturaActual.total),
-            params.id
+          // Revertir SOLO el efectivo realmente cobrado (suma de pagos), no el total.
+          // Cada pago entró a caja como INGRESO; al anular se registra un EGRESO equivalente.
+          const totalCobrado = facturaActual.pagos.reduce(
+            (sum, p) => sum + Number(p.monto),
+            0
           )
+          if (totalCobrado > 0) {
+            await registrarFlujoCaja(
+              'EGRESO',
+              `Anulación factura ${facturaActual.numero} (reverso de pagos)`,
+              totalCobrado,
+              params.id
+            )
+          }
         } catch (e) {
           console.error('Error al anular ingreso/flujo:', e)
         }
@@ -121,8 +134,21 @@ export async function PUT(
         (sum, item) => sum + Number(item.subtotal),
         0
       )
+      // El impuesto SIEMPRE se deriva de las tasas de los items (base neta * tasa),
+      // nunca se confía en el valor enviado por el cliente.
+      const impuesto = facturaActual.items.reduce(
+        (sum, item) => sum + Number(item.subtotal) * (Number(item.tasaIsv ?? 15) / 100),
+        0
+      )
       const descuento = validated.descuento ?? Number(facturaActual.descuento)
-      const impuesto = validated.impuesto ?? Number(facturaActual.impuesto)
+
+      if (descuento > subtotal + impuesto) {
+        return NextResponse.json(
+          { error: 'El descuento no puede ser mayor que el total de la factura' },
+          { status: 400 }
+        )
+      }
+
       const total = subtotal - descuento + impuesto
 
       dataUpdate = {

@@ -409,7 +409,9 @@ export default function ReportesPage() {
                   </thead>
                   <tbody>
                     {reporteFinanciero.topPacientes.map((paciente, index) => {
-                      const porcentaje = (paciente.total / reporteFinanciero.resumen.totalFacturas) * 100
+                      const porcentaje = reporteFinanciero.resumen.totalFacturas > 0
+                        ? (paciente.total / reporteFinanciero.resumen.totalFacturas) * 100
+                        : 0
                       return (
                         <tr key={index} className="border-b border-border hover:bg-muted">
                           <td className="py-3 px-4 text-slate-900">{index + 1}. {paciente.nombre}</td>
@@ -610,7 +612,9 @@ export default function ReportesPage() {
                   </thead>
                   <tbody>
                     {reporteClinico.procedimientos.topProcedimientos.map((proc, index) => {
-                      const porcentaje = (proc.cantidad / reporteClinico.resumen.procedimientosRealizados) * 100
+                      const porcentaje = reporteClinico.resumen.procedimientosRealizados > 0
+                        ? (proc.cantidad / reporteClinico.resumen.procedimientosRealizados) * 100
+                        : 0
                       return (
                         <tr key={index} className="border-b border-border hover:bg-muted">
                           <td className="py-3 px-4 text-slate-900">{index + 1}. {proc.nombre}</td>

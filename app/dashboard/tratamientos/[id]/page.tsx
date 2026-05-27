@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Edit2, Trash2, Plus, CheckCircle, Clock, AlertCircle, DollarSign, Calendar } from 'lucide-react'
@@ -45,6 +45,8 @@ export default function DetalleTratamientoPage() {
 
   const [tratamiento, setTratamiento] = useState<Tratamiento | null>(null)
   const [loading, setLoading] = useState(true)
+  // Guarda de re-entrada para evitar doble envío (doble clic) en las mutaciones
+  const accionEnCurso = useRef(false)
   const [editando, setEditando] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showNuevaEtapa, setShowNuevaEtapa] = useState(false)
@@ -86,6 +88,8 @@ export default function DetalleTratamientoPage() {
   }
 
   const handleActualizar = async () => {
+    if (accionEnCurso.current) return
+    accionEnCurso.current = true
     try {
       const response = await fetch(`/api/tratamientos/${id}`, {
         method: 'PUT',
@@ -98,10 +102,14 @@ export default function DetalleTratamientoPage() {
       fetchTratamiento()
     } catch (error) {
       toast.error('Error al actualizar tratamiento')
+    } finally {
+      accionEnCurso.current = false
     }
   }
 
   const handleEliminar = async () => {
+    if (accionEnCurso.current) return
+    accionEnCurso.current = true
     try {
       const response = await fetch(`/api/tratamientos/${id}`, {
         method: 'DELETE',
@@ -111,6 +119,7 @@ export default function DetalleTratamientoPage() {
       router.push('/dashboard/tratamientos')
     } catch (error) {
       toast.error('Error al eliminar tratamiento')
+      accionEnCurso.current = false
     }
   }
 
@@ -119,6 +128,8 @@ export default function DetalleTratamientoPage() {
       toast.error('Completa todos los campos')
       return
     }
+    if (accionEnCurso.current) return
+    accionEnCurso.current = true
 
     try {
       const response = await fetch(`/api/tratamientos/${id}/etapas`, {
@@ -138,25 +149,33 @@ export default function DetalleTratamientoPage() {
       fetchTratamiento()
     } catch (error) {
       toast.error('Error al agregar etapa')
+    } finally {
+      accionEnCurso.current = false
     }
   }
 
   const handleCompletarEtapa = async (etapaId: string) => {
+    if (accionEnCurso.current) return
+    accionEnCurso.current = true
     try {
       const response = await fetch(`/api/tratamientos/${id}/etapas/${etapaId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completada: true, fechaFin: new Date() }),
+        body: JSON.stringify({ completada: true }),
       })
       if (!response.ok) throw new Error('Error al completar')
       toast.success('Etapa completada')
       fetchTratamiento()
     } catch (error) {
       toast.error('Error al completar etapa')
+    } finally {
+      accionEnCurso.current = false
     }
   }
 
   const handleEliminarEtapa = async (etapaId: string) => {
+    if (accionEnCurso.current) return
+    accionEnCurso.current = true
     try {
       const response = await fetch(`/api/tratamientos/${id}/etapas/${etapaId}`, {
         method: 'DELETE',
@@ -166,6 +185,8 @@ export default function DetalleTratamientoPage() {
       fetchTratamiento()
     } catch (error) {
       toast.error('Error al eliminar etapa')
+    } finally {
+      accionEnCurso.current = false
     }
   }
 

@@ -28,6 +28,7 @@ interface Factura {
 
 export default function FacturacionPage() {
   const [facturas, setFacturas] = useState<Factura[]>([])
+  const [stats, setStats] = useState<{ totalIngresos: number; totalPendiente: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [filtroEstado, setFiltroEstado] = useState('')
   const { data: config } = useConfiguracion()
@@ -48,6 +49,7 @@ export default function FacturacionPage() {
 
       if (response.ok) {
         setFacturas(data.facturas || data)
+        setStats(data.stats || null)
       } else {
         toast.error('Error al cargar facturas')
       }
@@ -67,12 +69,13 @@ export default function FacturacionPage() {
     return Number(factura.total) - totalPagado
   }
 
-  // Estadísticas
-  const totalIngresos = facturas
+  // Estadísticas: se usan los agregados del servidor (sobre TODAS las facturas).
+  // Si por alguna razón no llegan, se hace fallback al cálculo sobre la página actual.
+  const totalIngresos = stats?.totalIngresos ?? facturas
     .filter(f => f.estado === 'PAGADA')
     .reduce((sum, f) => sum + Number(f.total), 0)
 
-  const totalPendiente = facturas
+  const totalPendiente = stats?.totalPendiente ?? facturas
     .filter(f => f.estado === 'PENDIENTE' || f.estado === 'PAGADA_PARCIAL')
     .reduce((sum, f) => sum + calcularSaldoPendiente(f), 0)
 

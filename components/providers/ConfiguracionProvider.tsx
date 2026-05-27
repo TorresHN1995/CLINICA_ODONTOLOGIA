@@ -52,7 +52,8 @@ export function ConfiguracionProvider({ children }: { children: ReactNode }) {
     }, [])
 
     const formatearMoneda = (monto: number | string) => {
-        const numero = typeof monto === 'string' ? parseFloat(monto) : monto
+        let numero = typeof monto === 'string' ? parseFloat(monto) : monto
+        if (numero == null || isNaN(numero)) numero = 0
         const simbolo = configuracion?.simboloMoneda || 'L.'
 
         // We can use Intl.NumberFormat if we want to respect locales properly, 
