@@ -34,5 +34,5 @@ yarn-error.log*
 next-env.d.ts
 
 # prisma
-/prisma/migrations
+# Las migraciones DEBEN versionarse para que `prisma migrate deploy` funcione en Vercel
 
