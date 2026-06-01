@@ -255,6 +255,11 @@ export default function NuevaFacturaPage() {
 
   const desglose = calcularDesglose()
 
+  // Un ítem solo "cuenta" si tiene descripción. La fila vacía que se agrega
+  // automáticamente al seleccionar un producto se ignora por completo (no bloquea
+  // la emisión ni se envía a la API).
+  const itemsValidos = items.filter(item => item.descripcion.trim() !== '')
+
   // Para la API: impuesto total = isv15 + isv18
   const calcularISVTotal = () => desglose.isv15 + desglose.isv18
   const calcularTotalPagar = () => desglose.totalPagar
@@ -272,14 +277,28 @@ export default function NuevaFacturaPage() {
       return
     }
 
+    // Debe haber al menos un ítem con descripción (las filas vacías no cuentan)
+    if (itemsValidos.length === 0) {
+      toast.error('Agregue al menos un concepto o servicio a la factura')
+      return
+    }
+
+    // Los ítems con descripción deben tener cantidad y precio válidos
+    const itemIncompleto = itemsValidos.find(
+      item => !(item.precioUnitario > 0) || !(item.cantidad >= 1)
+    )
+    if (itemIncompleto) {
+      toast.error('Cada concepto debe tener una cantidad válida y un precio mayor a 0')
+      return
+    }
+
     setLoading(true)
 
     try {
       // PREPARAR DATOS PARA API (Convertir montos inclusivos a base + impuesto)
       // Si el usuario ingresó 115 (Total), la API espera Base (100) + Impuesto (15)
 
-      const payloadItems = items
-        .filter(item => item.descripcion.trim() !== '')
+      const payloadItems = itemsValidos
         .map(({ id, ...item }) => ({
           ...item,
           precioUnitario: item.tasaIsv > 0
@@ -504,7 +523,6 @@ export default function NuevaFacturaPage() {
                         <div className="relative">
                           <input
                             type="text"
-                            required
                             className="input-field py-1.5 text-sm pr-8"
                             placeholder="Buscar producto o escribir..."
                             value={showProductoDropdown === item.id ? productoBusqueda : item.descripcion}
@@ -553,7 +571,6 @@ export default function NuevaFacturaPage() {
                       <div className="col-span-2">
                         <input
                           type="number"
-                          required
                           min="1"
                           className="input-field py-1.5 text-sm text-center"
                           value={item.cantidad}
@@ -563,7 +580,6 @@ export default function NuevaFacturaPage() {
                       <div className="col-span-2">
                         <input
                           type="number"
-                          required
                           min="0"
                           step="0.01"
                           className="input-field py-1.5 text-sm text-right pr-2"
@@ -659,8 +675,8 @@ export default function NuevaFacturaPage() {
 
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="w-full btn-primary py-3 text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2 mt-2"
+                    disabled={loading || itemsValidos.length === 0}
+                    className="w-full btn-primary py-3 text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
