@@ -163,11 +163,16 @@ export async function POST(request: NextRequest) {
 
       if (validatedData.tipoDocumento === 'FACTURA') {
         // Leer y bloquear correlativo dentro de la transacción
+        // La fecha límite SAR es válida durante TODO ese día. Comparamos contra el
+        // inicio del día de hoy (no el instante actual) para no excluir un correlativo
+        // cuya fecha límite es hoy (se guarda a medianoche desde un <input type="date">).
+        const inicioHoy = new Date()
+        inicioHoy.setHours(0, 0, 0, 0)
         correlativo = await tx.correlativo.findFirst({
           where: {
             tipo: validatedData.tipoDocumento,
             activo: true,
-            fechaLimite: { gte: new Date() },
+            fechaLimite: { gte: inicioHoy },
           },
           orderBy: { createdAt: 'desc' },
         })

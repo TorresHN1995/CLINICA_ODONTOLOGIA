@@ -14,7 +14,12 @@ const correlativoSchema = z.object({
     tipoDoc: z.string().max(2).optional().or(z.literal('')),
     rangoInicial: z.number().int().positive(),
     rangoFinal: z.number().int().positive(),
-    fechaLimite: z.string().optional().transform((str) => str ? new Date(str) : new Date('2099-12-31')),
+    fechaLimite: z.string().optional().transform((str) => {
+        // Guardar al FINAL del día límite para que sea válido durante todo ese día
+        const f = str ? new Date(str) : new Date('2099-12-31')
+        f.setUTCHours(23, 59, 59, 999)
+        return f
+    }),
 })
 
 export async function GET() {

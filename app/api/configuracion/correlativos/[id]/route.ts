@@ -80,7 +80,12 @@ export async function PUT(
         if (data.rangoFinal !== undefined) dataToUpdate.rangoFinal = data.rangoFinal
         if (data.siguiente !== undefined) dataToUpdate.siguiente = data.siguiente
         if (data.activo !== undefined) dataToUpdate.activo = data.activo
-        if (data.fechaLimite) dataToUpdate.fechaLimite = new Date(data.fechaLimite)
+        if (data.fechaLimite) {
+            // Final del día límite: válido durante todo ese día
+            const f = new Date(data.fechaLimite)
+            f.setUTCHours(23, 59, 59, 999)
+            dataToUpdate.fechaLimite = f
+        }
 
         const updated = await prisma.correlativo.update({
             where: { id: params.id },
