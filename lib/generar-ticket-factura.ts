@@ -217,127 +217,122 @@ function crearFacturaCarta(opts: TicketFacturaOptions): HTMLDivElement {
   const { esSAR, cai, rangoStr, fechaLimite } = getSARInfo(factura)
 
   const c = document.createElement('div')
-  c.style.cssText = 'width:816px;min-height:1056px;padding:48px;background:white;font-family:"Segoe UI",Arial,sans-serif;color:#1e293b;line-height:1.5;position:absolute;left:-9999px;top:0;box-sizing:border-box;'
+  c.style.cssText = 'width:720px;padding:24px 28px;background:white;font-family:"Segoe UI",Arial,sans-serif;color:#1e293b;line-height:1.25;position:absolute;left:-9999px;top:0;box-sizing:border-box;'
 
   let h = ''
 
   // ── HEADER ──
-  h += `<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1e40af;padding-bottom:20px;margin-bottom:24px;">
+  h += `<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1e40af;padding-bottom:10px;margin-bottom:12px;">
     <div>
-      <h1 style="margin:0;font-size:28px;font-weight:800;color:#0f172a;">${empresa.nombre}</h1>
-      ${empresa.rtn ? `<div style="font-size:13px;color:#475569;margin-top:4px;">RTN: <strong>${empresa.rtn}</strong></div>` : ''}
-      ${empresa.direccion ? `<div style="font-size:12px;color:#64748b;">${empresa.direccion}${empresa.ciudad ? `, ${empresa.ciudad}` : ''}</div>` : ''}
-      <div style="font-size:12px;color:#64748b;">
+      <h1 style="margin:0;font-size:19px;font-weight:800;color:#0f172a;">${empresa.nombre}</h1>
+      ${empresa.rtn ? `<div style="font-size:11px;color:#475569;margin-top:2px;">RTN: <strong>${empresa.rtn}</strong></div>` : ''}
+      ${empresa.direccion ? `<div style="font-size:10px;color:#64748b;">${empresa.direccion}${empresa.ciudad ? `, ${empresa.ciudad}` : ''}</div>` : ''}
+      <div style="font-size:10px;color:#64748b;">
         ${empresa.telefono ? `Tel: ${empresa.telefono}` : ''}${empresa.telefono && empresa.email ? ' | ' : ''}${empresa.email || ''}
       </div>
     </div>
     <div style="text-align:right;">
-      <div style="font-size:24px;font-weight:800;color:#1e40af;letter-spacing:2px;">${esSAR ? 'FACTURA' : 'ORDEN DE PEDIDO'}</div>
-      <div style="font-size:18px;font-weight:700;color:#0f172a;margin-top:4px;">${factura.numero}</div>
-      <div style="font-size:13px;color:#64748b;margin-top:4px;">Fecha: <strong>${factura.fecha}</strong></div>
+      <div style="font-size:17px;font-weight:800;color:#1e40af;letter-spacing:1px;">${esSAR ? 'FACTURA' : 'ORDEN DE PEDIDO'}</div>
+      <div style="font-size:14px;font-weight:700;color:#0f172a;margin-top:2px;">${factura.numero}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px;">Fecha: <strong>${factura.fecha}</strong></div>
     </div>
   </div>`
 
   // ── SAR BOX ──
   if (esSAR) {
-    h += `<div style="background:#eff6ff;border:2px solid #93c5fd;border-radius:8px;padding:16px;margin-bottom:24px;">
-      <div style="display:flex;align-items:center;margin-bottom:10px;">
-        <div style="width:8px;height:8px;background:#1e40af;border-radius:50%;margin-right:8px;"></div>
-        <span style="font-size:14px;font-weight:700;color:#1e40af;letter-spacing:1px;">DATOS FISCALES SAR</span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
-        <div><span style="color:#64748b;">C.A.I.:</span><br/><strong style="color:#1e40af;font-size:11px;word-break:break-all;">${cai}</strong></div>
-        <div><span style="color:#64748b;">Fecha Límite Emisión:</span><br/><strong>${fechaLimite || 'N/A'}</strong></div>
-        <div style="grid-column:1/3;"><span style="color:#64748b;">Rango Autorizado:</span><br/><strong style="font-size:11px;">${rangoStr || 'N/A'}</strong></div>
+    h += `<div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:6px;padding:8px 10px;margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:700;color:#1e40af;letter-spacing:1px;margin-bottom:4px;">DATOS FISCALES SAR</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11px;">
+        <div><span style="color:#64748b;">C.A.I.:</span> <strong style="color:#1e40af;font-size:10px;word-break:break-all;">${cai}</strong></div>
+        <div><span style="color:#64748b;">Fecha Límite:</span> <strong>${fechaLimite || 'N/A'}</strong></div>
+        <div style="grid-column:1/3;"><span style="color:#64748b;">Rango Autorizado:</span> <strong style="font-size:10px;">${rangoStr || 'N/A'}</strong></div>
       </div>
     </div>`
   }
 
   // ── CLIENTE + EMITENTE ──
-  h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px;">
-    <div style="background:#f8fafc;border-radius:8px;padding:16px;border:1px solid #e2e8f0;">
-      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Datos del Cliente</div>
-      <div style="font-size:14px;font-weight:700;color:#0f172a;">${factura.paciente.nombre} ${factura.paciente.apellido}</div>
-      <div style="font-size:12px;color:#475569;margin-top:4px;">Identidad: <strong>${factura.paciente.identificacion}</strong></div>
+  h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+    <div style="background:#f8fafc;border-radius:6px;padding:8px 10px;border:1px solid #e2e8f0;">
+      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Datos del Cliente</div>
+      <div style="font-size:13px;font-weight:700;color:#0f172a;">${factura.paciente.nombre} ${factura.paciente.apellido}</div>
+      <div style="font-size:11px;color:#475569;margin-top:2px;">Identidad: <strong>${factura.paciente.identificacion}</strong></div>
     </div>
-    <div style="background:#f8fafc;border-radius:8px;padding:16px;border:1px solid #e2e8f0;">
-      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Emitido por</div>
-      <div style="font-size:14px;font-weight:700;color:#0f172a;">${factura.emitente ? `${factura.emitente.nombre} ${factura.emitente.apellido}` : 'Sistema'}</div>
-      <div style="font-size:12px;color:#475569;margin-top:4px;">Fecha: <strong>${factura.fecha}</strong></div>
+    <div style="background:#f8fafc;border-radius:6px;padding:8px 10px;border:1px solid #e2e8f0;">
+      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Emitido por</div>
+      <div style="font-size:13px;font-weight:700;color:#0f172a;">${factura.emitente ? `${factura.emitente.nombre} ${factura.emitente.apellido}` : 'Sistema'}</div>
+      <div style="font-size:11px;color:#475569;margin-top:2px;">Fecha: <strong>${factura.fecha}</strong></div>
     </div>
   </div>`
 
   // ── TABLA DE ITEMS ──
-  h += `<table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+  h += `<table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
     <thead>
       <tr style="background:#1e40af;">
-        <th style="padding:10px 12px;text-align:left;color:white;font-size:12px;font-weight:600;border-radius:6px 0 0 0;">#</th>
-        <th style="padding:10px 12px;text-align:left;color:white;font-size:12px;font-weight:600;">Descripción</th>
-        <th style="padding:10px 12px;text-align:center;color:white;font-size:12px;font-weight:600;width:70px;">Cant.</th>
-        <th style="padding:10px 12px;text-align:right;color:white;font-size:12px;font-weight:600;width:120px;">Precio Unit.</th>
-        <th style="padding:10px 12px;text-align:right;color:white;font-size:12px;font-weight:600;width:120px;border-radius:0 6px 0 0;">Subtotal</th>
+        <th style="padding:6px 8px;text-align:left;color:white;font-size:11px;font-weight:600;border-radius:4px 0 0 0;">#</th>
+        <th style="padding:6px 8px;text-align:left;color:white;font-size:11px;font-weight:600;">Descripción</th>
+        <th style="padding:6px 8px;text-align:center;color:white;font-size:11px;font-weight:600;width:55px;">Cant.</th>
+        <th style="padding:6px 8px;text-align:right;color:white;font-size:11px;font-weight:600;width:100px;">Precio Unit.</th>
+        <th style="padding:6px 8px;text-align:right;color:white;font-size:11px;font-weight:600;width:100px;border-radius:0 4px 0 0;">Subtotal</th>
       </tr>
     </thead>
     <tbody>`
   factura.items.forEach((it, i) => {
     const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc'
     h += `<tr style="background:${bg};border-bottom:1px solid #e2e8f0;">
-      <td style="padding:10px 12px;font-size:12px;color:#64748b;">${i + 1}</td>
-      <td style="padding:10px 12px;font-size:13px;color:#0f172a;font-weight:500;">${it.descripcion}</td>
-      <td style="padding:10px 12px;text-align:center;font-size:13px;">${it.cantidad}</td>
-      <td style="padding:10px 12px;text-align:right;font-size:13px;">${fmt(it.precioUnitario, moneda)}</td>
-      <td style="padding:10px 12px;text-align:right;font-size:13px;font-weight:600;">${fmt(it.subtotal, moneda)}</td>
+      <td style="padding:5px 8px;font-size:11px;color:#64748b;">${i + 1}</td>
+      <td style="padding:5px 8px;font-size:12px;color:#0f172a;font-weight:500;">${it.descripcion}</td>
+      <td style="padding:5px 8px;text-align:center;font-size:12px;">${it.cantidad}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:12px;">${fmt(it.precioUnitario, moneda)}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:12px;font-weight:600;">${fmt(it.subtotal, moneda)}</td>
     </tr>`
   })
   h += `</tbody></table>`
 
   // ── TOTALES con desglose SAR ──
   const desgloseCarta = calcularDesgloseSAR(factura.items, factura.descuento, moneda)
-  h += `<div style="display:flex;justify-content:flex-end;margin-bottom:24px;">
-    <div style="width:340px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;">
+  h += `<div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+    <div style="width:300px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;">
       ${renderDesgloseSAR(desgloseCarta, factura.descuento, moneda, false)}
     </div>
   </div>`
 
   // ── PAGOS ──
   if (pagos.length > 0) {
-    h += `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-bottom:20px;">
-      <div style="font-size:12px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Pagos Realizados</div>
-      <table style="width:100%;font-size:13px;border-collapse:collapse;">`
+    h += `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 10px;margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">Pagos Realizados</div>
+      <table style="width:100%;font-size:12px;border-collapse:collapse;">`
     for (const p of pagos) {
       h += `<tr style="border-bottom:1px solid #dcfce7;">
-        <td style="padding:6px 0;color:#334155;">${metodoLabel(p.metodoPago)}${p.referencia ? ` <span style="color:#94a3b8;font-size:11px;">(Ref: ${p.referencia})</span>` : ''}</td>
-        <td style="padding:6px 0;text-align:right;font-weight:700;color:#166534;">${fmt(p.monto, moneda)}</td>
+        <td style="padding:4px 0;color:#334155;">${metodoLabel(p.metodoPago)}${p.referencia ? ` <span style="color:#94a3b8;font-size:10px;">(Ref: ${p.referencia})</span>` : ''}</td>
+        <td style="padding:4px 0;text-align:right;font-weight:700;color:#166534;">${fmt(p.monto, moneda)}</td>
       </tr>`
     }
-    h += `<tr><td style="padding:8px 0;font-weight:700;font-size:14px;border-top:2px solid #86efac;">Total Pagado</td>
-      <td style="padding:8px 0;text-align:right;font-weight:800;font-size:14px;color:#166534;border-top:2px solid #86efac;">${fmt(totalPagado, moneda)}</td></tr>
+    h += `<tr><td style="padding:5px 0;font-weight:700;font-size:13px;border-top:1px solid #86efac;">Total Pagado</td>
+      <td style="padding:5px 0;text-align:right;font-weight:800;font-size:13px;color:#166534;border-top:1px solid #86efac;">${fmt(totalPagado, moneda)}</td></tr>
     </table></div>`
   }
 
   // ── SALDO ──
   if (saldoPendiente > 0) {
-    h += `<div style="text-align:center;padding:16px;background:#fef2f2;border:2px solid #fecaca;border-radius:8px;margin-bottom:20px;">
-      <div style="font-size:12px;color:#991b1b;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Saldo Pendiente</div>
-      <div style="font-size:28px;font-weight:800;color:#dc2626;margin-top:4px;">${fmt(saldoPendiente, moneda)}</div>
+    h += `<div style="text-align:center;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;margin-bottom:10px;">
+      <span style="font-size:11px;color:#991b1b;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Saldo Pendiente: </span>
+      <span style="font-size:18px;font-weight:800;color:#dc2626;">${fmt(saldoPendiente, moneda)}</span>
     </div>`
   } else {
-    h += `<div style="text-align:center;padding:16px;background:#dcfce7;border:2px solid #86efac;border-radius:8px;margin-bottom:20px;">
-      <div style="font-size:18px;font-weight:800;color:#166534;">✓ CANCELADO EN SU TOTALIDAD</div>
-    </div>`
+    h += `<div style="text-align:center;padding:8px;background:#dcfce7;border:1px solid #86efac;border-radius:6px;margin-bottom:10px;font-size:14px;font-weight:800;color:#166534;">✓ CANCELADO EN SU TOTALIDAD</div>`
   }
 
   // ── FOOTER ──
   const now = new Date()
-  h += `<div style="border-top:2px solid #e2e8f0;padding-top:16px;margin-top:auto;display:flex;justify-content:space-between;align-items:center;">
-    <div style="font-size:11px;color:#94a3b8;">
+  h += `<div style="border-top:1px solid #e2e8f0;padding-top:8px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-size:10px;color:#94a3b8;">
       Impreso: ${now.toLocaleDateString('es-HN')} ${now.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' })}
     </div>
-    <div style="text-align:center;font-size:11px;color:#64748b;">
+    <div style="text-align:center;font-size:10px;color:#64748b;">
       ${esSAR ? '<div>La factura es beneficio de todos. Exíjala.</div>' : ''}
-      <div style="font-weight:600;margin-top:2px;">¡Gracias por su preferencia!</div>
+      <div style="font-weight:600;">¡Gracias por su preferencia!</div>
     </div>
-    <div style="font-size:11px;color:#94a3b8;text-align:right;">
+    <div style="font-size:10px;color:#94a3b8;text-align:right;">
       ${empresa.nombre}
     </div>
   </div>`
