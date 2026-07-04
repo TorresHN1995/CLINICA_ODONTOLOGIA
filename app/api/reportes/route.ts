@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns'
+import { inicioDiaLocal, finDiaLocal } from '@/lib/fecha'
+import { startOfMonth, endOfMonth } from 'date-fns'
 
 // GET - Obtener estadísticas para reportes
 export async function GET(request: NextRequest) {
@@ -17,10 +18,10 @@ export async function GET(request: NextRequest) {
     const fechaFin = searchParams.get('fechaFin')
 
     const inicio = fechaInicio
-      ? startOfDay(new Date(fechaInicio))
+      ? inicioDiaLocal(fechaInicio)
       : startOfMonth(new Date())
     const fin = fechaFin
-      ? endOfDay(new Date(fechaFin))
+      ? finDiaLocal(fechaFin)
       : endOfMonth(new Date())
 
     const [

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { inicioDiaLocal, finDiaLocal } from '@/lib/fecha'
 import { registrarFlujoCaja } from '@/lib/flujo-caja'
 import { auditar } from '@/lib/auditoria'
 import { z } from 'zod'
@@ -58,8 +59,8 @@ export async function GET(request: NextRequest) {
 
     if (fechaInicio && fechaFin) {
       where.fecha = {
-        gte: new Date(fechaInicio),
-        lte: new Date(fechaFin),
+        gte: inicioDiaLocal(fechaInicio),
+        lte: finDiaLocal(fechaFin),
       }
     }
 

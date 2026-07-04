@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { inicioDiaLocal, finDiaLocal } from '@/lib/fecha'
 
 // GET - Listado de flujo de caja
 export async function GET(request: NextRequest) {
@@ -20,8 +21,8 @@ export async function GET(request: NextRequest) {
     if (tipo) where.tipo = tipo
     if (fechaInicio && fechaFin) {
       where.fecha = {
-        gte: new Date(fechaInicio),
-        lte: new Date(fechaFin),
+        gte: inicioDiaLocal(fechaInicio),
+        lte: finDiaLocal(fechaFin),
       }
     }
 

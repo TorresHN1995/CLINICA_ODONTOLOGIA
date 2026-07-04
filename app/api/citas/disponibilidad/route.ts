@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { parseFechaLocal } from '@/lib/fecha'
 import { startOfDay, endOfDay, setHours, setMinutes, addMinutes, format, isBefore } from 'date-fns'
 
 // Forzar renderizado dinámico
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Fecha es requerida' }, { status: 400 })
         }
 
-        const fecha = new Date(fechaParam)
+        const fecha = parseFechaLocal(fechaParam)
         if (isNaN(fecha.getTime())) {
             return NextResponse.json({ error: 'Fecha inválida' }, { status: 400 })
         }

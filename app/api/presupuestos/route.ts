@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { parseFechaLocal } from '@/lib/fecha'
 import { auditar } from '@/lib/auditoria'
 import { z } from 'zod'
 
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
           pacienteId: data.pacienteId,
           creadoPor: session.user.id,
           creadoPorNombre: session.user.name || null,
-          validoHasta: data.validoHasta ? new Date(data.validoHasta) : null,
+          validoHasta: data.validoHasta ? parseFechaLocal(data.validoHasta) : null,
           subtotal: r2(subtotal),
           descuento: data.descuento,
           impuesto: r2(impuesto),

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { parseFechaLocal, inicioDiaLocal, finDiaLocal } from '@/lib/fecha'
 import { z } from 'zod'
 
 const citaSchema = z.object({
@@ -48,18 +49,13 @@ export async function GET(request: NextRequest) {
     // Prioridad a rango de fechas, sino fecha única
     if (fechaInicio && fechaFin) {
       where.fecha = {
-        gte: new Date(fechaInicio),
-        lte: new Date(fechaFin),
+        gte: inicioDiaLocal(fechaInicio),
+        lte: finDiaLocal(fechaFin),
       }
     } else if (fecha) {
-      const fechaDate = new Date(fecha)
-      fechaDate.setHours(0, 0, 0, 0)
-      const fechaFinDia = new Date(fecha)
-      fechaFinDia.setHours(23, 59, 59, 999)
-
       where.fecha = {
-        gte: fechaDate,
-        lte: fechaFinDia,
+        gte: inicioDiaLocal(fecha),
+        lte: finDiaLocal(fecha),
       }
     }
 
@@ -144,7 +140,7 @@ export async function POST(request: NextRequest) {
     const citasExistentes = await prisma.cita.findMany({
       where: {
         odontologoId: validatedData.odontologoId,
-        fecha: new Date(validatedData.fecha),
+        fecha: parseFechaLocal(validatedData.fecha),
         estado: {
           not: 'CANCELADA',
         },
@@ -174,7 +170,7 @@ export async function POST(request: NextRequest) {
     const citasPaciente = await prisma.cita.findFirst({
       where: {
         pacienteId: validatedData.pacienteId,
-        fecha: new Date(validatedData.fecha),
+        fecha: parseFechaLocal(validatedData.fecha),
         estado: { not: 'CANCELADA' },
         // Check estricto de hora
         horaInicio: validatedData.horaInicio
@@ -191,7 +187,7 @@ export async function POST(request: NextRequest) {
     const cita = await prisma.cita.create({
       data: {
         ...validatedData,
-        fecha: new Date(validatedData.fecha),
+        fecha: parseFechaLocal(validatedData.fecha),
       },
       include: {
         paciente: true,

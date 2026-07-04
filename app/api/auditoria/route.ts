@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { inicioDiaLocal, finDiaLocal } from '@/lib/fecha'
 import type { Prisma } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
@@ -32,13 +33,8 @@ export async function GET(request: NextRequest) {
     if (search) where.descripcion = { contains: search }
     if (fechaInicio || fechaFin) {
       where.fecha = {}
-      if (fechaInicio) where.fecha.gte = new Date(fechaInicio)
-      if (fechaFin) {
-        // Incluir todo el día final
-        const fin = new Date(fechaFin)
-        fin.setHours(23, 59, 59, 999)
-        where.fecha.lte = fin
-      }
+      if (fechaInicio) where.fecha.gte = inicioDiaLocal(fechaInicio)
+      if (fechaFin) where.fecha.lte = finDiaLocal(fechaFin)
     }
 
     const [registros, total, entidades] = await Promise.all([

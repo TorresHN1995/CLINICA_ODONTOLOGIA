@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { parseFechaLocal, inicioDiaLocal, finDiaLocal } from '@/lib/fecha'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { z } from 'zod'
 import { addMinutes, format } from 'date-fns'
@@ -67,11 +68,8 @@ export async function POST(request: NextRequest) {
             const horaFin = format(addMinutes(fechaDate, duracion), 'HH:mm')
 
             // 2. Validar Disponibilidad (Igual que al crear)
-            const nuevaFechaDate = new Date(data.nuevaFecha)
-            const inicioDelDia = new Date(nuevaFechaDate)
-            inicioDelDia.setHours(0, 0, 0, 0)
-            const finDelDia = new Date(nuevaFechaDate)
-            finDelDia.setHours(23, 59, 59, 999)
+            const inicioDelDia = inicioDiaLocal(data.nuevaFecha)
+            const finDelDia = finDiaLocal(data.nuevaFecha)
 
             // Odontólogo
             const colisionOdontologo = await prisma.cita.findFirst({
@@ -112,7 +110,7 @@ export async function POST(request: NextRequest) {
             await prisma.cita.update({
                 where: { id: data.citaId },
                 data: {
-                    fecha: new Date(data.nuevaFecha),
+                    fecha: parseFechaLocal(data.nuevaFecha),
                     horaInicio: data.nuevaHora,
                     horaFin: horaFin,
                     estado: 'PROGRAMADA', // Reset estado si estaba NO_ASISTIO etc
