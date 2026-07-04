@@ -248,7 +248,14 @@ export default function ProductosPage() {
                         {p.tipo === 'PRODUCTO' ? 'Producto' : 'Servicio'}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right font-mono font-medium">{moneda} {Number(p.precio).toFixed(2)}</td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="font-mono font-medium">{moneda} {Number(p.precio).toFixed(2)}</div>
+                      {Number(p.isv) === 0 ? (
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">Exento</span>
+                      ) : (
+                        <span className="inline-block mt-1 text-[10px] text-muted-foreground">Gravado {Number(p.isv).toFixed(0)}%</span>
+                      )}
+                    </td>
                     <td className="py-3 px-4 text-center">
                       {p.tipo === 'SERVICIO' && (
                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -316,6 +323,31 @@ export default function ProductosPage() {
                 <textarea rows={2} className="input-field resize-none" value={formData.descripcion} onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })} />
               </div>
 
+              {/* Régimen de ISV: Exento vs Gravado (exento = ISV 0) */}
+              <div>
+                <label className="label">Régimen de ISV</label>
+                <div className="flex gap-3 mt-1">
+                  <button type="button" onClick={() => setFormData({ ...formData, isv: 0 })}
+                    className={`flex-1 py-2 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${formData.isv === 0 ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-border text-muted-foreground hover:border-amber-300'}`}>
+                    Exento
+                  </button>
+                  <button type="button" onClick={() => setFormData({ ...formData, isv: formData.isv > 0 ? formData.isv : 15 })}
+                    className={`flex-1 py-2 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${formData.isv > 0 ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-border text-muted-foreground hover:border-emerald-300'}`}>
+                    Gravado
+                  </button>
+                </div>
+                {formData.isv > 0 && (
+                  <div className="flex gap-2 mt-2">
+                    {[15, 18].map((tasa) => (
+                      <button key={tasa} type="button" onClick={() => setFormData({ ...formData, isv: tasa })}
+                        className={`px-3 py-1 rounded-md text-xs font-medium border transition-colors ${formData.isv === tasa ? 'border-emerald-500 bg-emerald-100 text-emerald-700' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                        {tasa}%
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="label">Precio (Inc. ISV)</label>
@@ -323,7 +355,8 @@ export default function ProductosPage() {
                 </div>
                 <div>
                   <label className="label">ISV (%)</label>
-                  <input type="number" required min="0" max="100" step="0.01" className="input-field" value={formData.isv} onChange={(e) => setFormData({ ...formData, isv: parseFloat(e.target.value) || 0 })} />
+                  <input type="number" required min="0" max="100" step="0.01" disabled={formData.isv === 0} className="input-field disabled:opacity-60 disabled:cursor-not-allowed" value={formData.isv} onChange={(e) => setFormData({ ...formData, isv: parseFloat(e.target.value) || 0 })} />
+                  {formData.isv === 0 && <p className="text-xs text-amber-600 mt-1">Producto exento de ISV</p>}
                 </div>
               </div>
 
