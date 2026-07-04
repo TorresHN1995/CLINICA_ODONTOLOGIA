@@ -377,8 +377,8 @@ export default function ProductosPage() {
               </div>
             </form>
 
-            {/* Sección de Insumos — solo si ya existe el producto */}
-            {editando && (
+            {/* Sección de Insumos — solo para SERVICIOS ya existentes */}
+            {editando && formData.tipo === 'SERVICIO' && (
               <div className="border-t border-border">
                 <button
                   type="button"
