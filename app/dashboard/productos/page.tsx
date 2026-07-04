@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, Plus, ShoppingBag, Wrench, X, Loader2, Edit2, ToggleLeft, ToggleRight, Package, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Search, Plus, ShoppingBag, Wrench, X, Loader2, Edit2, ToggleLeft, ToggleRight, Package, Trash2, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { useConfiguracion } from '@/app/hooks/useConfiguracion'
 
@@ -79,12 +79,30 @@ export default function ProductosPage() {
 
   useEffect(() => { cargar() }, [search, filtroTipo])
 
+  // Genera y asigna automáticamente el siguiente código para el tipo dado
+  const generarCodigo = async (tipo: 'PRODUCTO' | 'SERVICIO') => {
+    try {
+      const res = await fetch(`/api/productos/siguiente-codigo?tipo=${tipo}`)
+      if (res.ok) {
+        const data = await res.json()
+        setFormData(prev => ({ ...prev, codigo: data.codigo }))
+      }
+    } catch { /* noop */ }
+  }
+
+  // Cambia el tipo y, si es un producto nuevo, regenera el código automático
+  const cambiarTipo = (tipo: 'PRODUCTO' | 'SERVICIO') => {
+    setFormData(prev => ({ ...prev, tipo }))
+    if (!editando) generarCodigo(tipo)
+  }
+
   const abrirNuevo = () => {
     setEditando(null)
     setInsumos([])
     setShowInsumos(false)
     setFormData({ codigo: '', nombre: '', descripcion: '', tipo: 'SERVICIO', precio: 0, isv: 15 })
     cargarInventario()
+    generarCodigo('SERVICIO')
     setShowModal(true)
   }
 
@@ -296,11 +314,11 @@ export default function ProductosPage() {
               <div>
                 <label className="label">Tipo</label>
                 <div className="flex gap-3 mt-1">
-                  <button type="button" onClick={() => setFormData({ ...formData, tipo: 'SERVICIO' })}
+                  <button type="button" onClick={() => cambiarTipo('SERVICIO')}
                     className={`flex-1 py-2 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${formData.tipo === 'SERVICIO' ? 'border-green-500 bg-green-50 text-green-700' : 'border-border text-muted-foreground hover:border-green-300'}`}>
                     <Wrench className="w-4 h-4 inline mr-2" />Servicio
                   </button>
-                  <button type="button" onClick={() => setFormData({ ...formData, tipo: 'PRODUCTO' })}
+                  <button type="button" onClick={() => cambiarTipo('PRODUCTO')}
                     className={`flex-1 py-2 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${formData.tipo === 'PRODUCTO' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-border text-muted-foreground hover:border-blue-300'}`}>
                     <ShoppingBag className="w-4 h-4 inline mr-2" />Producto
                   </button>
@@ -310,7 +328,20 @@ export default function ProductosPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="label">Código</label>
-                  <input type="text" required className="input-field" placeholder="SRV-001" value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} />
+                  <div className="flex gap-2">
+                    <input type="text" required className="input-field flex-1" placeholder="SRV-001" value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} />
+                    {!editando && (
+                      <button
+                        type="button"
+                        onClick={() => generarCodigo(formData.tipo)}
+                        title="Generar código automático"
+                        className="px-3 rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  {!editando && <p className="text-xs text-muted-foreground mt-1">Autogenerado, editable</p>}
                 </div>
                 <div>
                   <label className="label">Nombre</label>
