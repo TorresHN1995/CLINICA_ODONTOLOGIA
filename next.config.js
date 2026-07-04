@@ -8,6 +8,8 @@ const nextConfig = {
     domains: ['localhost'],
   },
   experimental: {
+    // Habilita instrumentation.ts (fija la zona horaria del servidor a Honduras)
+    instrumentationHook: true,
     serverActions: {
       bodySizeLimit: '10mb',
     },
