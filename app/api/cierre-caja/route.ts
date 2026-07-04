@@ -10,6 +10,14 @@ export const dynamic = 'force-dynamic'
 
 const r2 = (n: number) => Math.round(n * 100) / 100
 
+// Parsea 'yyyy-MM-dd' como medianoche LOCAL. new Date('yyyy-MM-dd') asume UTC,
+// lo que con startOfDay/endOfDay (hora local) desfasa el día en zonas UTC-negativas (ej. Honduras UTC-6).
+function parseFechaLocal(str: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(str)
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  return new Date(str)
+}
+
 const METODOS = ['EFECTIVO', 'TARJETA_CREDITO', 'TARJETA_DEBITO', 'TRANSFERENCIA', 'CHEQUE', 'OTRO']
 
 // Calcula los movimientos de efectivo y por método para un día dado
@@ -69,7 +77,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const fechaParam = searchParams.get('fecha')
-    const fecha = fechaParam ? new Date(fechaParam) : new Date()
+    const fecha = fechaParam ? parseFechaLocal(fechaParam) : new Date()
     if (isNaN(fecha.getTime())) {
       return NextResponse.json({ error: 'Fecha inválida' }, { status: 400 })
     }
@@ -121,7 +129,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const data = cierreSchema.parse(body)
-    const fecha = new Date(data.fecha)
+    const fecha = parseFechaLocal(data.fecha)
     if (isNaN(fecha.getTime())) {
       return NextResponse.json({ error: 'Fecha inválida' }, { status: 400 })
     }

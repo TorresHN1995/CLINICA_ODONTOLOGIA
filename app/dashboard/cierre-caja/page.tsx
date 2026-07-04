@@ -76,7 +76,8 @@ export default function CierreCajaPage() {
   }, [cargar])
 
   const efectivoEsperado = (preview?.efectivoNeto || 0) + fondoInicial
-  const diferencia = efectivoContado - efectivoEsperado
+  // Redondeo a centavos para evitar falsos "sobrante/faltante" por errores de punto flotante
+  const diferencia = Math.round((efectivoContado - efectivoEsperado) * 100) / 100
 
   const cerrarCaja = async () => {
     if (guardando) return
