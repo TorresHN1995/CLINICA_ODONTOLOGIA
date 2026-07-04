@@ -6,6 +6,13 @@ import { toast } from 'react-hot-toast'
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
+// Fecha de HOY en 'yyyy-MM-dd' en hora LOCAL (no UTC).
+// new Date().toISOString() usa UTC y, después de las 6pm en Honduras, devolvería el día siguiente.
+function hoyLocal(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 const categoriasEgreso = [
   { value: 'MATERIALES_DENTALES', label: 'Materiales Dentales' },
   { value: 'INSTRUMENTAL', label: 'Instrumental' },
@@ -37,7 +44,7 @@ export default function NuevoEgresoPage() {
     concepto: '',
     categoria: '',
     monto: '',
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: hoyLocal(),
     metodoPago: 'EFECTIVO',
     proveedor: '',
     numeroFactura: '',
