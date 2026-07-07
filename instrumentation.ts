@@ -4,6 +4,7 @@
 // de día) se calculen y muestren en hora local y no en UTC.
 export function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    process.env.TZ = process.env.TZ || 'America/Tegucigalpa'
+    // Forzar SIEMPRE (Vercel predefine TZ=":UTC"; con `||` nunca se sobrescribía).
+    process.env.TZ = 'America/Tegucigalpa'
   }
 }
