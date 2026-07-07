@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Banknote, TrendingUp, TrendingDown, Calculator, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Banknote, TrendingUp, TrendingDown, Calculator, CheckCircle, AlertTriangle, Printer } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useConfiguracion } from '@/app/hooks/useConfiguracion'
 import { parseFechaLocal, hoyLocalISO } from '@/lib/fecha'
+import { imprimirCierreCaja } from '@/lib/generar-cierre-caja'
 
 interface Preview {
   totalIngresos: number
@@ -80,6 +81,59 @@ export default function CierreCajaPage() {
   // Redondeo a centavos para evitar falsos "sobrante/faltante" por errores de punto flotante
   const diferencia = Math.round((efectivoContado - efectivoEsperado) * 100) / 100
 
+  const imprimir = () => {
+    if (!preview) {
+      toast.error('No hay datos del día para imprimir')
+      return
+    }
+    const empresa = {
+      nombre: config?.nombre || 'Clínica',
+      rtn: config?.rtn,
+      telefono: config?.telefono,
+      email: config?.email,
+      direccion: config?.direccion,
+      ciudad: config?.ciudad,
+    }
+    const base = {
+      empresa,
+      fecha,
+      moneda,
+      totalIngresos: preview.totalIngresos,
+      totalEfectivo: preview.totalEfectivo,
+      totalEgresos: preview.totalEgresos,
+      egresosEfectivo: preview.egresosEfectivo,
+      desglosePorMetodo: preview.desglosePorMetodo,
+    }
+    // Si ya está cerrado, imprime los valores REGISTRADOS (autoritativos);
+    // si no, imprime la vista previa con lo que el usuario capturó en pantalla.
+    const opts = existente
+      ? {
+          ...base,
+          registrado: true,
+          cerradoPor: existente.usuarioNombre,
+          fondoInicial: Number(existente.fondoInicial),
+          efectivoEsperado: Number(existente.efectivoEsperado),
+          efectivoContado: Number(existente.efectivoContado),
+          diferencia: Number(existente.diferencia),
+          observaciones: existente.observaciones,
+        }
+      : {
+          ...base,
+          registrado: false,
+          cerradoPor: null,
+          fondoInicial,
+          efectivoEsperado,
+          efectivoContado,
+          diferencia,
+          observaciones: observaciones || null,
+        }
+    try {
+      imprimirCierreCaja(opts)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error al imprimir')
+    }
+  }
+
   const cerrarCaja = async () => {
     if (guardando) return
     try {
@@ -111,9 +165,19 @@ export default function CierreCajaPage() {
           <h1 className="text-3xl font-bold text-foreground">Cierre de Caja</h1>
           <p className="text-muted-foreground mt-1">Arqueo diario: efectivo esperado vs. contado</p>
         </div>
-        <div>
-          <label className="label">Fecha</label>
-          <input type="date" className="input-field" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+        <div className="flex items-end gap-3">
+          <div>
+            <label className="label">Fecha</label>
+            <input type="date" className="input-field" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+          </div>
+          <button
+            onClick={imprimir}
+            disabled={loading || !preview}
+            className="btn-secondary flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
+            title="Imprimir el cierre del día seleccionado"
+          >
+            <Printer className="w-4 h-4" /> Imprimir
+          </button>
         </div>
       </div>
 
