@@ -154,7 +154,7 @@ export default function ExpedienteDetallePage({ params }: Params) {
         <div className="card">
           <p className="text-sm text-muted-foreground">Fecha de apertura</p>
           <p className="text-lg font-semibold text-foreground">
-            {format(parseFechaLocal(expediente.fecha), "dd/MM/yyyy", { locale: es })}
+            {format(new Date(expediente.fecha), "dd/MM/yyyy", { locale: es })}
           </p>
         </div>
         <div className="card">

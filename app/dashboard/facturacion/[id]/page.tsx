@@ -9,7 +9,6 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useConfiguracion } from '@/components/providers/ConfiguracionProvider'
 import { generarTicketFactura, imprimirTicketFactura, type TamanoTicket } from '@/lib/generar-ticket-factura'
-import { parseFechaLocal } from '@/lib/fecha'
 
 interface Params {
   params: { id: string }
@@ -118,7 +117,7 @@ export default function FacturaDetallePage({ params }: Params) {
       empresa: empresaCache,
       factura: {
         numero: factura.numero,
-        fecha: format(parseFechaLocal(factura.fecha), 'dd/MM/yyyy', { locale: es }),
+        fecha: format(new Date(factura.fecha), 'dd/MM/yyyy', { locale: es }),
         tipoDocumento: factura.tipoDocumento || 'FACTURA',
         cai: factura.cai || correlativoData?.cai || null,
         paciente: factura.paciente,
@@ -312,7 +311,7 @@ export default function FacturaDetallePage({ params }: Params) {
             <div>
               <h1 className="text-3xl font-bold text-foreground">Factura {factura.numero}</h1>
               <p className="text-muted-foreground mt-1">
-                {format(parseFechaLocal(factura.fecha), "dd/MM/yyyy", { locale: es })}
+                {format(new Date(factura.fecha), "dd/MM/yyyy", { locale: es })}
               </p>
             </div>
           </div>

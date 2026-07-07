@@ -143,7 +143,7 @@ export default function ExpedientesPage() {
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4" />
                       <span>
-                        Fecha: {format(parseFechaLocal(expediente.fecha), "d 'de' MMMM 'de' yyyy", { locale: es })}
+                        Fecha: {format(new Date(expediente.fecha), "d 'de' MMMM 'de' yyyy", { locale: es })}
                       </span>
                     </div>
                     {expediente.proximaCita && (

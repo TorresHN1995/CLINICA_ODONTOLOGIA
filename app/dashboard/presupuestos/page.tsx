@@ -130,7 +130,7 @@ export default function PresupuestosPage() {
                     <span className="block text-xs text-muted-foreground">{p.paciente.identificacion}</span>
                   </td>
                   <td className="py-3 px-3 text-muted-foreground whitespace-nowrap">
-                    {format(parseFechaLocal(p.fecha), 'dd/MM/yyyy', { locale: es })}
+                    {format(new Date(p.fecha), 'dd/MM/yyyy', { locale: es })}
                   </td>
                   <td className="py-3 px-3 text-muted-foreground whitespace-nowrap">
                     {p.validoHasta ? format(parseFechaLocal(p.validoHasta), 'dd/MM/yyyy', { locale: es }) : '—'}

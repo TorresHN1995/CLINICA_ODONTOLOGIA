@@ -181,7 +181,7 @@ export default function PresupuestoDetallePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
         <div className="card">
           <p className="text-muted-foreground">Fecha</p>
-          <p className="font-medium text-foreground">{format(parseFechaLocal(p.fecha), "dd 'de' MMMM, yyyy", { locale: es })}</p>
+          <p className="font-medium text-foreground">{format(new Date(p.fecha), "dd 'de' MMMM, yyyy", { locale: es })}</p>
         </div>
         <div className="card">
           <p className="text-muted-foreground">Válido hasta</p>
