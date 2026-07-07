@@ -185,7 +185,7 @@ export default function UsuariosPage() {
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card bg-gradient-to-br from-red-500 to-red-600 text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -207,18 +207,6 @@ export default function UsuariosPage() {
               </p>
             </div>
             <Shield className="w-12 h-12 text-blue-200" />
-          </div>
-        </div>
-
-        <div className="card bg-gradient-to-br from-green-500 to-green-600 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100 text-sm font-medium">Asistentes</p>
-              <p className="text-3xl font-bold mt-2">
-                {usuarios.filter(u => u.rol === 'ASISTENTE').length}
-              </p>
-            </div>
-            <Shield className="w-12 h-12 text-green-200" />
           </div>
         </div>
 
@@ -424,7 +412,6 @@ export default function UsuariosPage() {
                   onChange={(e) => setEditForm({ ...editForm, rol: e.target.value })}>
                   <option value="ADMINISTRADOR">Administrador</option>
                   <option value="ODONTOLOGO">Odontólogo</option>
-                  <option value="ASISTENTE">Asistente</option>
                   <option value="RECEPCION">Recepción</option>
                 </select>
               </div>

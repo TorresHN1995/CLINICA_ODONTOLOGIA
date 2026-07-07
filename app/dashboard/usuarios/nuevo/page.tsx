@@ -88,7 +88,6 @@ export default function NuevoUsuarioPage() {
               <select name="rol" className="input-field" value={formData.rol} onChange={handleChange}>
                 <option value="ADMINISTRADOR">Administrador</option>
                 <option value="ODONTOLOGO">Odontólogo</option>
-                <option value="ASISTENTE">Asistente</option>
                 <option value="RECEPCION">Recepción</option>
               </select>
             </div>
