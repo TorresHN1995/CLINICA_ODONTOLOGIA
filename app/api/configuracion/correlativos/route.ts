@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { auditar } from '@/lib/auditoria'
+import { inicioDiaLocal } from '@/lib/fecha'
 import { z } from 'zod'
 
 const correlativoSchema = z.object({
@@ -15,10 +16,10 @@ const correlativoSchema = z.object({
     rangoInicial: z.number().int().positive(),
     rangoFinal: z.number().int().positive(),
     fechaLimite: z.string().optional().transform((str) => {
-        // Guardar al FINAL del día límite para que sea válido durante todo ese día
-        const f = str ? new Date(str) : new Date('2099-12-31')
-        f.setUTCHours(23, 59, 59, 999)
-        return f
+        // Medianoche LOCAL (Honduras) del día límite. La factura valida con
+        // `fechaLimite >= inicioHoy` (ambas a medianoche local), por lo que el
+        // correlativo es válido durante todo el día límite y expira al día siguiente.
+        return inicioDiaLocal(str || '2099-12-31')
     }),
 })
 

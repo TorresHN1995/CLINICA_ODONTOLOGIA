@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { inicioDiaLocal } from '@/lib/fecha'
 import { registrarFlujoCaja } from '@/lib/flujo-caja'
 import { auditar } from '@/lib/auditoria'
 import { z } from 'zod'
@@ -52,7 +53,7 @@ export async function PUT(
       where: { id: params.id },
       data: {
         ...validatedData,
-        fecha: validatedData.fecha ? new Date(validatedData.fecha) : undefined,
+        fecha: validatedData.fecha ? inicioDiaLocal(validatedData.fecha) : undefined,
       },
       include: {
         registrador: {

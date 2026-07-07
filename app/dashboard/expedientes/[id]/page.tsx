@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast'
 import { ArrowLeft, Save, Loader2, FileText, Calendar } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseFechaLocal } from '@/lib/fecha'
 
 interface Params { params: { id: string } }
 
@@ -153,7 +154,7 @@ export default function ExpedienteDetallePage({ params }: Params) {
         <div className="card">
           <p className="text-sm text-muted-foreground">Fecha de apertura</p>
           <p className="text-lg font-semibold text-foreground">
-            {format(new Date(expediente.fecha), "dd/MM/yyyy", { locale: es })}
+            {format(parseFechaLocal(expediente.fecha), "dd/MM/yyyy", { locale: es })}
           </p>
         </div>
         <div className="card">
@@ -164,7 +165,7 @@ export default function ExpedienteDetallePage({ params }: Params) {
           <p className="text-sm text-muted-foreground">Próxima cita</p>
           <p className="text-lg font-semibold text-foreground">
             {expediente.proximaCita
-              ? format(new Date(expediente.proximaCita), "dd/MM/yyyy", { locale: es })
+              ? format(parseFechaLocal(expediente.proximaCita), "dd/MM/yyyy", { locale: es })
               : 'No programada'}
           </p>
         </div>
@@ -256,7 +257,7 @@ export default function ExpedienteDetallePage({ params }: Params) {
                 {expediente.procedimientos.map((proc) => (
                   <tr key={proc.id} className="hover:bg-muted">
                     <td className="px-4 sm:px-6 py-3 text-sm text-muted-foreground">
-                      {format(new Date(proc.fecha), 'dd/MM/yyyy', { locale: es })}
+                      {format(parseFechaLocal(proc.fecha), 'dd/MM/yyyy', { locale: es })}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-sm text-foreground font-medium">{proc.nombre}</td>
                     <td className="px-4 sm:px-6 py-3 text-sm text-muted-foreground">{proc.diente || '-'}</td>

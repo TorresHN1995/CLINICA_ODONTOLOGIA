@@ -7,6 +7,7 @@ import { ArrowLeft, Edit2, Trash2, Plus, CheckCircle, Clock, AlertCircle, Dollar
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseFechaLocal } from '@/lib/fecha'
 
 interface Etapa {
   id: string
@@ -501,7 +502,7 @@ export default function DetalleTratamientoPage() {
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
                           <span>
-                            {format(new Date(etapa.fechaInicio), 'dd/MM/yyyy', { locale: es })}
+                            {format(parseFechaLocal(etapa.fechaInicio), 'dd/MM/yyyy', { locale: es })}
                           </span>
                         </div>
                       )}

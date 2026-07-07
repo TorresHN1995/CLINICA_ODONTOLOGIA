@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { parseFechaLocal } from '@/lib/fecha'
 import { z } from 'zod'
 
 const etapaSchema = z.object({
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
         nombre: validatedData.nombre,
         descripcion: validatedData.descripcion,
         costoTotal,
-        fechaInicio: validatedData.fechaInicio ? new Date(validatedData.fechaInicio) : null,
+        fechaInicio: validatedData.fechaInicio ? parseFechaLocal(validatedData.fechaInicio) : null,
         observaciones: validatedData.observaciones || null,
         etapas: {
           create: validatedData.etapas.map((etapa, index) => ({

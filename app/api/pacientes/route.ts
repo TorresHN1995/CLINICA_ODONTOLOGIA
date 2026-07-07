@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { parseFechaLocal } from '@/lib/fecha'
 import { auditar } from '@/lib/auditoria'
 import { z } from 'zod'
 
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
     const paciente = await prisma.paciente.create({
       data: {
         ...validatedData,
-        fechaNacimiento: new Date(validatedData.fechaNacimiento),
+        fechaNacimiento: parseFechaLocal(validatedData.fechaNacimiento),
         email: validatedData.email || null,
       },
     })

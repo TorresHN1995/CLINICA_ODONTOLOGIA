@@ -6,6 +6,7 @@ import { Plus, FileText, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseFechaLocal } from '@/lib/fecha'
 import { useConfiguracion } from '@/app/hooks/useConfiguracion'
 
 interface Presupuesto {
@@ -129,10 +130,10 @@ export default function PresupuestosPage() {
                     <span className="block text-xs text-muted-foreground">{p.paciente.identificacion}</span>
                   </td>
                   <td className="py-3 px-3 text-muted-foreground whitespace-nowrap">
-                    {format(new Date(p.fecha), 'dd/MM/yyyy', { locale: es })}
+                    {format(parseFechaLocal(p.fecha), 'dd/MM/yyyy', { locale: es })}
                   </td>
                   <td className="py-3 px-3 text-muted-foreground whitespace-nowrap">
-                    {p.validoHasta ? format(new Date(p.validoHasta), 'dd/MM/yyyy', { locale: es }) : '—'}
+                    {p.validoHasta ? format(parseFechaLocal(p.validoHasta), 'dd/MM/yyyy', { locale: es }) : '—'}
                   </td>
                   <td className="py-3 px-3 text-right font-semibold text-foreground">{fmt(p.total)}</td>
                   <td className="py-3 px-3 text-center">

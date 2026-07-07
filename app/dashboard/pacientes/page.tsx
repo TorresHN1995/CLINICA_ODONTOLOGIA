@@ -6,6 +6,7 @@ import { Search, Plus, Edit, Trash2, Eye, Phone, Mail, Calendar } from 'lucide-r
 import { toast } from 'react-hot-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseFechaLocal } from '@/lib/fecha'
 
 interface Paciente {
   id: string
@@ -74,7 +75,7 @@ export default function PacientesPage() {
 
   const calcularEdad = (fechaNacimiento: Date) => {
     const hoy = new Date()
-    const nacimiento = new Date(fechaNacimiento)
+    const nacimiento = parseFechaLocal(fechaNacimiento)
     let edad = hoy.getFullYear() - nacimiento.getFullYear()
     const mes = hoy.getMonth() - nacimiento.getMonth()
     if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {

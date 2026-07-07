@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { auditar } from '@/lib/auditoria'
+import { hoyLocalISO } from '@/lib/fecha'
 
 export async function GET(request: NextRequest) {
   try {
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Crear archivo JSON
-    const filename = `clinica-backup-${new Date().toISOString().split('T')[0]}.json`
+    const filename = `clinica-backup-${hoyLocalISO()}.json`
 
     return new NextResponse(JSON.stringify(exportData, null, 2), {
       status: 200,

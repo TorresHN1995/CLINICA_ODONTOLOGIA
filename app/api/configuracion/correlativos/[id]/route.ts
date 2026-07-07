@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { auditar } from '@/lib/auditoria'
+import { inicioDiaLocal } from '@/lib/fecha'
 import { z } from 'zod'
 
 // Whitelist explícita de campos editables (evita mass-assignment de columnas arbitrarias)
@@ -81,10 +82,9 @@ export async function PUT(
         if (data.siguiente !== undefined) dataToUpdate.siguiente = data.siguiente
         if (data.activo !== undefined) dataToUpdate.activo = data.activo
         if (data.fechaLimite) {
-            // Final del día límite: válido durante todo ese día
-            const f = new Date(data.fechaLimite)
-            f.setUTCHours(23, 59, 59, 999)
-            dataToUpdate.fechaLimite = f
+            // Medianoche LOCAL (Honduras) del día límite: válido durante todo ese día
+            // (la factura compara `fechaLimite >= inicioHoy`, ambas a medianoche local).
+            dataToUpdate.fechaLimite = inicioDiaLocal(data.fechaLimite)
         }
 
         const updated = await prisma.correlativo.update({

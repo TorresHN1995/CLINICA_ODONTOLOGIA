@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast'
 import { ArrowLeft, Mail, Phone, Calendar, TrendingUp, Users, DollarSign, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseFechaLocal } from '@/lib/fecha'
 
 interface Odontologo {
   id: string
@@ -264,7 +265,7 @@ export default function OdontologoDetailPage() {
                 citas.map((cita) => (
                   <tr key={cita.id} className="hover:bg-muted/50">
                     <td className="px-6 py-4 text-sm text-foreground">
-                      {format(new Date(cita.fecha), 'dd/MM/yyyy', { locale: es })}
+                      {format(parseFechaLocal(cita.fecha), 'dd/MM/yyyy', { locale: es })}
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">
                       {cita.horaInicio}

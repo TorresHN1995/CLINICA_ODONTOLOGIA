@@ -24,6 +24,7 @@ import {
 import { toast } from 'react-hot-toast'
 import { format, differenceInYears } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseFechaLocal } from '@/lib/fecha'
 import { useConfiguracion } from '@/components/providers/ConfiguracionProvider'
 
 interface Paciente {
@@ -149,7 +150,7 @@ export default function DetallePacientePage() {
     )
   }
 
-  const edad = differenceInYears(new Date(), new Date(paciente.fechaNacimiento))
+  const edad = differenceInYears(new Date(), parseFechaLocal(paciente.fechaNacimiento))
 
   return (
     <div className="space-y-6">
@@ -219,7 +220,7 @@ export default function DetallePacientePage() {
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <Calendar className="w-5 h-5 text-muted-foreground" />
                 <span>
-                  {format(new Date(paciente.fechaNacimiento), "d 'de' MMMM 'de' yyyy", { locale: es })}
+                  {format(parseFechaLocal(paciente.fechaNacimiento), "d 'de' MMMM 'de' yyyy", { locale: es })}
                 </span>
               </div>
             </div>
@@ -337,7 +338,7 @@ export default function DetallePacientePage() {
                     <div>
                       <p className="font-medium text-foreground">{cita.tipoCita}</p>
                       <p className="text-sm text-muted-foreground">
-                        {format(new Date(cita.fecha), "d 'de' MMMM 'de' yyyy", { locale: es })}
+                        {format(parseFechaLocal(cita.fecha), "d 'de' MMMM 'de' yyyy", { locale: es })}
                         {' • '}
                         {cita.horaInicio} - {cita.horaFin}
                       </p>

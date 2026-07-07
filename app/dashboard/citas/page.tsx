@@ -9,6 +9,7 @@ import { Plus, Loader2, X, User, Clock, FileText, PlayCircle, CheckCircle2, XCir
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
+import { parseFechaLocal } from '@/lib/fecha'
 
 const locales = { 'es': es }
 
@@ -44,7 +45,7 @@ export default function AppointmentDashboard() {
       if (res.ok) {
         const data = await res.json()
         const mappedEvents: CitaEvent[] = data.map((cita: any) => {
-          const startDate = new Date(cita.fecha)
+          const startDate = parseFechaLocal(cita.fecha)
           const [startHour, startMin] = cita.horaInicio.split(':').map(Number)
           const [endHour, endMin] = cita.horaFin.split(':').map(Number)
           const startDateTime = new Date(startDate)

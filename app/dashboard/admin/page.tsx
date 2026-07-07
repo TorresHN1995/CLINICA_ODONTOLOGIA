@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { Download, Trash2, AlertTriangle, CheckCircle } from 'lucide-react'
+import { hoyLocalISO } from '@/lib/fecha'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -24,7 +25,7 @@ export default function AdminPage() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `clinica-backup-${new Date().toISOString().split('T')[0]}.json`
+      a.download = `clinica-backup-${hoyLocalISO()}.json`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)

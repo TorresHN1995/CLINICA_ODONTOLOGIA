@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
+import { parseFechaLocal, inicioDiaLocal, finDiaLocal } from '@/lib/fecha'
 import { z } from 'zod'
 import { addMinutes, format } from 'date-fns'
 
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
                     apellido: validatedData.paciente.apellido,
                     telefono: validatedData.paciente.telefono,
                     email: validatedData.paciente.email || null,
-                    fechaNacimiento: new Date(validatedData.paciente.fechaNacimiento),
+                    fechaNacimiento: parseFechaLocal(validatedData.paciente.fechaNacimiento),
                     // Valores por defecto
                     direccion: 'Registrado Online',
                 }
@@ -83,7 +84,10 @@ export async function POST(request: NextRequest) {
 
         const citasOdontologo = await prisma.cita.findMany({
             where: {
-                fecha: new Date(validatedData.fecha),
+                fecha: {
+                    gte: inicioDiaLocal(validatedData.fecha),
+                    lte: finDiaLocal(validatedData.fecha)
+                },
                 estado: { not: 'CANCELADA' },
                 odontologoId: odontologo.id
             }
@@ -104,8 +108,8 @@ export async function POST(request: NextRequest) {
         const colisionPaciente = await prisma.cita.findFirst({
             where: {
                 fecha: {
-                    gte: new Date(validatedData.fecha),
-                    lt: addMinutes(new Date(validatedData.fecha), 24 * 60)
+                    gte: inicioDiaLocal(validatedData.fecha),
+                    lte: finDiaLocal(validatedData.fecha)
                 },
                 horaInicio: validatedData.hora,
                 estado: { not: 'CANCELADA' },
@@ -121,7 +125,7 @@ export async function POST(request: NextRequest) {
             data: {
                 pacienteId: paciente.id,
                 odontologoId: odontologo.id,
-                fecha: new Date(validatedData.fecha),
+                fecha: parseFechaLocal(validatedData.fecha),
                 horaInicio: validatedData.hora,
                 horaFin: horaFin,
                 duracion: duracion,

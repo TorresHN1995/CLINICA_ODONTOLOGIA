@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseFechaLocal } from '@/lib/fecha'
 import { Calendar as CalendarIcon, Clock, User, CheckCircle2, ChevronRight, ChevronLeft, Loader2, ArrowLeft } from 'lucide-react'
 import { toast, Toaster } from 'react-hot-toast'
 import Link from 'next/link'
@@ -75,7 +76,7 @@ export default function BookingPage() {
                         apellido: data.paciente.apellido,
                         telefono: data.paciente.telefono,
                         email: data.paciente.email || '',
-                        fechaNacimiento: new Date(data.paciente.fechaNacimiento).toISOString().split('T')[0]
+                        fechaNacimiento: String(data.paciente.fechaNacimiento).substring(0, 10)
                     }))
                     toast.success(`Hola de nuevo, ${data.paciente.nombre}`)
                 }
@@ -439,7 +440,7 @@ export default function BookingPage() {
                                             <h3 className="font-semibold text-primary-900 mb-2">Resumen de Cita</h3>
                                             <div className="text-sm text-primary-800 space-y-1">
                                                 <p><span className="font-medium">Servicio:</span> {motivo}</p>
-                                                <p><span className="font-medium">Fecha:</span> {format(new Date(fecha), 'PPP', { locale: es })}</p>
+                                                <p><span className="font-medium">Fecha:</span> {format(parseFechaLocal(fecha), 'PPP', { locale: es })}</p>
                                                 <p><span className="font-medium">Hora:</span> {hora && format(new Date(`2000-01-01T${hora}`), 'h:mm a')}</p>
                                             </div>
                                         </div>
@@ -463,7 +464,7 @@ export default function BookingPage() {
                                     </div>
                                     <h2 className="text-2xl font-bold text-foreground mb-2">¡Cita Confirmada!</h2>
                                     <p className="text-muted-foreground mb-8">
-                                        Hemos registrado tu cita correctamente. Te esperamos el día <strong>{format(new Date(fecha), 'dd/MM/yyyy')}</strong> a las <strong>{format(new Date(`2000-01-01T${hora}`), 'h:mm a')}</strong>.
+                                        Hemos registrado tu cita correctamente. Te esperamos el día <strong>{format(parseFechaLocal(fecha), 'dd/MM/yyyy')}</strong> a las <strong>{format(new Date(`2000-01-01T${hora}`), 'h:mm a')}</strong>.
                                     </p>
                                     <button
                                         onClick={() => { setStep(1); setMotivo(''); setHora(''); setPaciente({ ...paciente, identificacion: '', nombre: '', apellido: '' }); }}
@@ -513,7 +514,7 @@ export default function BookingPage() {
                                         <div key={cita.id} className="p-4 border rounded-xl hover:border-primary-300 transition-all bg-muted">
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
-                                                    <p className="font-bold text-foreground">{format(new Date(cita.fecha), 'PPP', { locale: es })}</p>
+                                                    <p className="font-bold text-foreground">{format(parseFechaLocal(cita.fecha), 'PPP', { locale: es })}</p>
                                                     <p className="text-muted-foreground text-sm">{cita.horaInicio} - {cita.tipoCita}</p>
                                                     <p className="text-xs text-blue-600 font-medium">Dr. {cita.odontologo.nombre} {cita.odontologo.apellido}</p>
                                                 </div>
@@ -548,7 +549,7 @@ export default function BookingPage() {
                                     <h2 className="text-xl font-bold text-red-600">Cancelar Cita</h2>
                                 </div>
                                 <p className="text-sm text-muted-foreground mb-4">
-                                    Estás cancelando tu cita del <strong>{format(new Date(managingCita.fecha), 'PPP', { locale: es })}</strong>.
+                                    Estás cancelando tu cita del <strong>{format(parseFechaLocal(managingCita.fecha), 'PPP', { locale: es })}</strong>.
                                     Por favor indícanos el motivo:
                                 </p>
                                 <textarea

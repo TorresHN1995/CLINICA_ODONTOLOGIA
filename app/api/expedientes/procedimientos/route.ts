@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { parseFechaLocal } from '@/lib/fecha'
 import { z } from 'zod'
 
 const procedimientoSchema = z.object({
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
       data: {
         expedienteId: validated.expedienteId,
         odontologoId: validated.odontologoId,
-        fecha: validated.fecha ? new Date(validated.fecha) : undefined,
+        fecha: validated.fecha ? parseFechaLocal(validated.fecha) : undefined,
         nombre: validated.nombre,
         descripcion: validated.descripcion || '',
         diente: validated.diente || null,

@@ -6,6 +6,7 @@ import { Search, Plus, Eye, FileText, Calendar } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseFechaLocal } from '@/lib/fecha'
 
 interface Expediente {
   id: string
@@ -142,14 +143,14 @@ export default function ExpedientesPage() {
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4" />
                       <span>
-                        Fecha: {format(new Date(expediente.fecha), "d 'de' MMMM 'de' yyyy", { locale: es })}
+                        Fecha: {format(parseFechaLocal(expediente.fecha), "d 'de' MMMM 'de' yyyy", { locale: es })}
                       </span>
                     </div>
                     {expediente.proximaCita && (
                       <div className="flex items-center space-x-2 text-orange-600">
                         <Calendar className="w-4 h-4" />
                         <span>
-                          Próxima cita: {format(new Date(expediente.proximaCita), "d 'de' MMMM", { locale: es })}
+                          Próxima cita: {format(parseFechaLocal(expediente.proximaCita), "d 'de' MMMM", { locale: es })}
                         </span>
                       </div>
                     )}

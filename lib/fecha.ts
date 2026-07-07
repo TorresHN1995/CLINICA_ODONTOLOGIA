@@ -6,8 +6,13 @@ import { startOfDay, endOfDay } from 'date-fns'
 // MEDIANOCHE UTC, lo que en una zona UTC-negativa cae en el día anterior y desfasa
 // todos los filtros/guardados por día. Estas funciones lo interpretan en hora LOCAL.
 
-/** Parsea 'yyyy-MM-dd' (o el prefijo de fecha de un ISO) como medianoche LOCAL. */
-export function parseFechaLocal(str: string): Date {
+/** Parsea 'yyyy-MM-dd' (o el prefijo de fecha de un ISO) como medianoche LOCAL.
+ *  Acepta también un Date (campo de solo-día guardado a medianoche UTC): en ese
+ *  caso toma las componentes UTC del calendario y las reconstruye a medianoche LOCAL. */
+export function parseFechaLocal(str: string | Date): Date {
+  if (str instanceof Date) {
+    return new Date(str.getUTCFullYear(), str.getUTCMonth(), str.getUTCDate())
+  }
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(str)
   if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
   return new Date(str)

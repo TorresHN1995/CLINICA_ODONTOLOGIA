@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { parseFechaLocal } from '@/lib/fecha'
 import { z } from 'zod'
 
 const expedienteSchema = z.object({
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
         diagnostico: validatedData.diagnostico,
         tratamiento: validatedData.tratamiento,
         evolucion: validatedData.evolucion || null,
-        proximaCita: validatedData.proximaCita ? new Date(validatedData.proximaCita) : null,
+        proximaCita: validatedData.proximaCita ? parseFechaLocal(validatedData.proximaCita) : null,
         odontograma: validatedData.odontograma || null,
       },
       include: {

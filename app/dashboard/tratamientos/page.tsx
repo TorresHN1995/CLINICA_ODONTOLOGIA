@@ -6,6 +6,7 @@ import { Search, Plus, Heart, Calendar, DollarSign } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseFechaLocal } from '@/lib/fecha'
 import { useConfiguracion } from '@/components/providers/ConfiguracionProvider'
 
 interface Tratamiento {
@@ -166,7 +167,7 @@ export default function TratamientosPage() {
                       <p className="text-xs text-muted-foreground">Inicio</p>
                       <p className="font-medium">
                         {tratamiento.fechaInicio
-                          ? format(new Date(tratamiento.fechaInicio), "dd/MM/yyyy", { locale: es })
+                          ? format(parseFechaLocal(tratamiento.fechaInicio), "dd/MM/yyyy", { locale: es })
                           : 'No iniciado'}
                       </p>
                     </div>

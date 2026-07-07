@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useConfiguracion } from '@/app/hooks/useConfiguracion'
+import { parseFechaLocal } from '@/lib/fecha'
 
 interface Factura {
   id: string
@@ -223,7 +224,7 @@ export default function FacturacionPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                        {format(new Date(factura.fecha), "dd/MM/yyyy", { locale: es })}
+                        {format(parseFechaLocal(factura.fecha), "dd/MM/yyyy", { locale: es })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm font-bold text-foreground">

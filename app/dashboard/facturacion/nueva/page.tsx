@@ -10,6 +10,7 @@ import { es } from 'date-fns/locale'
 import { Combobox } from '@/components/ui/Combobox'
 import { useConfiguracion } from '@/app/hooks/useConfiguracion'
 import { useSession } from 'next-auth/react'
+import { parseFechaLocal, hoyLocalISO } from '@/lib/fecha'
 
 interface Paciente {
   id: string
@@ -70,7 +71,7 @@ export default function NuevaFacturaPage() {
 
   // Form State
   const [pacienteId, setPacienteId] = useState('')
-  const [fecha] = useState(format(new Date(), 'yyyy-MM-dd')) // Read-only state
+  const [fecha] = useState(hoyLocalISO()) // Read-only state
   const [items, setItems] = useState<Item[]>([
     { id: '1', descripcion: '', cantidad: 1, precioUnitario: 0, tasaIsv: 15 }
   ])
@@ -432,7 +433,7 @@ export default function NuevaFacturaPage() {
               </h1>
               {correlativoActivo && tipoDocumento === 'FACTURA' && (
                 <div className="text-xs text-muted-foreground">
-                  CAI: {correlativoActivo.cai || 'N/A'} • Vence: {format(new Date(correlativoActivo.fechaLimite || '2099-12-31'), 'dd/MM/yyyy')}
+                  CAI: {correlativoActivo.cai || 'N/A'} • Vence: {format(parseFechaLocal(correlativoActivo.fechaLimite || '2099-12-31'), 'dd/MM/yyyy')}
                 </div>
               )}
               {tipoDocumento === 'ORDEN_PEDIDO' && (
@@ -453,7 +454,7 @@ export default function NuevaFacturaPage() {
           <div className="flex items-center gap-6 w-full md:w-auto text-sm">
             <div className="flex items-center gap-2 text-muted-foreground bg-muted px-3 py-1.5 rounded-lg border border-border">
               <Calendar className="w-4 h-4" />
-              <span>{format(new Date(fecha), 'dd MMMM yyyy', { locale: es })}</span>
+              <span>{format(parseFechaLocal(fecha), 'dd MMMM yyyy', { locale: es })}</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground bg-muted px-3 py-1.5 rounded-lg border border-border">
               <User className="w-4 h-4" />

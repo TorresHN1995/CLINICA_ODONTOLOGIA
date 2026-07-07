@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useConfiguracion } from '@/app/hooks/useConfiguracion'
+import { parseFechaLocal, hoyLocalISO } from '@/lib/fecha'
 
 interface Preview {
   totalIngresos: number
@@ -41,7 +42,7 @@ export default function CierreCajaPage() {
   const moneda = config?.simboloMoneda || 'L.'
   const fmt = (n: number) => `${moneda} ${Number(n || 0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-  const [fecha, setFecha] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [fecha, setFecha] = useState(hoyLocalISO())
   const [preview, setPreview] = useState<Preview | null>(null)
   const [existente, setExistente] = useState<Cierre | null>(null)
   const [historial, setHistorial] = useState<Cierre[]>([])
@@ -252,7 +253,7 @@ export default function CierreCajaPage() {
                 <tbody>
                   {historial.map((c) => (
                     <tr key={c.id} className="border-b border-border hover:bg-muted">
-                      <td className="py-2 px-3 whitespace-nowrap text-foreground">{format(new Date(c.fecha), 'dd/MM/yyyy', { locale: es })}</td>
+                      <td className="py-2 px-3 whitespace-nowrap text-foreground">{format(parseFechaLocal(c.fecha), 'dd/MM/yyyy', { locale: es })}</td>
                       <td className="py-2 px-3 text-foreground">{c.usuarioNombre || '—'}</td>
                       <td className="py-2 px-3 text-right text-foreground">{fmt(Number(c.efectivoEsperado))}</td>
                       <td className="py-2 px-3 text-right text-foreground">{fmt(Number(c.efectivoContado))}</td>

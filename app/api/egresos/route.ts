@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
         concepto: validatedData.concepto,
         categoria: validatedData.categoria,
         monto: validatedData.monto,
-        fecha: new Date(validatedData.fecha),
+        fecha: inicioDiaLocal(validatedData.fecha),
         metodoPago: validatedData.metodoPago,
         proveedor: validatedData.proveedor || null,
         numeroFactura: validatedData.numeroFactura || null,

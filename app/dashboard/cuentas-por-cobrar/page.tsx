@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useConfiguracion } from '@/app/hooks/useConfiguracion'
+import { parseFechaLocal } from '@/lib/fecha'
 
 type Bucket = 'corriente' | 'dias31_60' | 'dias61_90' | 'mas90'
 
@@ -274,7 +275,7 @@ export default function CuentasPorCobrarPage() {
                       <span className="block text-xs text-muted-foreground">{c.identificacion}</span>
                     </td>
                     <td className="py-3 px-3 whitespace-nowrap text-muted-foreground">
-                      {format(new Date(c.fecha), 'dd/MM/yyyy', { locale: es })}
+                      {format(parseFechaLocal(c.fecha), 'dd/MM/yyyy', { locale: es })}
                     </td>
                     <td className="py-3 px-3 text-right text-muted-foreground">{fmt(c.total)}</td>
                     <td className="py-3 px-3 text-right text-emerald-600">{fmt(c.pagado)}</td>

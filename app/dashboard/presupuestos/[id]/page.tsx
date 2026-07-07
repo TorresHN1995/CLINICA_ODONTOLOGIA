@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle, XCircle, FileText, Trash2, ExternalLink } from 
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseFechaLocal } from '@/lib/fecha'
 import { useConfiguracion } from '@/app/hooks/useConfiguracion'
 
 interface Item {
@@ -180,11 +181,11 @@ export default function PresupuestoDetallePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
         <div className="card">
           <p className="text-muted-foreground">Fecha</p>
-          <p className="font-medium text-foreground">{format(new Date(p.fecha), "dd 'de' MMMM, yyyy", { locale: es })}</p>
+          <p className="font-medium text-foreground">{format(parseFechaLocal(p.fecha), "dd 'de' MMMM, yyyy", { locale: es })}</p>
         </div>
         <div className="card">
           <p className="text-muted-foreground">Válido hasta</p>
-          <p className="font-medium text-foreground">{p.validoHasta ? format(new Date(p.validoHasta), "dd 'de' MMMM, yyyy", { locale: es }) : 'Sin vencimiento'}</p>
+          <p className="font-medium text-foreground">{p.validoHasta ? format(parseFechaLocal(p.validoHasta), "dd 'de' MMMM, yyyy", { locale: es }) : 'Sin vencimiento'}</p>
         </div>
         <div className="card">
           <p className="text-muted-foreground">Creado por</p>

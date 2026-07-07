@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { Save, ShieldCheck, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
+import { parseFechaLocal } from '@/lib/fecha'
 
 interface Correlativo {
     id: string
@@ -52,7 +53,7 @@ export default function ConfiguracionFacturacionPage() {
                         rangoInicial: activo.rangoInicial,
                         rangoFinal: activo.rangoFinal,
                         siguiente: activo.siguiente,
-                        fechaLimite: activo.fechaLimite ? format(new Date(activo.fechaLimite), 'yyyy-MM-dd') : ''
+                        fechaLimite: activo.fechaLimite ? format(parseFechaLocal(activo.fechaLimite), 'yyyy-MM-dd') : ''
                     })
                 }
             }
