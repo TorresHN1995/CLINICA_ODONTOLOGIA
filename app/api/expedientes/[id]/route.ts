@@ -54,9 +54,11 @@ export async function GET(
 const updateExpedienteSchema = z.object({
   diagnostico: z.string().optional(),
   tratamiento: z.string().optional(),
-  evolucion: z.string().optional(),
-  proximaCita: z.string().optional(),
-  odontograma: z.string().optional(),
+  evolucion: z.string().nullable().optional(),
+  // El cliente envía null cuando el campo se deja vacío / se limpia; se acepta
+  // null además de string/undefined para no romper el guardado del expediente.
+  proximaCita: z.string().nullable().optional(),
+  odontograma: z.string().nullable().optional(),
 })
 
 // PUT - Actualizar expediente
