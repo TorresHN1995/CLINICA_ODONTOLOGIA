@@ -104,10 +104,11 @@ export default function AppointmentDashboard() {
     return colors[estado] || 'bg-gray-100 text-gray-800'
   }
 
-  // Verificar si el usuario actual es el odontólogo de la cita o es admin
+  // Quién puede cambiar el estado de una cita: ADMINISTRADOR y RECEPCION gestionan
+  // cualquier cita; el ODONTOLOGO solo las suyas.
   const esPropietarioCita = (cita: any) => {
     if (!session) return false
-    if (session.user.role === 'ADMINISTRADOR') return true
+    if (session.user.role === 'ADMINISTRADOR' || session.user.role === 'RECEPCION') return true
     return session.user.id === cita.odontologoId
   }
 
