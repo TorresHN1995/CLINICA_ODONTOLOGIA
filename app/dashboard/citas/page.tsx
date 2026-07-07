@@ -7,6 +7,7 @@ import { es } from 'date-fns/locale'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Plus, Loader2, X, User, Clock, FileText, PlayCircle, CheckCircle2, XCircle, Stethoscope } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
 import { parseFechaLocal } from '@/lib/fecha'
@@ -25,6 +26,7 @@ interface CitaEvent {
 
 export default function AppointmentDashboard() {
   const { data: session } = useSession()
+  const router = useRouter()
   const esOdontologo = session?.user?.role === 'ODONTOLOGO'
   const [events, setEvents] = useState<CitaEvent[]>([])
   const [loading, setLoading] = useState(false)
@@ -34,6 +36,7 @@ export default function AppointmentDashboard() {
   const [selectedEvent, setSelectedEvent] = useState<CitaEvent | null>(null)
   const [odontologos, setOdontologos] = useState<{ id: string; nombre: string; apellido: string }[]>([])
   const [odontologoFiltro, setOdontologoFiltro] = useState('')
+  const [buscandoExpediente, setBuscandoExpediente] = useState(false)
 
   // Lista de odontólogos para el filtro (solo administradores/asistentes; el
   // odontólogo ya ve únicamente sus citas por filtrado del servidor).
@@ -130,6 +133,29 @@ export default function AppointmentDashboard() {
       toast.error('Error de conexión')
     } finally {
       setUpdatingEstado(false)
+    }
+  }
+
+  // Abre el historial clínico del paciente de la cita. Si ya tiene expediente,
+  // lleva al más reciente; si no, abre la creación de un expediente nuevo con el
+  // paciente ya seleccionado.
+  const verHistorial = async () => {
+    const cita = selectedEvent?.resource
+    if (!cita?.paciente?.id) return
+    setBuscandoExpediente(true)
+    try {
+      const res = await fetch(`/api/expedientes?pacienteId=${cita.paciente.id}`)
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0) {
+        router.push(`/dashboard/expedientes/${data[0].id}`)
+      } else {
+        toast('El paciente aún no tiene expediente. Abriendo creación...', { icon: 'ℹ️' })
+        router.push(`/dashboard/expedientes/nuevo?pacienteId=${cita.paciente.id}`)
+      }
+    } catch {
+      toast.error('No se pudo abrir el historial clínico')
+      setBuscandoExpediente(false)
     }
   }
 
@@ -248,6 +274,17 @@ export default function AppointmentDashboard() {
                   {cita.motivo && <p className="text-sm text-muted-foreground">{cita.motivo}</p>}
                 </div>
               </div>
+
+              {/* Historial clínico del paciente */}
+              <button
+                onClick={verHistorial}
+                disabled={buscandoExpediente}
+                className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
+                title="Abrir el expediente / historial clínico del paciente"
+              >
+                {buscandoExpediente ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                Ver historial clínico
+              </button>
 
               {/* Acciones — solo visibles para el odontólogo dueño o admin */}
               {esPropietario && (

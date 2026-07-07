@@ -29,6 +29,10 @@ export default function NuevoExpedientePage() {
 
   useEffect(() => {
     fetchPacientes()
+    // Preseleccionar paciente si viene en la URL (?pacienteId=...), p.ej. al abrir
+    // el historial desde una cita cuyo paciente aún no tiene expediente.
+    const pid = new URLSearchParams(window.location.search).get('pacienteId')
+    if (pid) setFormData((prev) => ({ ...prev, pacienteId: pid }))
   }, [])
 
   const fetchPacientes = async () => {
