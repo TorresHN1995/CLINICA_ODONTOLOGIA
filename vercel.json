@@ -4,8 +4,7 @@
   "framework": "nextjs",
   "regions": ["iad1"],
   "env": {
-    "PRISMA_GENERATE_DATAPROXY": "false",
-    "TZ": "America/Tegucigalpa"
+    "PRISMA_GENERATE_DATAPROXY": "false"
   }
 }
 
