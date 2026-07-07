@@ -25,12 +25,25 @@ interface CitaEvent {
 
 export default function AppointmentDashboard() {
   const { data: session } = useSession()
+  const esOdontologo = session?.user?.role === 'ODONTOLOGO'
   const [events, setEvents] = useState<CitaEvent[]>([])
   const [loading, setLoading] = useState(false)
   const [updatingEstado, setUpdatingEstado] = useState(false)
   const [view, setView] = useState<View>(Views.MONTH)
   const [date, setDate] = useState(new Date())
   const [selectedEvent, setSelectedEvent] = useState<CitaEvent | null>(null)
+  const [odontologos, setOdontologos] = useState<{ id: string; nombre: string; apellido: string }[]>([])
+  const [odontologoFiltro, setOdontologoFiltro] = useState('')
+
+  // Lista de odontólogos para el filtro (solo administradores/asistentes; el
+  // odontólogo ya ve únicamente sus citas por filtrado del servidor).
+  useEffect(() => {
+    if (esOdontologo) return
+    fetch('/api/usuarios?rol=ODONTOLOGO')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setOdontologos(d.usuarios || []) })
+      .catch(() => {})
+  }, [esOdontologo])
 
   const fetchCitas = useCallback(async (currentDate: Date, currentView: View) => {
     setLoading(true)
@@ -41,6 +54,7 @@ export default function AppointmentDashboard() {
         fechaInicio: format(start, 'yyyy-MM-dd'),
         fechaFin: format(end, 'yyyy-MM-dd')
       })
+      if (odontologoFiltro) params.set('odontologoId', odontologoFiltro)
       const res = await fetch(`/api/citas?${params}`)
       if (res.ok) {
         const data = await res.json()
@@ -61,7 +75,7 @@ export default function AppointmentDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [odontologoFiltro])
 
   useEffect(() => { fetchCitas(date, view) }, [date, view, fetchCitas])
 
@@ -126,13 +140,28 @@ export default function AppointmentDashboard() {
   return (
     <div className="h-[calc(100vh-100px)] flex flex-col space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-center justify-between px-1 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Agenda Médica</h1>
-          <p className="text-muted-foreground text-sm">Organización de citas y pacientes</p>
+          <h1 className="text-2xl font-bold text-foreground">{esOdontologo ? 'Mi Agenda' : 'Agenda Médica'}</h1>
+          <p className="text-muted-foreground text-sm">
+            {esOdontologo ? 'Tus citas asignadas' : 'Organización de citas y pacientes'}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {loading && <Loader2 className="w-5 h-5 animate-spin text-primary-600" />}
+          {!esOdontologo && (
+            <select
+              value={odontologoFiltro}
+              onChange={(e) => setOdontologoFiltro(e.target.value)}
+              className="input-field py-2 max-w-[220px]"
+              title="Filtrar la agenda por odontólogo"
+            >
+              <option value="">Todos los odontólogos</option>
+              {odontologos.map((o) => (
+                <option key={o.id} value={o.id}>Dr. {o.nombre} {o.apellido}</option>
+              ))}
+            </select>
+          )}
           <Link href="/dashboard/citas/nueva" className="btn-primary flex items-center space-x-2">
             <Plus className="w-5 h-5" />
             <span className="hidden sm:inline">Nueva Cita</span>

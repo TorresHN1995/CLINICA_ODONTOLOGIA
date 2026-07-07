@@ -63,7 +63,12 @@ export async function GET(request: NextRequest) {
       where.pacienteId = pacienteId
     }
 
-    if (odontologoId) {
+    // Un ODONTOLOGO solo puede ver SUS citas: se fuerza en el servidor e ignora
+    // cualquier odontologoId recibido. Administradores/asistentes ven todas y
+    // pueden filtrar opcionalmente por odontólogo.
+    if (session.user.role === 'ODONTOLOGO') {
+      where.odontologoId = session.user.id
+    } else if (odontologoId) {
       where.odontologoId = odontologoId
     }
 
