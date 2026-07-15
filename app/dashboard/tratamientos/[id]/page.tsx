@@ -355,7 +355,7 @@ export default function DetalleTratamientoPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Costo Total</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">L. {tratamiento.costoTotal.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">L. {Number(tratamiento.costoTotal).toFixed(2)}</p>
             </div>
             <DollarSign className="w-12 h-12 text-blue-500 opacity-20" />
           </div>
@@ -496,7 +496,7 @@ export default function DetalleTratamientoPage() {
                     <div className="flex gap-6 mt-3 text-sm text-gray-600">
                       <div className="flex items-center gap-2">
                         <DollarSign className="w-4 h-4" />
-                        <span>L. {etapa.costo.toFixed(2)}</span>
+                        <span>L. {Number(etapa.costo).toFixed(2)}</span>
                       </div>
                       {etapa.fechaInicio && (
                         <div className="flex items-center gap-2">
