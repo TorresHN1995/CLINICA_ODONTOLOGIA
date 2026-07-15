@@ -71,6 +71,15 @@ export default function NuevaCompraPage() {
     cantidad: '',
     costoUnitario: '',
   })
+  // Búsqueda dinámica de producto existente
+  const [busquedaProd, setBusquedaProd] = useState('')
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
+
+  const productosFiltrados = (
+    busquedaProd.trim()
+      ? productos.filter((p) => `${p.codigo} ${p.nombre}`.toLowerCase().includes(busquedaProd.toLowerCase()))
+      : productos
+  ).slice(0, 8)
 
   useEffect(() => {
     fetch('/api/inventario?limit=1000')
@@ -79,8 +88,11 @@ export default function NuevaCompraPage() {
       .catch(() => {})
   }, [])
 
-  const resetLinea = () =>
+  const resetLinea = () => {
     setLinea({ inventarioId: '', codigo: '', nombre: '', categoria: 'MATERIAL_DENTAL', unidadMedida: 'UNIDAD', cantidad: '', costoUnitario: '' })
+    setBusquedaProd('')
+    setMostrarSugerencias(false)
+  }
 
   const handleAgregarLinea = () => {
     const cantidad = parseFloat(linea.cantidad)
@@ -285,18 +297,52 @@ export default function NuevaCompraPage() {
             </div>
 
             {!modoNuevo ? (
-              <div className="mb-4">
+              <div className="mb-4 relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Producto de inventario</label>
-                <select
-                  value={linea.inventarioId}
-                  onChange={(e) => setLinea({ ...linea, inventarioId: e.target.value })}
+                <input
+                  type="text"
+                  value={busquedaProd}
+                  onChange={(e) => {
+                    setBusquedaProd(e.target.value)
+                    setLinea({ ...linea, inventarioId: '' })
+                    setMostrarSugerencias(true)
+                  }}
+                  onFocus={() => setMostrarSugerencias(true)}
+                  onBlur={() => setTimeout(() => setMostrarSugerencias(false), 150)}
+                  placeholder="Escribe código o nombre para buscar…"
+                  autoComplete="off"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Selecciona un producto…</option>
-                  {productos.map((p) => (
-                    <option key={p.id} value={p.id}>{p.codigo} — {p.nombre}</option>
-                  ))}
-                </select>
+                />
+                {mostrarSugerencias && (
+                  <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {productos.length === 0 ? (
+                      <div className="px-4 py-2 text-sm text-gray-500">No hay productos en inventario</div>
+                    ) : productosFiltrados.length === 0 ? (
+                      <div className="px-4 py-2 text-sm text-gray-500">Sin resultados para “{busquedaProd}”</div>
+                    ) : (
+                      productosFiltrados.map((p) => (
+                        <button
+                          type="button"
+                          key={p.id}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setLinea({ ...linea, inventarioId: p.id })
+                            setBusquedaProd(`${p.codigo} — ${p.nombre}`)
+                            setMostrarSugerencias(false)
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 border-b border-gray-100 last:border-0"
+                        >
+                          <span className="font-medium text-gray-900">{p.codigo}</span>
+                          <span className="text-gray-600"> — {p.nombre}</span>
+                          <span className="text-xs text-gray-400"> ({p.unidadMedida})</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+                {linea.inventarioId && (
+                  <p className="mt-1 text-xs text-green-600">✓ Producto seleccionado</p>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
