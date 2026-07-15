@@ -26,7 +26,8 @@ import {
   ScrollText,
   Wallet,
   ClipboardList,
-  Banknote
+  Banknote,
+  ShoppingCart
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
@@ -53,6 +54,7 @@ const menuItems: MenuItem[] = [
   { name: 'Contabilidad', href: '/dashboard/contabilidad', icon: Calculator },
   { name: 'Cierre de Caja', href: '/dashboard/cierre-caja', icon: Banknote },
   { name: 'Inventario', href: '/dashboard/inventario', icon: Package },
+  { name: 'Compras', href: '/dashboard/compras', icon: ShoppingCart },
   { name: 'Reportes', href: '/dashboard/reportes', icon: BarChart3 },
   { name: 'Usuarios', href: '/dashboard/usuarios', icon: UserCog, roles: ['ADMINISTRADOR'] },
   { name: 'Auditoría', href: '/dashboard/auditoria', icon: ScrollText, roles: ['ADMINISTRADOR'] },

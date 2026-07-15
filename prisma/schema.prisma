@@ -30,6 +30,7 @@ model Usuario {
   procedimientos  Procedimiento[]
   estadisticas    EstadisticaOdontologo[]
   egresos         Egreso[]
+  compras         Compra[]
 
   @@map("usuarios")
 }
@@ -361,6 +362,7 @@ model Inventario {
   movimientos   MovimientoInventario[]
   productos     ProductoServicio[]
   insumos       ServicioInsumo[]
+  detalleCompras DetalleCompra[]
 
   @@map("inventario")
 }
@@ -523,6 +525,7 @@ model Egreso {
 
   // Relaciones
   registrador   Usuario       @relation(fields: [registradoPor], references: [id])
+  compra        Compra?
 
   @@index([fecha])
   @@index([categoria])
@@ -754,5 +757,57 @@ model CierreCaja {
 
   @@index([fecha])
   @@map("cierres_caja")
+}
+
+// Modelo de Compras (registro de adquisiciones que ingresan al inventario)
+model Compra {
+  id            String        @id @default(uuid())
+  proveedor     String        // Nombre del proveedor
+  numeroFactura String?       // Número de factura del proveedor
+  fecha         DateTime      @default(now())
+  metodoPago    MetodoPago
+  total         Decimal       @db.Decimal(10, 2)
+  estado        EstadoCompra  @default(RECIBIDA)
+  observaciones String?       @db.Text
+  registradoPor String        // ID del usuario que registró la compra
+  egresoId      String?       @unique // Egreso generado automáticamente por esta compra
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relaciones
+  registrador   Usuario       @relation(fields: [registradoPor], references: [id])
+  egreso        Egreso?       @relation(fields: [egresoId], references: [id])
+  detalles      DetalleCompra[]
+
+  @@index([fecha])
+  @@index([proveedor])
+  @@index([registradoPor])
+  @@map("compras")
+}
+
+enum EstadoCompra {
+  RECIBIDA
+  PENDIENTE
+  ANULADA
+}
+
+// Detalle (líneas) de una compra
+model DetalleCompra {
+  id            String     @id @default(uuid())
+  compraId      String
+  inventarioId  String
+  cantidad      Int
+  costoUnitario Decimal    @db.Decimal(10, 2)
+  subtotal      Decimal    @db.Decimal(10, 2)
+  createdAt     DateTime   @default(now())
+
+  // Relaciones
+  compra        Compra     @relation(fields: [compraId], references: [id], onDelete: Cascade)
+  inventario    Inventario @relation(fields: [inventarioId], references: [id])
+
+  @@index([compraId])
+  @@index([inventarioId])
+  @@map("detalle_compras")
 }
 
