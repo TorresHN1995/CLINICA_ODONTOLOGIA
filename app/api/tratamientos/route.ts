@@ -12,12 +12,17 @@ const etapaSchema = z.object({
 })
 
 const tratamientoSchema = z.object({
-  pacienteId: z.string(),
+  pacienteId: z.string().min(1),
   nombre: z.string().min(1).max(200),
-  descripcion: z.string().max(10000),
+  descripcion: z.string().max(10000).optional().default(''),
   fechaInicio: z.string().optional(),
   observaciones: z.string().max(5000).optional(),
-  etapas: z.array(etapaSchema).min(1, 'Debe incluir al menos una etapa'),
+  // El costo total se toma de este valor cuando no se envían etapas; si vienen
+  // etapas, se recalcula como su suma (igual que el endpoint /etapas).
+  costoTotal: z.number().nonnegative().optional(),
+  // Las etapas pueden crearse aquí (inline) o después vía /etapas. El formulario
+  // usa el segundo flujo, así que aquí son opcionales.
+  etapas: z.array(etapaSchema).optional().default([]),
 })
 
 // GET - Obtener tratamientos
@@ -74,13 +79,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = tratamientoSchema.parse(body)
 
-    // Calcular costo total
-    const costoTotal = validatedData.etapas.reduce(
-      (sum, etapa) => sum + etapa.costo,
-      0
-    )
+    // Costo total: suma de etapas si vienen inline; de lo contrario, el valor enviado.
+    const costoTotal = validatedData.etapas.length > 0
+      ? validatedData.etapas.reduce((sum, etapa) => sum + etapa.costo, 0)
+      : (validatedData.costoTotal ?? 0)
 
-    // Crear tratamiento con etapas
+    // Crear tratamiento (con etapas inline solo si se enviaron)
     const tratamiento = await prisma.tratamiento.create({
       data: {
         pacienteId: validatedData.pacienteId,
@@ -89,14 +93,16 @@ export async function POST(request: NextRequest) {
         costoTotal,
         fechaInicio: validatedData.fechaInicio ? parseFechaLocal(validatedData.fechaInicio) : null,
         observaciones: validatedData.observaciones || null,
-        etapas: {
-          create: validatedData.etapas.map((etapa, index) => ({
-            orden: index + 1,
-            nombre: etapa.nombre,
-            descripcion: etapa.descripcion || null,
-            costo: etapa.costo,
-          })),
-        },
+        ...(validatedData.etapas.length > 0 && {
+          etapas: {
+            create: validatedData.etapas.map((etapa, index) => ({
+              orden: index + 1,
+              nombre: etapa.nombre,
+              descripcion: etapa.descripcion || null,
+              costo: etapa.costo,
+            })),
+          },
+        }),
       },
       include: {
         paciente: true,
