@@ -3,20 +3,13 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { auditar } from '@/lib/auditoria'
+import { parseFechaLocal } from '@/lib/fecha'
 import { startOfDay, endOfDay } from 'date-fns'
 import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
 
 const r2 = (n: number) => Math.round(n * 100) / 100
-
-// Parsea 'yyyy-MM-dd' como medianoche LOCAL. new Date('yyyy-MM-dd') asume UTC,
-// lo que con startOfDay/endOfDay (hora local) desfasa el día en zonas UTC-negativas (ej. Honduras UTC-6).
-function parseFechaLocal(str: string): Date {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(str)
-  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-  return new Date(str)
-}
 
 const METODOS = ['EFECTIVO', 'TARJETA_CREDITO', 'TARJETA_DEBITO', 'TRANSFERENCIA', 'CHEQUE', 'OTRO']
 

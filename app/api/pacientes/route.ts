@@ -11,7 +11,7 @@ const pacienteSchema = z.object({
   nombre: z.string().min(1, 'Nombre requerido').max(100),
   apellido: z.string().min(1, 'Apellido requerido').max(100),
   fechaNacimiento: z.string().refine((val) => {
-    const date = new Date(val)
+    const date = parseFechaLocal(val)
     return !isNaN(date.getTime()) && date < new Date()
   }, 'Fecha de nacimiento inválida o futura'),
   email: z.string().email().max(200).optional().or(z.literal('')),
