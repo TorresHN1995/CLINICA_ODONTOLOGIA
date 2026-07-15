@@ -51,6 +51,10 @@ const itemSchema = z
     unidadMedida: z.string().max(50).optional(),
     cantidad: z.number().int().positive('La cantidad debe ser mayor a 0'),
     costoUnitario: z.number().min(0, 'El costo no puede ser negativo'),
+    // Solo para productos nuevos: si se define precioVenta, el producto se
+    // registra también en el catálogo general (Productos/Servicios) y queda facturable.
+    precioVenta: z.number().min(0).optional(),
+    isv: z.number().min(0).max(100).optional(),
   })
   .refine(
     (d) => !!d.inventarioId || (!!d.codigo && !!d.nombre && !!d.categoria && !!d.unidadMedida),
@@ -145,10 +149,30 @@ export async function POST(request: NextRequest) {
               unidadMedida: item.unidadMedida!,
               stock: 0,
               precioCompra: item.costoUnitario,
+              precioVenta: item.precioVenta ?? null,
               proveedor: data.proveedor,
             },
           })
           inventarioId = nuevo.id
+
+          // Si se indicó precio de venta, registrar también en el catálogo
+          // general (Productos/Servicios) para que sea facturable en todo el sistema.
+          if (item.precioVenta != null) {
+            const existenteProd = await tx.productoServicio.findUnique({ where: { codigo: item.codigo! } })
+            if (existenteProd) {
+              throw new Error(`Ya existe un producto/servicio con el código "${item.codigo}"`)
+            }
+            await tx.productoServicio.create({
+              data: {
+                codigo: item.codigo!,
+                nombre: item.nombre!,
+                tipo: 'PRODUCTO',
+                precio: item.precioVenta,
+                isv: item.isv ?? 15,
+                inventarioId: nuevo.id,
+              },
+            })
+          }
         }
 
         // Sumar al stock y actualizar el último precio de compra

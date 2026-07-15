@@ -26,6 +26,9 @@ interface Linea {
   cantidad: number
   costoUnitario: number
   esNuevo: boolean
+  // Solo producto nuevo: si se define, se crea también en el catálogo facturable
+  precioVenta?: number
+  isv?: number
 }
 
 const CATEGORIAS_INVENTARIO = [
@@ -70,6 +73,8 @@ export default function NuevaCompraPage() {
     unidadMedida: 'UNIDAD',
     cantidad: '',
     costoUnitario: '',
+    precioVenta: '',
+    isv: '15',
   })
   // Búsqueda dinámica de producto existente
   const [busquedaProd, setBusquedaProd] = useState('')
@@ -89,7 +94,7 @@ export default function NuevaCompraPage() {
   }, [])
 
   const resetLinea = () => {
-    setLinea({ inventarioId: '', codigo: '', nombre: '', categoria: 'MATERIAL_DENTAL', unidadMedida: 'UNIDAD', cantidad: '', costoUnitario: '' })
+    setLinea({ inventarioId: '', codigo: '', nombre: '', categoria: 'MATERIAL_DENTAL', unidadMedida: 'UNIDAD', cantidad: '', costoUnitario: '', precioVenta: '', isv: '15' })
     setBusquedaProd('')
     setMostrarSugerencias(false)
   }
@@ -107,6 +112,12 @@ export default function NuevaCompraPage() {
         toast.error('Completa código, nombre, categoría y unidad del producto nuevo')
         return
       }
+      const precioVenta = linea.precioVenta.trim() !== '' ? parseFloat(linea.precioVenta) : undefined
+      if (precioVenta !== undefined && (isNaN(precioVenta) || precioVenta < 0)) {
+        toast.error('Precio de venta inválido')
+        return
+      }
+      const isv = linea.isv.trim() !== '' ? parseFloat(linea.isv) : undefined
       setLineas([
         ...lineas,
         {
@@ -117,6 +128,8 @@ export default function NuevaCompraPage() {
           unidadMedida: linea.unidadMedida,
           cantidad,
           costoUnitario,
+          precioVenta,
+          isv: precioVenta !== undefined ? (isv ?? 15) : undefined,
         },
       ])
     } else {
@@ -169,6 +182,7 @@ export default function NuevaCompraPage() {
               unidadMedida: l.unidadMedida,
               cantidad: l.cantidad,
               costoUnitario: l.costoUnitario,
+              ...(l.precioVenta != null && { precioVenta: l.precioVenta, isv: l.isv ?? 15 }),
             }
           : {
               inventarioId: l.inventarioId,
@@ -345,6 +359,7 @@ export default function NuevaCompraPage() {
                 )}
               </div>
             ) : (
+              <>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Código</label>
@@ -389,6 +404,35 @@ export default function NuevaCompraPage() {
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Precio de venta (L.)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={linea.precioVenta}
+                    onChange={(e) => setLinea({ ...linea, precioVenta: e.target.value })}
+                    placeholder="Opcional — para venderlo/facturarlo"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">ISV (%)</label>
+                  <select
+                    value={linea.isv}
+                    onChange={(e) => setLinea({ ...linea, isv: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="15">15% (gravado)</option>
+                    <option value="18">18% (gravado)</option>
+                    <option value="0">0% (exento)</option>
+                  </select>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mb-4">
+                Si indicás un precio de venta, el producto se agrega también al catálogo de <strong>Productos/Servicios</strong> y queda facturable en todo el sistema. Si lo dejás vacío, solo ingresa al inventario.
+              </p>
+              </>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
@@ -449,6 +493,7 @@ export default function NuevaCompraPage() {
                       <td className="px-4 py-3 text-sm text-gray-900">
                         {l.nombre}
                         {l.esNuevo && <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">nuevo</span>}
+                        {l.esNuevo && l.precioVenta != null && <span className="ml-1 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">facturable</span>}
                       </td>
                       <td className="px-4 py-3 text-sm text-center text-gray-700">{l.cantidad} {l.unidadMedida}</td>
                       <td className="px-4 py-3 text-sm text-right text-gray-700">L. {l.costoUnitario.toFixed(2)}</td>
