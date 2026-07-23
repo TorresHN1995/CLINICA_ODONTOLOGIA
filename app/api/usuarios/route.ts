@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { PRESETS_POR_ROL, normalizarPermisos } from '@/lib/modulos'
 
 // GET - Obtener usuarios
 export async function GET(request: NextRequest) {
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
         apellido: true,
         telefono: true,
         rol: true,
+        permisos: true,
         activo: true,
         createdAt: true,
       },
@@ -54,7 +56,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password, nombre, apellido, telefono, rol, username } = body
+    const { email, password, nombre, apellido, telefono, rol, username, permisos } = body
+
+    // Permisos por módulo: se validan contra el catálogo para no guardar keys
+    // inventadas. El ADMINISTRADOR siempre tiene todo (ver permisosEfectivos),
+    // y si no vienen permisos se aplica el preset del rol.
+    const permisosGuardar = Array.isArray(permisos)
+      ? normalizarPermisos(permisos)
+      : PRESETS_POR_ROL[rol] || []
 
     // Verificar si el email ya existe
     const existenteEmail = await prisma.usuario.findUnique({
@@ -117,6 +126,7 @@ export async function POST(request: NextRequest) {
         apellido,
         telefono: telefono || null,
         rol,
+        permisos: JSON.stringify(permisosGuardar),
       },
       select: {
         id: true,
@@ -125,6 +135,7 @@ export async function POST(request: NextRequest) {
         apellido: true,
         telefono: true,
         rol: true,
+        permisos: true,
         activo: true,
         createdAt: true,
       },

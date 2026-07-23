@@ -20,6 +20,9 @@ model Usuario {
   apellido  String
   telefono  String?
   rol       Rol      @default(RECEPCION)
+  // JSON con las keys de los módulos a los que tiene acceso (ver lib/modulos.ts).
+  // NULL = nunca se configuró: se aplica el preset del rol.
+  permisos  String?  @db.Text
   activo    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

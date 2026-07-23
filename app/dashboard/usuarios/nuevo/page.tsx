@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
+import SelectorPermisos from '@/components/usuarios/SelectorPermisos'
+import { PRESETS_POR_ROL, TODAS_LAS_KEYS } from '@/lib/modulos'
 
 export default function NuevoUsuarioPage() {
   const router = useRouter()
@@ -17,19 +19,32 @@ export default function NuevoUsuarioPage() {
     telefono: '',
     rol: 'RECEPCION',
   })
+  const [permisos, setPermisos] = useState<string[]>(PRESETS_POR_ROL.RECEPCION)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
+  // Cambiar el rol reajusta los permisos a su preset; desde ahí se afinan a mano.
+  const handleRolChange = (rol: string) => {
+    setFormData(prev => ({ ...prev, rol }))
+    setPermisos(rol === 'ADMINISTRADOR' ? TODAS_LAS_KEYS : PRESETS_POR_ROL[rol] || [])
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (formData.rol !== 'ADMINISTRADOR' && permisos.length === 0) {
+      toast.error('Selecciona al menos un módulo para este usuario')
+      return
+    }
+
     try {
       setLoading(true)
       const response = await fetch('/api/usuarios', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, permisos }),
       })
       const data = await response.json()
       if (response.ok) {
@@ -57,7 +72,7 @@ export default function NuevoUsuarioPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
+      <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
         <div className="card">
           <h2 className="text-xl font-bold text-foreground mb-6">Información del Usuario</h2>
           <div className="space-y-4">
@@ -85,13 +100,27 @@ export default function NuevoUsuarioPage() {
             </div>
             <div>
               <label className="label">Rol *</label>
-              <select name="rol" className="input-field" value={formData.rol} onChange={handleChange}>
+              <select
+                name="rol"
+                className="input-field"
+                value={formData.rol}
+                onChange={(e) => handleRolChange(e.target.value)}
+              >
                 <option value="ADMINISTRADOR">Administrador</option>
                 <option value="ODONTOLOGO">Odontólogo</option>
+                <option value="ASISTENTE">Asistente</option>
                 <option value="RECEPCION">Recepción</option>
               </select>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Al cambiar el rol se marcan sus módulos habituales; ajústalos abajo si hace falta.
+              </p>
             </div>
           </div>
+        </div>
+
+        {/* Permisos por módulo */}
+        <div className="card">
+          <SelectorPermisos rol={formData.rol} value={permisos} onChange={setPermisos} />
         </div>
 
         <div className="flex justify-end space-x-4">

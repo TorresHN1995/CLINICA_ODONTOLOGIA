@@ -6,6 +6,13 @@ import { toast } from 'react-hot-toast'
 import { Plus, Edit, Trash2, Eye, Mail, Phone, Shield, X, Loader2, Lock } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import SelectorPermisos from '@/components/usuarios/SelectorPermisos'
+import {
+  PRESETS_POR_ROL,
+  TODAS_LAS_KEYS,
+  parsePermisos,
+  permisosEfectivos,
+} from '@/lib/modulos'
 
 interface Usuario {
   id: string
@@ -14,6 +21,7 @@ interface Usuario {
   apellido: string
   telefono: string | null
   rol: string
+  permisos: string | null
   activo: boolean
   createdAt: Date
 }
@@ -32,6 +40,27 @@ export default function UsuariosPage() {
     rol: '',
     password: '',
   })
+  const [editPermisos, setEditPermisos] = useState<string[]>([])
+
+  // Abre el modal con los permisos guardados del usuario; si nunca se le
+  // configuraron, muestra el preset de su rol, que es su acceso real hoy.
+  const abrirEdicion = (usuario: Usuario) => {
+    setEditingUser(usuario)
+    setEditForm({
+      nombre: usuario.nombre,
+      apellido: usuario.apellido,
+      telefono: usuario.telefono || '',
+      rol: usuario.rol,
+      password: '',
+    })
+    setEditPermisos(permisosEfectivos(usuario.rol, parsePermisos(usuario.permisos)))
+    setShowEditModal(true)
+  }
+
+  const cambiarRolEnEdicion = (rol: string) => {
+    setEditForm((prev) => ({ ...prev, rol }))
+    setEditPermisos(rol === 'ADMINISTRADOR' ? TODAS_LAS_KEYS : PRESETS_POR_ROL[rol] || [])
+  }
 
   useEffect(() => {
     fetchUsuarios()
@@ -96,6 +125,12 @@ export default function UsuariosPage() {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingUser) return
+
+    if (editForm.rol !== 'ADMINISTRADOR' && editPermisos.length === 0) {
+      toast.error('Selecciona al menos un módulo para este usuario')
+      return
+    }
+
     try {
       setSaving(true)
       const payload: any = {
@@ -103,6 +138,7 @@ export default function UsuariosPage() {
         apellido: editForm.apellido,
         telefono: editForm.telefono || null,
         rol: editForm.rol,
+        permisos: editForm.rol === 'ADMINISTRADOR' ? TODAS_LAS_KEYS : editPermisos,
       }
       if (editForm.password) {
         payload.password = editForm.password
@@ -267,6 +303,9 @@ export default function UsuariosPage() {
                     Rol
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Accesos
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -312,6 +351,20 @@ export default function UsuariosPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      {usuario.rol === 'ADMINISTRADOR' ? (
+                        <span className="text-sm text-muted-foreground">Todos los módulos</span>
+                      ) : (
+                        <button
+                          onClick={() => abrirEdicion(usuario)}
+                          className="text-sm text-foreground hover:text-primary-600 hover:underline"
+                          title="Editar permisos de acceso"
+                        >
+                          {permisosEfectivos(usuario.rol, parsePermisos(usuario.permisos)).length} de{' '}
+                          {TODAS_LAS_KEYS.length} módulos
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <button
                         onClick={() => toggleActivo(usuario.id, usuario.activo)}
                         className={`inline-block px-3 py-1 text-xs font-semibold rounded-full transition-colors ${usuario.activo
@@ -328,34 +381,14 @@ export default function UsuariosPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
                         <button
-                          onClick={() => {
-                            setEditingUser(usuario)
-                            setEditForm({
-                              nombre: usuario.nombre,
-                              apellido: usuario.apellido,
-                              telefono: usuario.telefono || '',
-                              rol: usuario.rol,
-                              password: '',
-                            })
-                            setShowEditModal(true)
-                          }}
+                          onClick={() => abrirEdicion(usuario)}
                           className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-500/10 rounded-lg transition-colors"
                           title="Ver detalles"
                         >
                           <Eye className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => {
-                            setEditingUser(usuario)
-                            setEditForm({
-                              nombre: usuario.nombre,
-                              apellido: usuario.apellido,
-                              telefono: usuario.telefono || '',
-                              rol: usuario.rol,
-                              password: '',
-                            })
-                            setShowEditModal(true)
-                          }}
+                          onClick={() => abrirEdicion(usuario)}
                           className="text-green-600 hover:text-green-900 p-2 hover:bg-green-500/10 rounded-lg transition-colors"
                           title="Editar"
                         >
@@ -381,7 +414,7 @@ export default function UsuariosPage() {
       {/* Modal Editar Usuario */}
       {showEditModal && editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-xl shadow-xl max-w-lg w-full">
+          <div className="bg-card rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-xl font-bold text-foreground">Editar Usuario</h2>
               <button onClick={() => setShowEditModal(false)} className="p-1 hover:bg-muted rounded-full">
@@ -409,11 +442,15 @@ export default function UsuariosPage() {
               <div>
                 <label className="label">Rol</label>
                 <select className="input-field" value={editForm.rol}
-                  onChange={(e) => setEditForm({ ...editForm, rol: e.target.value })}>
+                  onChange={(e) => cambiarRolEnEdicion(e.target.value)}>
                   <option value="ADMINISTRADOR">Administrador</option>
                   <option value="ODONTOLOGO">Odontólogo</option>
+                  <option value="ASISTENTE">Asistente</option>
                   <option value="RECEPCION">Recepción</option>
                 </select>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Cambiar el rol vuelve a marcar sus módulos habituales.
+                </p>
               </div>
               <div>
                 <label className="label flex items-center space-x-2">
@@ -423,6 +460,15 @@ export default function UsuariosPage() {
                 <input type="password" className="input-field" placeholder="••••••••" value={editForm.password}
                   onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} />
               </div>
+              <div className="border-t border-border pt-4">
+                <SelectorPermisos
+                  rol={editForm.rol}
+                  value={editPermisos}
+                  onChange={setEditPermisos}
+                  compacto
+                />
+              </div>
+
               <div className="flex justify-end space-x-3 pt-4">
                 <button type="button" onClick={() => setShowEditModal(false)} className="btn-secondary">Cancelar</button>
                 <button type="submit" disabled={saving} className="btn-primary flex items-center space-x-2">

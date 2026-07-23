@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { normalizarPermisos } from '@/lib/modulos'
 
 // GET - Obtener usuario por ID
 export async function GET(
@@ -25,6 +26,7 @@ export async function GET(
         apellido: true,
         telefono: true,
         rol: true,
+        permisos: true,
         activo: true,
         createdAt: true,
       },
@@ -53,7 +55,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { activo, nombre, apellido, telefono, rol, password } = body
+    const { activo, nombre, apellido, telefono, rol, password, permisos } = body
 
     const updateData: any = {}
     if (activo !== undefined) updateData.activo = activo
@@ -61,6 +63,9 @@ export async function PUT(
     if (apellido) updateData.apellido = apellido
     if (telefono !== undefined) updateData.telefono = telefono
     if (rol) updateData.rol = rol
+    if (Array.isArray(permisos)) {
+      updateData.permisos = JSON.stringify(normalizarPermisos(permisos))
+    }
     if (password) {
       updateData.password = await bcrypt.hash(password, 10)
     }
@@ -75,6 +80,7 @@ export async function PUT(
         apellido: true,
         telefono: true,
         rol: true,
+        permisos: true,
         activo: true,
         createdAt: true,
       },

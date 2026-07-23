@@ -7,6 +7,8 @@ declare module 'next-auth' {
       email: string
       name: string
       role: string
+      /** Keys de los módulos a los que tiene acceso (ver lib/modulos.ts). */
+      permisos: string[]
     }
   }
 
@@ -15,6 +17,7 @@ declare module 'next-auth' {
     email: string
     name: string
     role: string
+    permisos?: string[]
   }
 }
 
@@ -22,6 +25,8 @@ declare module 'next-auth/jwt' {
   interface JWT {
     id: string
     role: string
+    permisos?: string[]
+    /** Momento del último refresco de permisos desde la BD. */
+    permisosAt?: number
   }
 }
-

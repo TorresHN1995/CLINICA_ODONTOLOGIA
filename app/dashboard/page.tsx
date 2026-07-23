@@ -11,6 +11,7 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react'
+import { moduloPorKey } from '@/lib/modulos'
 import { format, startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -108,8 +109,17 @@ async function getDashboardStats() {
   }
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: { sinAcceso?: string }
+}) {
   const stats = await getDashboardStats()
+  // middleware.ts redirige aquí con ?sinAcceso=<modulo> cuando alguien abre por
+  // URL un módulo que no tiene habilitado.
+  const moduloBloqueado = searchParams?.sinAcceso
+    ? moduloPorKey(searchParams.sinAcceso)
+    : null
 
   const citasCompletadas = stats.citasMes.find(c => c.estado === 'COMPLETADA')?._count || 0
   const citasCanceladas = stats.citasMes.find(c => c.estado === 'CANCELADA')?._count || 0
@@ -117,6 +127,17 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {searchParams?.sinAcceso && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+          <p className="text-sm text-foreground">
+            No tienes acceso al módulo{' '}
+            <strong>{moduloBloqueado?.label || searchParams.sinAcceso}</strong>. Pide a un
+            administrador que te lo habilite en Usuarios &rarr; Permisos de acceso.
+          </p>
+        </div>
+      )}
+
       {/* Encabezado */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>

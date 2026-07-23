@@ -30,40 +30,42 @@ import {
   ShoppingCart
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
+import { permisosEfectivos } from '@/lib/modulos'
 
 interface MenuItem {
   name: string
   href: string
   icon: any
-  roles?: string[]
+  /** Key del módulo en lib/modulos.ts. Sin key, el ítem se ve siempre. */
+  modulo?: string
   children?: { name: string; href: string; icon: any }[]
 }
 
 const menuItems: MenuItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Pacientes', href: '/dashboard/pacientes', icon: Users },
-  { name: 'Odontólogos', href: '/dashboard/odontologos', icon: Stethoscope },
-  { name: 'Agenda y Citas', href: '/dashboard/citas', icon: Calendar },
-  { name: 'Expedientes', href: '/dashboard/expedientes', icon: FileText },
-  { name: 'Tratamientos', href: '/dashboard/tratamientos', icon: Heart },
-  { name: 'Cotizaciones', href: '/dashboard/presupuestos', icon: ClipboardList },
-  { name: 'Documentos', href: '/dashboard/documentos', icon: FilePlus },
-  { name: 'Facturación', href: '/dashboard/facturacion', icon: CreditCard },
-  { name: 'Cuentas por Cobrar', href: '/dashboard/cuentas-por-cobrar', icon: Wallet },
-  { name: 'Productos/Servicios', href: '/dashboard/productos', icon: ShoppingBag },
-  { name: 'Contabilidad', href: '/dashboard/contabilidad', icon: Calculator },
-  { name: 'Cierre de Caja', href: '/dashboard/cierre-caja', icon: Banknote },
-  { name: 'Inventario', href: '/dashboard/inventario', icon: Package },
-  { name: 'Compras', href: '/dashboard/compras', icon: ShoppingCart },
-  { name: 'Reportes', href: '/dashboard/reportes', icon: BarChart3 },
-  { name: 'Usuarios', href: '/dashboard/usuarios', icon: UserCog, roles: ['ADMINISTRADOR'] },
-  { name: 'Auditoría', href: '/dashboard/auditoria', icon: ScrollText, roles: ['ADMINISTRADOR'] },
-  { name: 'Administración', href: '/dashboard/admin', icon: Lock, roles: ['ADMINISTRADOR'] },
+  { name: 'Pacientes', href: '/dashboard/pacientes', icon: Users, modulo: 'pacientes' },
+  { name: 'Odontólogos', href: '/dashboard/odontologos', icon: Stethoscope, modulo: 'odontologos' },
+  { name: 'Agenda y Citas', href: '/dashboard/citas', icon: Calendar, modulo: 'citas' },
+  { name: 'Expedientes', href: '/dashboard/expedientes', icon: FileText, modulo: 'expedientes' },
+  { name: 'Tratamientos', href: '/dashboard/tratamientos', icon: Heart, modulo: 'tratamientos' },
+  { name: 'Cotizaciones', href: '/dashboard/presupuestos', icon: ClipboardList, modulo: 'presupuestos' },
+  { name: 'Documentos', href: '/dashboard/documentos', icon: FilePlus, modulo: 'documentos' },
+  { name: 'Facturación', href: '/dashboard/facturacion', icon: CreditCard, modulo: 'facturacion' },
+  { name: 'Cuentas por Cobrar', href: '/dashboard/cuentas-por-cobrar', icon: Wallet, modulo: 'cuentas-por-cobrar' },
+  { name: 'Productos/Servicios', href: '/dashboard/productos', icon: ShoppingBag, modulo: 'productos' },
+  { name: 'Contabilidad', href: '/dashboard/contabilidad', icon: Calculator, modulo: 'contabilidad' },
+  { name: 'Cierre de Caja', href: '/dashboard/cierre-caja', icon: Banknote, modulo: 'cierre-caja' },
+  { name: 'Inventario', href: '/dashboard/inventario', icon: Package, modulo: 'inventario' },
+  { name: 'Compras', href: '/dashboard/compras', icon: ShoppingCart, modulo: 'compras' },
+  { name: 'Reportes', href: '/dashboard/reportes', icon: BarChart3, modulo: 'reportes' },
+  { name: 'Usuarios', href: '/dashboard/usuarios', icon: UserCog, modulo: 'usuarios' },
+  { name: 'Auditoría', href: '/dashboard/auditoria', icon: ScrollText, modulo: 'auditoria' },
+  { name: 'Administración', href: '/dashboard/admin', icon: Lock, modulo: 'admin' },
   {
     name: 'Configuración',
     href: '/dashboard/configuracion',
     icon: Settings,
-    roles: ['ADMINISTRADOR'],
+    modulo: 'configuracion',
     children: [
       { name: 'Empresa', href: '/dashboard/configuracion', icon: Settings },
       { name: 'Facturación SAR', href: '/dashboard/configuracion/facturacion', icon: ShieldCheck },
@@ -72,13 +74,14 @@ const menuItems: MenuItem[] = [
   },
 ]
 
-export default function Sidebar({ userRole }: { userRole: string }) {
+export default function Sidebar({ userRole, permisos }: { userRole: string; permisos?: string[] }) {
   const pathname = usePathname()
   const [expanded, setExpanded] = useState<string[]>([])
 
-  const filteredItems = menuItems.filter(item =>
-    !item.roles || item.roles.includes(userRole)
-  )
+  // El menú muestra solo los módulos habilitados para el usuario; el bloqueo
+  // real de la URL lo hace middleware.ts.
+  const habilitados = permisosEfectivos(userRole, permisos)
+  const filteredItems = menuItems.filter(item => !item.modulo || habilitados.includes(item.modulo))
 
   const toggleSubmenu = (name: string) => {
     setExpanded(prev =>

@@ -20,7 +20,7 @@ export default async function DashboardLayout({
   return (
     <ConfiguracionProvider>
       <div className="min-h-screen bg-background">
-        <Sidebar userRole={session.user.role} />
+        <Sidebar userRole={session.user.role} permisos={session.user.permisos} />
         <Header />
         <main className="ml-64 pt-16">
           <div className="p-6">
