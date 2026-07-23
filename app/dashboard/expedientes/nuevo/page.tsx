@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { ArrowLeft, Save, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Wand2 } from 'lucide-react'
 import Link from 'next/link'
 import Odontograma from '@/components/odontograma/Odontograma'
+import { Combobox } from '@/components/ui/Combobox'
+import { OdontogramaData, generarDiagnostico } from '@/lib/odontograma'
 
 interface Paciente {
   id: string
@@ -18,7 +20,11 @@ export default function NuevoExpedientePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [pacientes, setPacientes] = useState<Paciente[]>([])
-  const [odontogramaData, setOdontogramaData] = useState({})
+  const [odontogramaData, setOdontogramaData] = useState<OdontogramaData>({})
+  // Mientras el odontólogo no escriba en el diagnóstico, el texto se mantiene
+  // sincronizado con el odontograma. En cuanto lo edita, su redacción manda.
+  const [diagnosticoEditado, setDiagnosticoEditado] = useState(false)
+  const diagnosticoRef = useRef<HTMLTextAreaElement>(null)
   const [formData, setFormData] = useState({
     pacienteId: '',
     diagnostico: '',
@@ -47,8 +53,32 @@ export default function NuevoExpedientePage() {
     }
   }
 
+  const handleOdontogramaChange = (data: OdontogramaData) => {
+    setOdontogramaData(data)
+    if (!diagnosticoEditado) {
+      setFormData((prev) => ({ ...prev, diagnostico: generarDiagnostico(data) }))
+    }
+  }
+
+  const redactarDesdeOdontograma = () => {
+    const texto = generarDiagnostico(odontogramaData)
+    if (!texto) {
+      toast('Marca primero el estado de alguna pieza en el odontograma', { icon: '🦷' })
+      return
+    }
+    setFormData((prev) => ({ ...prev, diagnostico: texto }))
+    setDiagnosticoEditado(false)
+    diagnosticoRef.current?.focus()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!formData.pacienteId) {
+      toast.error('Selecciona un paciente')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -61,11 +91,12 @@ export default function NuevoExpedientePage() {
         }),
       })
 
+      const data = await response.json()
+
       if (response.ok) {
         toast.success('Expediente creado exitosamente')
-        router.push('/dashboard/expedientes')
+        router.push(`/dashboard/expedientes/${data.id}`)
       } else {
-        const data = await response.json()
         toast.error(data.error || 'Error al crear expediente')
       }
     } catch (error) {
@@ -97,30 +128,24 @@ export default function NuevoExpedientePage() {
           <h2 className="text-xl font-bold text-foreground mb-6">Seleccionar Paciente</h2>
           <div>
             <label className="label">Paciente *</label>
-            <select
-              required
-              className="input-field"
+            <Combobox
+              options={pacientes.map((p) => ({
+                id: p.id,
+                label: `${p.nombre} ${p.apellido} - ${p.identificacion}`,
+              }))}
               value={formData.pacienteId}
-              onChange={(e) => setFormData({ ...formData, pacienteId: e.target.value })}
-            >
-              <option value="">Seleccione un paciente</option>
-              {pacientes.map((paciente) => (
-                <option key={paciente.id} value={paciente.id}>
-                  {paciente.nombre} {paciente.apellido} - {paciente.identificacion}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setFormData({ ...formData, pacienteId: value })}
+              placeholder="Seleccione un paciente"
+              searchPlaceholder="Buscar por nombre o identificación..."
+              emptyMessage="No se encontraron pacientes."
+            />
           </div>
         </div>
 
         {/* Odontograma */}
         <div className="card">
           <h2 className="text-xl font-bold text-foreground mb-6">Odontograma</h2>
-          <Odontograma
-            data={odontogramaData}
-            editable={true}
-            onChange={setOdontogramaData}
-          />
+          <Odontograma data={odontogramaData} editable={true} onChange={handleOdontogramaChange} />
         </div>
 
         {/* Diagnóstico y Tratamiento */}
@@ -128,15 +153,34 @@ export default function NuevoExpedientePage() {
           <h2 className="text-xl font-bold text-foreground mb-6">Diagnóstico y Tratamiento</h2>
           <div className="space-y-6">
             <div>
-              <label className="label">Diagnóstico *</label>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                <label className="label mb-0">Diagnóstico *</label>
+                <button
+                  type="button"
+                  onClick={redactarDesdeOdontograma}
+                  className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:underline"
+                >
+                  <Wand2 className="w-4 h-4" />
+                  Redactar desde el odontograma
+                </button>
+              </div>
               <textarea
+                ref={diagnosticoRef}
                 required
-                rows={4}
+                rows={6}
                 className="input-field"
-                placeholder="Describa el diagnóstico del paciente..."
+                placeholder="Marca las piezas en el odontograma y el diagnóstico se redacta solo. También puedes escribirlo aquí."
                 value={formData.diagnostico}
-                onChange={(e) => setFormData({ ...formData, diagnostico: e.target.value })}
+                onChange={(e) => {
+                  setDiagnosticoEditado(true)
+                  setFormData({ ...formData, diagnostico: e.target.value })
+                }}
               />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {diagnosticoEditado
+                  ? 'Estás editando el texto: el odontograma ya no lo sobrescribe. Usa «Redactar desde el odontograma» para volver a generarlo.'
+                  : 'Se actualiza automáticamente con cada pieza que marcas. Puedes editarlo cuando quieras.'}
+              </p>
             </div>
 
             <div>
@@ -170,6 +214,10 @@ export default function NuevoExpedientePage() {
                 value={formData.proximaCita}
                 onChange={(e) => setFormData({ ...formData, proximaCita: e.target.value })}
               />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Es solo un recordatorio. Para reservar el cupo en la agenda, abre el expediente y usa
+                «Programar próxima cita».
+              </p>
             </div>
           </div>
         </div>
@@ -201,4 +249,3 @@ export default function NuevoExpedientePage() {
     </div>
   )
 }
-

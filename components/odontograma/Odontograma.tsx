@@ -1,203 +1,224 @@
 'use client'
 
-import { useState } from 'react'
-
-interface DienteEstado {
-  numero: number
-  estado: 'sano' | 'caries' | 'obturado' | 'corona' | 'extraccion' | 'ausente' | 'endodoncia' | 'fractura'
-  notas: string
-}
+import { useEffect, useMemo, useState } from 'react'
+import { Eraser, Info } from 'lucide-react'
+import Diente, { OdontogramaDefs } from './Diente'
+import MapaCaras from './MapaCaras'
+import {
+  ARCADA_INFERIOR,
+  ARCADA_SUPERIOR,
+  CaraDiente,
+  DienteEstado,
+  ESTADOS,
+  EstadoDiente,
+  ORDEN_ESTADOS,
+  OdontogramaData,
+  nombreDiente,
+  piezasAfectadas,
+} from '@/lib/odontograma'
 
 interface OdontogramaProps {
-  data?: Record<number, DienteEstado>
+  data?: OdontogramaData
   editable?: boolean
-  onChange?: (data: Record<number, DienteEstado>) => void
+  onChange?: (data: OdontogramaData) => void
 }
 
-const estadosColores = {
-  sano: '#ffffff',
-  caries: '#ef4444',
-  obturado: '#3b82f6',
-  corona: '#f59e0b',
-  extraccion: '#000000',
-  ausente: '#9ca3af',
-  endodoncia: '#8b5cf6',
-  fractura: '#ec4899',
-}
+/** Separación visual entre hemiarcadas (línea media). */
+const MITAD = 8
 
-const estadosLabels = {
-  sano: 'Sano',
-  caries: 'Caries',
-  obturado: 'Obturado',
-  corona: 'Corona',
-  extraccion: 'Extracción',
-  ausente: 'Ausente',
-  endodoncia: 'Endodoncia',
-  fractura: 'Fractura',
+/** Curvatura de la arcada: las piezas posteriores se separan del plano oclusal. */
+function desplazamientoArco(indice: number) {
+  const t = (indice - (ARCADA_SUPERIOR.length - 1) / 2) / ((ARCADA_SUPERIOR.length - 1) / 2)
+  return Math.round(16 * t * t)
 }
 
 export default function Odontograma({ data = {}, editable = true, onChange }: OdontogramaProps) {
-  const [selectedDiente, setSelectedDiente] = useState<number | null>(null)
-  const [odontogramaData, setOdontogramaData] = useState<Record<number, DienteEstado>>(data)
+  const [seleccionado, setSeleccionado] = useState<number | null>(null)
+  const [registro, setRegistro] = useState<OdontogramaData>(data)
 
-  // Numeración dental FDI (32 dientes permanentes)
-  const dientesSuperiores = {
-    derecha: [18, 17, 16, 15, 14, 13, 12, 11],
-    izquierda: [21, 22, 23, 24, 25, 26, 27, 28],
-  }
-  
-  const dientesInferiores = {
-    derecha: [48, 47, 46, 45, 44, 43, 42, 41],
-    izquierda: [31, 32, 33, 34, 35, 36, 37, 38],
-  }
+  // El expediente carga de forma asíncrona: hay que re-sincronizar cuando llega.
+  // Se compara por contenido y no por identidad para no entrar en bucle cuando el
+  // padre reconstruye el objeto en cada render.
+  const dataKey = JSON.stringify(data || {})
+  useEffect(() => {
+    setRegistro(JSON.parse(dataKey))
+  }, [dataKey])
 
-  const handleDienteClick = (numero: number) => {
-    if (!editable) return
-    setSelectedDiente(numero)
+  const actualizar = (siguiente: OdontogramaData) => {
+    setRegistro(siguiente)
+    onChange?.(siguiente)
   }
 
-  const handleEstadoChange = (estado: DienteEstado['estado']) => {
-    if (!editable || selectedDiente === null) return
-    
-    const nuevoEstado = {
-      ...odontogramaData,
-      [selectedDiente]: {
-        numero: selectedDiente,
-        estado,
-        notas: odontogramaData[selectedDiente]?.notas || '',
+  const actual: DienteEstado | undefined = seleccionado !== null ? registro[seleccionado] : undefined
+
+  const setDiente = (cambios: Partial<DienteEstado>) => {
+    if (!editable || seleccionado === null) return
+    const previo = registro[seleccionado]
+    actualizar({
+      ...registro,
+      [seleccionado]: {
+        numero: seleccionado,
+        estado: previo?.estado || 'sano',
+        caras: previo?.caras || [],
+        notas: previo?.notas || '',
+        ...cambios,
       },
-    }
-    
-    setOdontogramaData(nuevoEstado)
-    onChange?.(nuevoEstado)
+    })
   }
 
-  const renderDiente = (numero: number) => {
-    const estado = odontogramaData[numero]?.estado || 'sano'
-    const color = estadosColores[estado]
-    const isSelected = selectedDiente === numero
+  const limpiarDiente = () => {
+    if (!editable || seleccionado === null) return
+    const siguiente = { ...registro }
+    delete siguiente[seleccionado]
+    actualizar(siguiente)
+  }
 
-    return (
-      <div
-        key={numero}
-        onClick={() => handleDienteClick(numero)}
-        className={`relative cursor-pointer transition-all ${
-          isSelected ? 'scale-110 z-10' : ''
-        }`}
-        title={`Diente ${numero} - ${estadosLabels[estado]}`}
-      >
-        <svg width="40" height="50" viewBox="0 0 40 50" className="drop-shadow-md">
-          {/* Diente */}
-          <path
-            d="M20 5 C15 5, 10 8, 10 15 L10 35 C10 40, 15 45, 20 45 C25 45, 30 40, 30 35 L30 15 C30 8, 25 5, 20 5 Z"
-            fill={color}
-            stroke={isSelected ? '#3b82f6' : '#666'}
-            strokeWidth={isSelected ? '3' : '1.5'}
+  const toggleCara = (cara: CaraDiente) => {
+    const caras = actual?.caras || []
+    setDiente({ caras: caras.includes(cara) ? caras.filter((c) => c !== cara) : [...caras, cara] })
+  }
+
+  const afectadas = useMemo(() => piezasAfectadas(registro), [registro])
+
+  const renderArcada = (piezas: number[], superior: boolean) => (
+    // items-start: todas las piezas miden lo mismo, así el número queda alineado
+    // aunque alguna muestre la línea extra de caras marcadas.
+    <div className="flex items-start justify-center">
+      {piezas.map((numero, i) => (
+        <div
+          key={numero}
+          style={{
+            transform: `translateY(${superior ? -desplazamientoArco(i) : desplazamientoArco(i)}px)`,
+            marginLeft: i === piezas.length / 2 ? MITAD : undefined,
+          }}
+        >
+          <Diente
+            numero={numero}
+            registro={registro[numero]}
+            seleccionado={seleccionado === numero}
+            editable={editable}
+            onSelect={(n) => setSeleccionado(seleccionado === n ? null : n)}
           />
-          {/* Marca de X para extracción */}
-          {estado === 'extraccion' && (
-            <>
-              <line x1="10" y1="10" x2="30" y2="40" stroke="#fff" strokeWidth="2" />
-              <line x1="30" y1="10" x2="10" y2="40" stroke="#fff" strokeWidth="2" />
-            </>
-          )}
-          {/* Marca de - para ausente */}
-          {estado === 'ausente' && (
-            <line x1="10" y1="25" x2="30" y2="25" stroke="#fff" strokeWidth="2" />
-          )}
-        </svg>
-        <div className="text-center text-xs font-bold text-muted-foreground mt-1">
-          {numero}
         </div>
-      </div>
-    )
-  }
+      ))}
+    </div>
+  )
 
   return (
-    <div className="space-y-6">
-      {/* Odontograma */}
-      <div className="bg-muted p-8 rounded-xl border-2 border-border">
-        {/* Dientes superiores */}
-        <div className="mb-8">
-          <div className="flex justify-center space-x-2">
-            {/* Derecha superior */}
-            <div className="flex space-x-1">
-              {dientesSuperiores.derecha.map(renderDiente)}
-            </div>
-            <div className="w-4"></div>
-            {/* Izquierda superior */}
-            <div className="flex space-x-1">
-              {dientesSuperiores.izquierda.map(renderDiente)}
-            </div>
+    <div className="space-y-5">
+      <OdontogramaDefs />
+
+      {/* Arcadas */}
+      {/* py generoso: la curvatura de la arcada desplaza las piezas posteriores
+          hasta 16px y `overflow-x-auto` recortaría lo que se salga en vertical. */}
+      <div className="overflow-x-auto rounded-xl border border-border bg-muted/60 px-4 py-8 sm:px-6">
+        <div className="mx-auto min-w-[720px] max-w-4xl">
+          {/* Etiquetas de cuadrante */}
+          <div className="mb-1 flex justify-between px-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span>Cuadrante 1 · superior derecho</span>
+            <span>Cuadrante 2 · superior izquierdo</span>
           </div>
-        </div>
 
-        {/* Línea divisoria */}
-        <div className="border-t-2 border-border my-4"></div>
+          {renderArcada(ARCADA_SUPERIOR, true)}
 
-        {/* Dientes inferiores */}
-        <div className="mt-8">
-          <div className="flex justify-center space-x-2">
-            {/* Derecha inferior */}
-            <div className="flex space-x-1">
-              {dientesInferiores.derecha.map(renderDiente)}
-            </div>
-            <div className="w-4"></div>
-            {/* Izquierda inferior */}
-            <div className="flex space-x-1">
-              {dientesInferiores.izquierda.map(renderDiente)}
-            </div>
+          {/* Línea media / plano oclusal */}
+          <div className="relative my-3 h-px bg-gradient-to-r from-transparent via-border to-transparent">
+            <span className="absolute left-1/2 top-1/2 h-8 w-px -translate-x-1/2 -translate-y-1/2 bg-border" />
+          </div>
+
+          {renderArcada(ARCADA_INFERIOR, false)}
+
+          <div className="mt-1 flex justify-between px-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span>Cuadrante 4 · inferior derecho</span>
+            <span>Cuadrante 3 · inferior izquierdo</span>
           </div>
         </div>
       </div>
 
-      {/* Panel de control */}
-      {editable && selectedDiente && (
-        <div className="card animate-slide-in">
-          <h3 className="text-lg font-bold text-foreground mb-4">
-            Diente #{selectedDiente}
-          </h3>
-          
-          <div className="grid grid-cols-4 gap-3 mb-4">
-            {Object.entries(estadosLabels).map(([key, label]) => (
+      {/* Ayuda / resumen */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+        {editable && (
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <Info className="h-4 w-4" />
+            Haz clic en una pieza para registrar su estado.
+          </span>
+        )}
+        <span className="font-semibold text-foreground">
+          {afectadas.length === 0
+            ? 'Sin hallazgos registrados'
+            : `${afectadas.length} ${afectadas.length === 1 ? 'pieza con hallazgo' : 'piezas con hallazgos'}: ${afectadas
+                .map((d) => d.numero)
+                .join(', ')}`}
+        </span>
+      </div>
+
+      {/* Panel de la pieza seleccionada */}
+      {seleccionado !== null && (
+        <div className="card animate-slide-in space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-bold text-foreground">Pieza {seleccionado}</h3>
+              <p className="text-sm capitalize text-muted-foreground">{nombreDiente(seleccionado)}</p>
+            </div>
+            {editable && registro[seleccionado] && (
               <button
-                key={key}
-                onClick={() => handleEstadoChange(key as DienteEstado['estado'])}
-                className={`p-3 rounded-lg border-2 transition-all ${
-                  odontogramaData[selectedDiente]?.estado === key
-                    ? 'border-primary-600 bg-primary-50'
-                    : 'border-border hover:border-border'
-                }`}
+                type="button"
+                onClick={limpiarDiente}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
-                <div
-                  className="w-6 h-6 rounded mx-auto mb-2 border border-border"
-                  style={{ backgroundColor: estadosColores[key as DienteEstado['estado']] }}
-                ></div>
-                <div className="text-xs font-medium text-center">{label}</div>
+                <Eraser className="h-4 w-4" />
+                Quitar registro
               </button>
-            ))}
+            )}
           </div>
 
           <div>
-            <label className="label">Notas del Diente</label>
+            <label className="label">Estado</label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {ORDEN_ESTADOS.map((key) => {
+                const meta = ESTADOS[key]
+                const activo = (actual?.estado || 'sano') === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    disabled={!editable}
+                    onClick={() => setDiente({ estado: key as EstadoDiente })}
+                    className={[
+                      'flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-left transition-all',
+                      activo ? 'border-sky-500 bg-sky-500/10' : 'border-border hover:border-slate-500',
+                    ].join(' ')}
+                  >
+                    <span
+                      className="h-4 w-4 shrink-0 rounded-full border border-black/20"
+                      style={{ backgroundColor: meta.color }}
+                    />
+                    <span className="text-sm font-medium text-foreground">{meta.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {(actual?.estado || 'sano') !== 'sano' && (
+            <MapaCaras
+              numero={seleccionado}
+              caras={actual?.caras || []}
+              color={ESTADOS[actual?.estado || 'sano'].color}
+              editable={editable}
+              onToggle={toggleCara}
+            />
+          )}
+
+          <div>
+            <label className="label">Notas de la pieza</label>
             <textarea
               rows={2}
+              readOnly={!editable}
               className="input-field"
-              placeholder="Agregar notas sobre este diente..."
-              value={odontogramaData[selectedDiente]?.notas || ''}
-              onChange={(e) => {
-                const nuevoEstado = {
-                  ...odontogramaData,
-                  [selectedDiente]: {
-                    ...odontogramaData[selectedDiente],
-                    numero: selectedDiente,
-                    estado: odontogramaData[selectedDiente]?.estado || 'sano',
-                    notas: e.target.value,
-                  },
-                }
-                setOdontogramaData(nuevoEstado)
-                onChange?.(nuevoEstado)
-              }}
+              placeholder="Observaciones clínicas sobre esta pieza..."
+              value={actual?.notas || ''}
+              onChange={(e) => setDiente({ notas: e.target.value })}
             />
           </div>
         </div>
@@ -205,15 +226,15 @@ export default function Odontograma({ data = {}, editable = true, onChange }: Od
 
       {/* Leyenda */}
       <div className="card">
-        <h3 className="text-sm font-bold text-foreground mb-3">Leyenda</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {Object.entries(estadosLabels).map(([key, label]) => (
+        <h3 className="mb-3 text-sm font-bold text-foreground">Leyenda</h3>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {ORDEN_ESTADOS.map((key) => (
             <div key={key} className="flex items-center space-x-2">
               <div
-                className="w-4 h-4 rounded border border-border"
-                style={{ backgroundColor: estadosColores[key as DienteEstado['estado']] }}
-              ></div>
-              <span className="text-sm text-muted-foreground">{label}</span>
+                className="h-4 w-4 rounded border border-border"
+                style={{ backgroundColor: ESTADOS[key].color }}
+              />
+              <span className="text-sm text-muted-foreground">{ESTADOS[key].label}</span>
             </div>
           ))}
         </div>
@@ -221,4 +242,3 @@ export default function Odontograma({ data = {}, editable = true, onChange }: Od
     </div>
   )
 }
-
