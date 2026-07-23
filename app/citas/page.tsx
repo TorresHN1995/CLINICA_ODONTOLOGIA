@@ -11,6 +11,12 @@ import Link from 'next/link'
 interface Slot {
     hora: string
     disponible: boolean
+    profesionalesLibres?: number
+}
+
+interface OdontologoAsignado {
+    nombre: string
+    apellido: string
 }
 
 export default function BookingPage() {
@@ -22,6 +28,8 @@ export default function BookingPage() {
     const [motivo, setMotivo] = useState('')
     const [fecha, setFecha] = useState(format(new Date(), 'yyyy-MM-dd'))
     const [hora, setHora] = useState('')
+    // Profesional que el sistema asignó a la reserva; se muestra al confirmar.
+    const [odontologoAsignado, setOdontologoAsignado] = useState<OdontologoAsignado | null>(null)
     const [paciente, setPaciente] = useState({
         nombre: '',
         apellido: '',
@@ -119,11 +127,19 @@ export default function BookingPage() {
                 })
             })
 
+            const data = await res.json()
+
             if (res.ok) {
+                setOdontologoAsignado(data.odontologo || null)
                 setStep(5) // Success (Was 4)
             } else {
-                const data = await res.json()
                 toast.error(data.error || 'Error al reservar cita')
+                // Si el horario se ocupó mientras llenaba sus datos, se refrescan
+                // las franjas para que vea las que siguen libres.
+                if (res.status === 409) {
+                    fetchSlots()
+                    setStep(2)
+                }
             }
         } catch (error) {
             toast.error('Error de conexión')
@@ -199,7 +215,11 @@ export default function BookingPage() {
             const data = await res.json()
 
             if (res.ok) {
-                toast.success('Cita reprogramada exitosamente')
+                // El backend puede haber reasignado el profesional si el tuyo no
+                // podía en el nuevo horario; su mensaje lo dice.
+                toast.success(data.message || 'Cita reprogramada exitosamente', {
+                    duration: data.cambioProfesional ? 7000 : 4000,
+                })
                 setGestionAction(null)
                 setManagingCita(null)
                 buscarMisCitas() // Refresh
@@ -442,6 +462,10 @@ export default function BookingPage() {
                                                 <p><span className="font-medium">Servicio:</span> {motivo}</p>
                                                 <p><span className="font-medium">Fecha:</span> {format(parseFechaLocal(fecha), 'PPP', { locale: es })}</p>
                                                 <p><span className="font-medium">Hora:</span> {hora && format(new Date(`2000-01-01T${hora}`), 'h:mm a')}</p>
+                                                <p>
+                                                    <span className="font-medium">Odontólogo:</span> se te asigna uno
+                                                    disponible para ese horario y te lo confirmamos al reservar.
+                                                </p>
                                             </div>
                                         </div>
 
@@ -463,11 +487,28 @@ export default function BookingPage() {
                                         <CheckCircle2 className="w-10 h-10" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-foreground mb-2">¡Cita Confirmada!</h2>
-                                    <p className="text-muted-foreground mb-8">
+                                    <p className="text-muted-foreground mb-4">
                                         Hemos registrado tu cita correctamente. Te esperamos el día <strong>{format(parseFechaLocal(fecha), 'dd/MM/yyyy')}</strong> a las <strong>{format(new Date(`2000-01-01T${hora}`), 'h:mm a')}</strong>.
                                     </p>
+
+                                    {odontologoAsignado && (
+                                        <div className="mb-8 flex items-center justify-center gap-3 rounded-xl bg-primary-50 p-4 text-left">
+                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-100">
+                                                <User className="h-5 w-5 text-primary-700" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-medium uppercase tracking-wide text-primary-700">
+                                                    Te atenderá
+                                                </p>
+                                                <p className="font-bold text-primary-900">
+                                                    {odontologoAsignado.nombre} {odontologoAsignado.apellido}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <button
-                                        onClick={() => { setStep(1); setMotivo(''); setHora(''); setPaciente({ ...paciente, identificacion: '', nombre: '', apellido: '' }); }}
+                                        onClick={() => { setStep(1); setMotivo(''); setHora(''); setOdontologoAsignado(null); setPaciente({ ...paciente, identificacion: '', nombre: '', apellido: '' }); }}
                                         className="btn-secondary w-full"
                                     >
                                         Reservar otra cita
@@ -516,7 +557,7 @@ export default function BookingPage() {
                                                 <div>
                                                     <p className="font-bold text-foreground">{format(parseFechaLocal(cita.fecha), 'PPP', { locale: es })}</p>
                                                     <p className="text-muted-foreground text-sm">{cita.horaInicio} - {cita.tipoCita}</p>
-                                                    <p className="text-xs text-blue-600 font-medium">Dr. {cita.odontologo.nombre} {cita.odontologo.apellido}</p>
+                                                    <p className="text-xs text-blue-600 font-medium">Te atiende: {cita.odontologo.nombre} {cita.odontologo.apellido}</p>
                                                 </div>
                                             </div>
                                             <div className="flex gap-2 mt-4 pt-4 border-t border-border">

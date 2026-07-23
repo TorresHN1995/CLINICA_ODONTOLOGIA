@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { parseFechaLocal, inicioDiaLocal, finDiaLocal } from '@/lib/fecha'
+import { asignarOdontologo, profesionalesAtendiendo } from '@/lib/asignacion-odontologo'
 import { z } from 'zod'
 import { addMinutes, format } from 'date-fns'
 
@@ -56,53 +57,33 @@ export async function POST(request: NextRequest) {
             // Opcional: Actualizar datos si ya existe? Por ahora solo usamos el ID.
         }
 
-        // 2. Asignar Odontólogo (Por ahora asignamos al primer usuario ODONTOLOGO o ADMINISTRADOR disponible)
-        // En el futuro esto podría venir del frontend si seleccionan doctor.
-        const odontologo = await prisma.usuario.findFirst({
-            where: {
-                rol: { in: ['ODONTOLOGO', 'ADMINISTRADOR'] },
-                activo: true
-            }
-        })
-
-        if (!odontologo) {
-            return NextResponse.json({ error: 'No hay odontólogos disponibles en el sistema.' }, { status: 500 })
-        }
-
-        // 3. Crear Cita
+        // 2. Calcular el rango de la cita
         const fechaDate = new Date(`${validatedData.fecha}T${validatedData.hora}`)
         const duracion = 60 // Default 60 mins
         const horaFin = format(addMinutes(fechaDate, duracion), 'HH:mm')
 
-        // Verificar colisión de ODONTÓLOGO por SOLAPAMIENTO de rango (no solo hora exacta)
-        const horaAMinutos = (hora: string) => {
-            const [h, m] = hora.split(':').map(Number)
-            return h * 60 + m
-        }
-        const inicioNueva = horaAMinutos(validatedData.hora)
-        const finNueva = horaAMinutos(horaFin)
+        // 3. Asignar odontólogo automáticamente: el paciente no elige profesional
+        // en la web, así que se le da uno que esté libre en ese horario (el de
+        // menor carga ese día) y se le informa en la respuesta.
+        const asignacion = await asignarOdontologo({
+            fecha: validatedData.fecha,
+            horaInicio: validatedData.hora,
+            horaFin,
+        })
 
-        const citasOdontologo = await prisma.cita.findMany({
-            where: {
-                fecha: {
-                    gte: inicioDiaLocal(validatedData.fecha),
-                    lte: finDiaLocal(validatedData.fecha)
+        if (!asignacion) {
+            const hayProfesionales = (await profesionalesAtendiendo()).length > 0
+            return NextResponse.json(
+                {
+                    error: hayProfesionales
+                        ? 'Ese horario acaba de ocuparse. Elige otra hora, por favor.'
+                        : 'No hay odontólogos disponibles en el sistema.'
                 },
-                estado: { not: 'CANCELADA' },
-                odontologoId: odontologo.id
-            }
-        })
-
-        const haySolapamiento = citasOdontologo.some((cita) => {
-            const ini = horaAMinutos(cita.horaInicio)
-            const fin = horaAMinutos(cita.horaFin)
-            // Dos rangos se solapan si inicioNueva < fin existente && finNueva > inicio existente
-            return inicioNueva < fin && finNueva > ini
-        })
-
-        if (haySolapamiento) {
-            return NextResponse.json({ error: 'El horario seleccionado ya no está disponible.' }, { status: 409 })
+                { status: hayProfesionales ? 409 : 500 }
+            )
         }
+
+        const odontologo = asignacion.profesional
 
         // Verificar colisión de PACIENTE (Para evitar citas duplicadas)
         const colisionPaciente = await prisma.cita.findFirst({
@@ -136,7 +117,22 @@ export async function POST(request: NextRequest) {
             }
         })
 
-        return NextResponse.json(nuevaCita, { status: 201 })
+        // Se devuelve el profesional asignado para poder mostrárselo al paciente
+        // en la confirmación: es el dato que antes no aparecía por ningún lado.
+        return NextResponse.json(
+            {
+                ...nuevaCita,
+                odontologo: {
+                    id: odontologo.id,
+                    nombre: odontologo.nombre,
+                    apellido: odontologo.apellido,
+                },
+                // Sin «Dr./Dra.»: el sistema no guarda el género del profesional y
+                // deducirlo del nombre llevaría a tratar mal a alguien.
+                mensaje: `Te atenderá ${odontologo.nombre} ${odontologo.apellido}.`,
+            },
+            { status: 201 }
+        )
 
     } catch (error) {
         if (error instanceof z.ZodError) {

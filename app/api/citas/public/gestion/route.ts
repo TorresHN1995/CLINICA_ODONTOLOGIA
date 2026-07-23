@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { parseFechaLocal, inicioDiaLocal, finDiaLocal } from '@/lib/fecha'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
+import { asignarOdontologo } from '@/lib/asignacion-odontologo'
 import { z } from 'zod'
 import { addMinutes, format } from 'date-fns'
 
@@ -71,21 +72,18 @@ export async function POST(request: NextRequest) {
             const inicioDelDia = inicioDiaLocal(data.nuevaFecha)
             const finDelDia = finDiaLocal(data.nuevaFecha)
 
-            // Odontólogo
-            const colisionOdontologo = await prisma.cita.findFirst({
-                where: {
-                    id: { not: cita.id }, // Excluir misma cita
-                    fecha: {
-                        gte: inicioDelDia,
-                        lte: finDelDia
-                    },
-                    horaInicio: data.nuevaHora,
-                    estado: { not: 'CANCELADA' },
-                    odontologoId: cita.odontologoId
-                }
+            // Odontólogo: se intenta conservar el mismo profesional. Si él no
+            // puede en el nuevo horario pero otro sí, se reasigna en vez de
+            // rechazar la reprogramación, y se le avisa al paciente.
+            const asignacion = await asignarOdontologo({
+                fecha: data.nuevaFecha,
+                horaInicio: data.nuevaHora,
+                horaFin,
+                preferidoId: cita.odontologoId,
+                excluirCitaId: cita.id,
             })
 
-            if (colisionOdontologo) {
+            if (!asignacion) {
                 return NextResponse.json({ error: 'El horario seleccionado no está disponible.' }, { status: 409 })
             }
 
@@ -107,18 +105,32 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: 'Ya tienes otra cita en ese horario.' }, { status: 409 })
             }
 
+            const profesional = asignacion.profesional
+            const cambioProfesional = profesional.id !== cita.odontologoId
+
             await prisma.cita.update({
                 where: { id: data.citaId },
                 data: {
                     fecha: parseFechaLocal(data.nuevaFecha),
                     horaInicio: data.nuevaHora,
                     horaFin: horaFin,
+                    odontologoId: profesional.id,
                     estado: 'PROGRAMADA', // Reset estado si estaba NO_ASISTIO etc
-                    observaciones: (cita.observaciones || '') + `\n[Reprogramada por Paciente]`
+                    observaciones:
+                        (cita.observaciones || '') +
+                        `\n[Reprogramada por Paciente]` +
+                        (cambioProfesional ? ` (reasignada a ${profesional.nombre} ${profesional.apellido})` : '')
                 }
             })
 
-            return NextResponse.json({ success: true, message: 'Cita reprogramada correctamente' })
+            return NextResponse.json({
+                success: true,
+                message: cambioProfesional
+                    ? `Cita reprogramada. En ese horario te atenderá ${profesional.nombre} ${profesional.apellido}.`
+                    : 'Cita reprogramada correctamente',
+                odontologo: profesional,
+                cambioProfesional,
+            })
         }
 
         return NextResponse.json({ error: 'Acción inválida' }, { status: 400 })

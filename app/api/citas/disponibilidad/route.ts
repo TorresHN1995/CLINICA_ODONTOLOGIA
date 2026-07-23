@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { parseFechaLocal } from '@/lib/fecha'
-import { startOfDay, endOfDay, setHours, setMinutes, addMinutes, format, isBefore } from 'date-fns'
+import { libresPorFranja } from '@/lib/asignacion-odontologo'
+import { setHours, setMinutes, addMinutes, format, isBefore } from 'date-fns'
 
 // Forzar renderizado dinámico
 export const dynamic = 'force-dynamic'
@@ -26,54 +26,39 @@ export async function GET(request: NextRequest) {
         const endHour = 17
         const slotDuration = 60 // 1 hora por cita default para la web pública
 
-        // 2. Obtener citas existentes para esa fecha
-        const citasExistentes = await prisma.cita.findMany({
-            where: {
-                fecha: {
-                    gte: startOfDay(fecha),
-                    lte: endOfDay(fecha)
-                },
-                estado: {
-                    not: 'CANCELADA'
-                },
-                ...(odontologoId ? { odontologoId } : {})
-            }
-        })
-
-        // 3. Generar slots
-        const slots = []
+        // 2. Armar las franjas del día
+        const franjas: { inicio: string; fin: string; momento: Date }[] = []
         let currentSlot = setMinutes(setHours(fecha, startHour), 0)
         const endTime = setMinutes(setHours(fecha, endHour), 0)
-        const now = new Date()
 
         while (isBefore(currentSlot, endTime)) {
             const slotEnd = addMinutes(currentSlot, slotDuration)
-            const slotTimeStr = format(currentSlot, 'HH:mm')
-
-            // Verificar si el slot está ocupado
-            // Una cita choca si empieza antes de que termine el slot Y termina después de que empiece el slot
-            const isOccupied = citasExistentes.some(cita => {
-                const citaInicio = new Date(`${format(cita.fecha, 'yyyy-MM-dd')}T${cita.horaInicio}`)
-                const citaFin = new Date(`${format(cita.fecha, 'yyyy-MM-dd')}T${cita.horaFin}`)
-
-                // Ajuste: comparamos timestamps para precisión
-                return (
-                    (citaInicio < slotEnd && citaFin > currentSlot)
-                )
+            franjas.push({
+                inicio: format(currentSlot, 'HH:mm'),
+                fin: format(slotEnd, 'HH:mm'),
+                momento: currentSlot,
             })
-
-            // Verificar si es tiempo pasado (para el día de hoy)
-            const isPast = isBefore(currentSlot, now)
-
-            if (!isOccupied && !isPast) {
-                slots.push({
-                    hora: slotTimeStr,
-                    disponible: true
-                })
-            }
-
             currentSlot = slotEnd
         }
+
+        // 3. Una franja sigue disponible mientras quede AL MENOS UN profesional
+        // libre. Antes se descartaba en cuanto existía cualquier cita a esa hora,
+        // aunque los demás odontólogos estuvieran desocupados.
+        const libres = await libresPorFranja(
+            format(fecha, 'yyyy-MM-dd'),
+            franjas.map(({ inicio, fin }) => ({ inicio, fin })),
+            odontologoId
+        )
+
+        const ahora = new Date()
+        const slots = franjas
+            .filter((franja) => !isBefore(franja.momento, ahora))
+            .filter((franja) => (libres.get(franja.inicio) || 0) > 0)
+            .map((franja) => ({
+                hora: franja.inicio,
+                disponible: true,
+                profesionalesLibres: libres.get(franja.inicio) || 0,
+            }))
 
         return NextResponse.json(slots)
     } catch (error) {
