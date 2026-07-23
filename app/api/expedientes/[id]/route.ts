@@ -34,6 +34,10 @@ export async function GET(
           },
         },
         imagenes: true,
+        notas: {
+          orderBy: [{ fecha: 'desc' }, { createdAt: 'desc' }],
+          include: { odontologo: { select: { id: true, nombre: true, apellido: true } } },
+        },
       },
     })
 
@@ -41,7 +45,25 @@ export async function GET(
       return NextResponse.json({ error: 'Expediente no encontrado' }, { status: 404 })
     }
 
-    return NextResponse.json(expediente)
+    // Agenda del paciente: se consulta aquí (y no vía /api/citas) para que el
+    // expediente muestre TODAS sus citas, sin el filtro por odontólogo de la agenda.
+    const citas = await prisma.cita.findMany({
+      where: { pacienteId: expediente.pacienteId },
+      orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
+      take: 30,
+      select: {
+        id: true,
+        fecha: true,
+        horaInicio: true,
+        horaFin: true,
+        tipoCita: true,
+        estado: true,
+        motivo: true,
+        odontologo: { select: { id: true, nombre: true, apellido: true } },
+      },
+    })
+
+    return NextResponse.json({ ...expediente, citas })
   } catch (error) {
     console.error('Error al obtener expediente:', error)
     return NextResponse.json(
@@ -95,6 +117,10 @@ export async function PUT(
           include: { odontologo: { select: { nombre: true, apellido: true } } },
         },
         imagenes: true,
+        notas: {
+          orderBy: [{ fecha: 'desc' }, { createdAt: 'desc' }],
+          include: { odontologo: { select: { id: true, nombre: true, apellido: true } } },
+        },
       },
     })
 

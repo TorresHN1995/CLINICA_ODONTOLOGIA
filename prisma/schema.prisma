@@ -31,6 +31,7 @@ model Usuario {
   estadisticas    EstadisticaOdontologo[]
   egresos         Egreso[]
   compras         Compra[]
+  notasEvolucion  NotaEvolucion[]
 
   @@map("usuarios")
 }
@@ -147,9 +148,35 @@ model Expediente {
   paciente      Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
   procedimientos Procedimiento[]
   imagenes      ImagenClinica[]
+  notas         NotaEvolucion[]
 
   @@index([pacienteId])
   @@map("expedientes")
+}
+
+// Nota de evolución: una entrada por sesión clínica. Es lo que permite dar
+// seguimiento continuo al expediente sin sobrescribir el historial anterior.
+model NotaEvolucion {
+  id            String   @id @default(uuid())
+  expedienteId  String
+  odontologoId  String
+  fecha         DateTime @default(now())
+  motivo        String?  @db.Text // motivo de consulta de la sesión
+  hallazgos     String?  @db.Text // examen clínico / evolución observada
+  procedimiento String?  @db.Text // lo realizado en la sesión
+  indicaciones  String?  @db.Text // recetas, cuidados en casa, controles
+  piezas        String?  // piezas tratadas, separadas por coma (FDI)
+  proximaCita   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  expediente    Expediente @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  odontologo    Usuario    @relation(fields: [odontologoId], references: [id])
+
+  @@index([expedienteId])
+  @@index([odontologoId])
+  @@map("notas_evolucion")
 }
 
 // Modelo de Procedimientos
