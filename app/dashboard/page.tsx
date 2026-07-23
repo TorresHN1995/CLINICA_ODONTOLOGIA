@@ -11,16 +11,40 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react'
-import { moduloPorKey } from '@/lib/modulos'
+import { moduloPorKey, tienePermiso } from '@/lib/modulos'
 import { format, startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns'
 import { es } from 'date-fns/locale'
 
-async function getDashboardStats() {
+/** Agenda del día: es la operación diaria y la ve cualquier usuario del sistema. */
+async function getCitasHoy() {
+  const hoy = new Date()
+
+  return prisma.cita.findMany({
+    where: {
+      fecha: {
+        gte: startOfDay(hoy),
+        lte: endOfDay(hoy)
+      }
+    },
+    include: {
+      paciente: true,
+      odontologo: true
+    },
+    orderBy: {
+      horaInicio: 'asc'
+    }
+  })
+}
+
+/**
+ * Indicadores del negocio (pacientes, ingresos, resumen del mes). Solo se
+ * consultan si el usuario tiene el permiso «estadisticas»: así los datos de
+ * facturación ni siquiera se leen para quien no debe verlos.
+ */
+async function getEstadisticas() {
   const hoy = new Date()
   const inicioMes = startOfMonth(hoy)
   const finMes = endOfMonth(hoy)
-  const inicioDia = startOfDay(hoy)
-  const finDia = endOfDay(hoy)
 
   // Total de pacientes activos
   const totalPacientes = await prisma.paciente.count({
@@ -35,23 +59,6 @@ async function getDashboardStats() {
         gte: inicioMes,
         lte: finMes
       }
-    }
-  })
-
-  // Citas de hoy
-  const citasHoy = await prisma.cita.findMany({
-    where: {
-      fecha: {
-        gte: inicioDia,
-        lte: finDia
-      }
-    },
-    include: {
-      paciente: true,
-      odontologo: true
-    },
-    orderBy: {
-      horaInicio: 'asc'
     }
   })
 
@@ -96,16 +103,14 @@ async function getDashboardStats() {
   const config = await prisma.configuracionEmpresa.findFirst({
     where: { activo: true }
   })
-  const simboloMoneda = config?.simboloMoneda || 'L.'
 
   return {
     totalPacientes,
     pacientesNuevos,
-    citasHoy,
     citasMes,
     ingresosMes: ingresosMes._sum.total || 0,
     facturasPendientes,
-    simboloMoneda
+    simboloMoneda: config?.simboloMoneda || 'L.'
   }
 }
 
@@ -114,16 +119,39 @@ export default async function DashboardPage({
 }: {
   searchParams?: { sinAcceso?: string }
 }) {
-  const stats = await getDashboardStats()
+  const session = await getServerSession(authOptions)
+  const rol = session?.user?.role || ''
+  const permisos = session?.user?.permisos
+  const puedeVerEstadisticas = tienePermiso('estadisticas', rol, permisos)
+
+  const citasHoy = await getCitasHoy()
+  const stats = puedeVerEstadisticas ? await getEstadisticas() : null
+
   // middleware.ts redirige aquí con ?sinAcceso=<modulo> cuando alguien abre por
   // URL un módulo que no tiene habilitado.
   const moduloBloqueado = searchParams?.sinAcceso
     ? moduloPorKey(searchParams.sinAcceso)
     : null
 
-  const citasCompletadas = stats.citasMes.find(c => c.estado === 'COMPLETADA')?._count || 0
-  const citasCanceladas = stats.citasMes.find(c => c.estado === 'CANCELADA')?._count || 0
-  const citasProgramadas = stats.citasMes.find(c => c.estado === 'PROGRAMADA')?._count || 0
+  const citasCompletadas = stats?.citasMes.find(c => c.estado === 'COMPLETADA')?._count || 0
+  const citasCanceladas = stats?.citasMes.find(c => c.estado === 'CANCELADA')?._count || 0
+  const citasProgramadas = stats?.citasMes.find(c => c.estado === 'PROGRAMADA')?._count || 0
+
+  // Los accesos directos apuntan a otros módulos: se muestran solo los que este
+  // usuario puede abrir, si no llevarían a la pantalla de "sin acceso".
+  const accesosRapidos = [
+    { modulo: 'pacientes', href: '/dashboard/pacientes/nuevo', label: 'Nuevo Paciente', Icon: Users, color: 'blue' },
+    { modulo: 'citas', href: '/dashboard/citas/nueva', label: 'Nueva Cita', Icon: Calendar, color: 'purple' },
+    { modulo: 'facturacion', href: '/dashboard/facturacion/nueva', label: 'Nueva Factura', Icon: DollarSign, color: 'green' },
+    { modulo: 'reportes', href: '/dashboard/reportes', label: 'Ver Reportes', Icon: TrendingUp, color: 'orange' },
+  ].filter((accion) => tienePermiso(accion.modulo, rol, permisos))
+
+  const clasesAccion: Record<string, string> = {
+    blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
+    purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
+    green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
+    orange: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400',
+  }
 
   return (
     <div className="space-y-6">
@@ -146,7 +174,8 @@ export default async function DashboardPage({
         </p>
       </div>
 
-      {/* Cards de Estadísticas */}
+      {/* Cards de Estadísticas — solo para quien tenga el permiso «estadisticas» */}
+      {stats && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Pacientes */}
         <div className="card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
@@ -167,9 +196,9 @@ export default async function DashboardPage({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-100 text-sm font-medium">Citas Hoy</p>
-              <p className="text-3xl font-bold mt-2">{stats.citasHoy.length}</p>
+              <p className="text-3xl font-bold mt-2">{citasHoy.length}</p>
               <p className="text-purple-100 text-sm mt-2">
-                {stats.citasHoy.filter(c => c.estado === 'COMPLETADA').length} completadas
+                {citasHoy.filter(c => c.estado === 'COMPLETADA').length} completadas
               </p>
             </div>
             <Calendar className="w-12 h-12 text-purple-200" />
@@ -206,6 +235,7 @@ export default async function DashboardPage({
           </div>
         </div>
       </div>
+      )}
 
       {/* Citas de Hoy */}
       <div className="card">
@@ -216,14 +246,14 @@ export default async function DashboardPage({
           </a>
         </div>
 
-        {stats.citasHoy.length === 0 ? (
+        {citasHoy.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">No hay citas programadas para hoy</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {stats.citasHoy.map((cita) => (
+            {citasHoy.map((cita) => (
               <div
                 key={cita.id}
                 className="flex items-center justify-between p-4 bg-muted rounded-lg hover:opacity-80 transition-colors"
@@ -267,8 +297,9 @@ export default async function DashboardPage({
       </div>
 
       {/* Gráficas y Resumen */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Resumen de Citas */}
+      <div className={`grid grid-cols-1 gap-6 ${stats ? 'lg:grid-cols-2' : ''}`}>
+        {/* Resumen de Citas — parte de las estadísticas */}
+        {stats && (
         <div className="card">
           <h3 className="text-lg font-bold text-foreground mb-4">Resumen de Citas - Este Mes</h3>
           <div className="space-y-4">
@@ -301,40 +332,27 @@ export default async function DashboardPage({
             </div>
           </div>
         </div>
+        )}
 
         {/* Acciones Rápidas */}
         <div className="card">
           <h3 className="text-lg font-bold text-foreground mb-4">Acciones Rápidas</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <a
-              href="/dashboard/pacientes/nuevo"
-              className="p-4 bg-blue-50 dark:bg-blue-900/20 hover:opacity-80 rounded-lg transition-colors text-center"
-            >
-              <Users className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-300">Nuevo Paciente</p>
-            </a>
-            <a
-              href="/dashboard/citas/nueva"
-              className="p-4 bg-purple-50 dark:bg-purple-900/20 hover:opacity-80 rounded-lg transition-colors text-center"
-            >
-              <Calendar className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-purple-900 dark:text-purple-300">Nueva Cita</p>
-            </a>
-            <a
-              href="/dashboard/facturacion/nueva"
-              className="p-4 bg-green-50 dark:bg-green-900/20 hover:opacity-80 rounded-lg transition-colors text-center"
-            >
-              <DollarSign className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-green-900 dark:text-green-300">Nueva Factura</p>
-            </a>
-            <a
-              href="/dashboard/reportes"
-              className="p-4 bg-orange-50 dark:bg-orange-900/20 hover:opacity-80 rounded-lg transition-colors text-center"
-            >
-              <TrendingUp className="w-8 h-8 text-orange-600 dark:text-orange-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-orange-900 dark:text-orange-300">Ver Reportes</p>
-            </a>
-          </div>
+          {accesosRapidos.length === 0 ? (
+            <p className="text-muted-foreground">No tienes módulos con acciones directas.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {accesosRapidos.map(({ href, label, Icon, color }) => (
+                <a
+                  key={href}
+                  href={href}
+                  className={`rounded-lg p-4 text-center transition-colors hover:opacity-80 ${clasesAccion[color]}`}
+                >
+                  <Icon className="mx-auto mb-2 h-8 w-8" />
+                  <p className="text-sm font-medium">{label}</p>
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

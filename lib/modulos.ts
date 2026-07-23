@@ -7,8 +7,12 @@ export interface Modulo {
   /** Identificador que se guarda en `usuarios.permisos`. */
   key: string
   label: string
-  /** Ruta base del módulo dentro del dashboard. */
-  href: string
+  /**
+   * Ruta base del módulo dentro del dashboard. `null` para los permisos que no
+   * son una pantalla propia sino una parte de otra (p. ej. las estadísticas del
+   * dashboard): esos no participan en el bloqueo por URL.
+   */
+  href: string | null
   descripcion: string
   grupo: GrupoModulo
 }
@@ -41,6 +45,7 @@ export const MODULOS: Modulo[] = [
   { key: 'productos', label: 'Productos/Servicios', href: '/dashboard/productos', grupo: 'Comercial y facturación', descripcion: 'Catálogo de servicios y precios' },
 
   // Operación
+  { key: 'estadisticas', label: 'Estadísticas del dashboard', href: null, grupo: 'Operación', descripcion: 'Indicadores y resumen del mes en la pantalla de inicio' },
   { key: 'inventario', label: 'Inventario', href: '/dashboard/inventario', grupo: 'Operación', descripcion: 'Existencias de insumos y materiales' },
   { key: 'compras', label: 'Compras', href: '/dashboard/compras', grupo: 'Operación', descripcion: 'Ingreso de compras a proveedores' },
   { key: 'contabilidad', label: 'Contabilidad', href: '/dashboard/contabilidad', grupo: 'Operación', descripcion: 'Ingresos, egresos y flujo de caja' },
@@ -114,10 +119,17 @@ export function permisosEfectivos(rol: string, permisos: string[] | null | undef
 export function moduloDeRuta(pathname: string): Modulo | null {
   // Se recorre de href más largo a más corto para que /dashboard/configuracion/facturacion
   // resuelva a «configuracion» y no a un módulo con prefijo más corto.
-  const candidatos = [...MODULOS].sort((a, b) => b.href.length - a.href.length)
+  const candidatos = MODULOS.filter((m) => m.href).sort(
+    (a, b) => (b.href as string).length - (a.href as string).length
+  )
   return (
     candidatos.find((m) => pathname === m.href || pathname.startsWith(m.href + '/')) || null
   )
+}
+
+/** ¿Este usuario tiene habilitado un módulo concreto? */
+export function tienePermiso(key: string, rol: string, permisos: string[] | null | undefined): boolean {
+  return permisosEfectivos(rol, permisos).includes(key)
 }
 
 /** ¿Puede este usuario abrir esta ruta del dashboard? */
