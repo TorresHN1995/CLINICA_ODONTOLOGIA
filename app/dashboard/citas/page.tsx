@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Calendar, dateFnsLocalizer, View, Views } from 'react-big-calendar'
-import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth } from 'date-fns'
+import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth, endOfWeek, addDays } from 'date-fns'
 import { es } from 'date-fns/locale'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Plus, Loader2, X, User, Clock, FileText, PlayCircle, CheckCircle2, XCircle, Stethoscope } from 'lucide-react'
@@ -15,6 +15,25 @@ import { parseFechaLocal } from '@/lib/fecha'
 const locales = { 'es': es }
 
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales })
+
+/** Rango de fechas que realmente se ve en pantalla según la vista activa. */
+function rangoVisible(fecha: Date, vista: View): { start: Date; end: Date } {
+  const opcionesSemana = { locale: es }
+  if (vista === Views.DAY) return { start: fecha, end: fecha }
+  if (vista === Views.WEEK) {
+    return { start: startOfWeek(fecha, opcionesSemana), end: endOfWeek(fecha, opcionesSemana) }
+  }
+  if (vista === Views.AGENDA) {
+    // La vista de agenda de react-big-calendar lista 30 días desde la fecha activa.
+    return { start: fecha, end: addDays(fecha, 30) }
+  }
+  // Mes: la rejilla arranca en el lunes previo al día 1 y termina el domingo
+  // posterior al último día, así que se incluyen esos días vecinos.
+  return {
+    start: startOfWeek(startOfMonth(fecha), opcionesSemana),
+    end: endOfWeek(endOfMonth(fecha), opcionesSemana),
+  }
+}
 
 interface CitaEvent {
   id: string
@@ -38,6 +57,18 @@ export default function AppointmentDashboard() {
   const [odontologoFiltro, setOdontologoFiltro] = useState('')
   const [buscandoExpediente, setBuscandoExpediente] = useState(false)
 
+  // Abrir la agenda en un día concreto: /dashboard/citas?fecha=yyyy-MM-dd. Es el
+  // enlace que usa el expediente para comprobar que la cita quedó agendada.
+  // Se lee de window.location (y no con useSearchParams) para no obligar a
+  // envolver la página en un <Suspense> durante el prerender.
+  useEffect(() => {
+    const fecha = new URLSearchParams(window.location.search).get('fecha')
+    if (fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      setDate(parseFechaLocal(fecha))
+      setView(Views.DAY)
+    }
+  }, [])
+
   // Lista de odontólogos para el filtro (solo administradores/asistentes; el
   // odontólogo ya ve únicamente sus citas por filtrado del servidor).
   useEffect(() => {
@@ -51,8 +82,11 @@ export default function AppointmentDashboard() {
   const fetchCitas = useCallback(async (currentDate: Date, currentView: View) => {
     setLoading(true)
     try {
-      const start = startOfMonth(currentDate)
-      const end = endOfMonth(currentDate)
+      // El rango debe cubrir TODO lo que la vista muestra, no solo el mes: la
+      // rejilla mensual incluye días del mes anterior y del siguiente, y las
+      // vistas de semana/agenda se salen del mes. Consultar solo el mes hacía que
+      // una cita programada a inicios del mes siguiente no apareciera nunca.
+      const { start, end } = rangoVisible(currentDate, currentView)
       const params = new URLSearchParams({
         fechaInicio: format(start, 'yyyy-MM-dd'),
         fechaFin: format(end, 'yyyy-MM-dd')
